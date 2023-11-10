@@ -1,0 +1,16 @@
+name: OrigamiOrigins
+version: 1.0.0
+main: com.starshootercity.OrigamiOrigins
+description: Paper plugin inspired by the Origins mod
+api-version: '1.20'
+
+permissions:
+  origamiorigins.default:
+    default: true
+
+commands:
+  origin-swap:
+    aliases: oswap
+    permission: origamiorigins.default
+    description: Swap your origin for a different one
+    usage: /<command>

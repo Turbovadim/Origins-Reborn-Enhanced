@@ -1,0 +1,5 @@
+change-cost: 100
+worlds:
+  world: 'world'
+  world_nether: 'world_nether'
+origins: []
