@@ -1,6 +1,7 @@
 package com.starshootercity;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.starshootercity.origins.Shulk;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -148,11 +149,11 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     .color(NamedTextColor.GREEN));
             add(Component.text("not dropped on death")
                     .color(NamedTextColor.GREEN));
-            add(Component.text("+ -50% all damage taken")
+            add(Component.text("+ -25% all damage taken")
                     .color(NamedTextColor.GREEN));
             add(Component.text("- Cannot use shields")
                     .color(NamedTextColor.RED));
-            add(Component.text("- Saturation and hunger decrease twice as fast")
+            add(Component.text("- Saturation and hunger decrease three times as fast")
                     .color(NamedTextColor.RED));
         }});
         put("Feline", new ArrayList<>() {{
@@ -286,6 +287,9 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     maxHealth = instance.getBaseValue();
                 }
                 player.setHealth(maxHealth);
+                Shulk.getInventoriesConfig().set(player.getUniqueId().toString(), null);
+                player.setFallDistance(0);
+                player.setCooldown(Material.SHIELD, 0);
                 player.setAllowFlight(false);
                 player.setFlying(false);
                 player.setRemainingAir(player.getMaximumAir());

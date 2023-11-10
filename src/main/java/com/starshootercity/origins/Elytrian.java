@@ -45,8 +45,8 @@ public class Elytrian implements Listener {
             OriginSwapper.runForOrigin(player, "Elytrian",
                     () -> {
                         if (player.getLocation().getBlock().getRelative(BlockFace.UP, 2).isSolid()) {
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 30, 2, false, false));
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 30, 1, false, false));
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 5, 2, false, false));
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 5, 1, false, false));
                         }
                         ItemStack chestplate = player.getEquipment().getChestplate();
                         if (chestplate != null) {

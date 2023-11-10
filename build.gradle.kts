@@ -10,13 +10,6 @@ repositories {
     mavenCentral()
     maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
     maven { url = uri("https://jitpack.io") }
-    maven {
-        url = uri("https://nexus.frengor.com/repository/public/")
-    }
-    maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
-    maven {
-        url = uri("https://repo.opencollab.dev/main/")
-    }
 }
 
 dependencies {
