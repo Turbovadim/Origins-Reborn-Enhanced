@@ -163,9 +163,9 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     .color(NamedTextColor.GREEN));
             add(Component.text("+ Infinite night vision")
                     .color(NamedTextColor.GREEN));
-            add(Component.text("+ Scare creepers away")
+            add(Component.text("+ Creepers only ignite if attacked")
                     .color(NamedTextColor.GREEN));
-            add(Component.text("- Can only mine blocks with the right tool")
+            add(Component.text("- Slower mining speed")
                     .color(NamedTextColor.RED));
             add(Component.text("- Only 9 hearts of health")
                     .color(NamedTextColor.RED));
@@ -246,15 +246,13 @@ public class OriginSwapper implements Listener, CommandExecutor {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(""));
         lore.addAll(information.get(origin));
-        if (!firstTime) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Warning:")
-                    .color(NamedTextColor.YELLOW)
-                    .decoration(TextDecoration.ITALIC, false));
-            lore.add(Component.text("Switching origins will wipe your inventory and cost $%s".formatted(price))
-                    .color(NamedTextColor.YELLOW)
-                    .decoration(TextDecoration.ITALIC, false));
-        }
+        lore.add(Component.text(""));
+        lore.add(Component.text("Warning:")
+                .color(NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text("Switching origins will wipe your inventory and cost $%s".formatted(price))
+                .color(NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -342,6 +340,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
             case "Enderian" -> 24;
             case "Phantom" -> 14;
             case "Arachnid" -> 6;
+            case "Feline" -> 18;
             default -> 20;
         };
     }
