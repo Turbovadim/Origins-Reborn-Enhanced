@@ -282,7 +282,11 @@ public class OriginSwapper implements Listener, CommandExecutor {
             if (event.getWhoClicked() instanceof Player player) {
                 Integer cost = meta.getPersistentDataContainer().get(new NamespacedKey(OriginsReborn.getInstance(), "cost"), PersistentDataType.INTEGER);
                 if (cost != null) {
-                    if (OriginsReborn.economy != null && !OriginsReborn.economy.has(player, cost)) return;
+                    if (OriginsReborn.economy != null && !OriginsReborn.economy.has(player, cost)) {
+                        player.sendMessage(Component.text("You need $%s to switch origins".formatted(cost)));
+                        player.closeInventory();
+                        return;
+                    }
                     if (OriginsReborn.economy != null) OriginsReborn.economy.withdrawPlayer(player, cost);
                 }
                 player.getInventory().clear();
