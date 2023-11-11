@@ -2,7 +2,6 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.text.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
@@ -16,10 +15,11 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public class Blazeborn implements Listener {
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
+    public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             OriginSwapper.runForOrigin(player, "Blazeborn", () -> {
                 double temp = player.getLocation().getBlock().getTemperature();
@@ -33,7 +33,6 @@ public class Blazeborn implements Listener {
             });
         }
     }
-
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         Player trueDamager;

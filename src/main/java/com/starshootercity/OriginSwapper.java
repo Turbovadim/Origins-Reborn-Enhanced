@@ -346,6 +346,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
             speed.setBaseValue(getSpeed(origin));
         }
     }
+
     public double getMaxHealth(String origin) {
         return switch (origin) {
             case "Enderian" -> 24;
@@ -355,6 +356,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
             default -> 20;
         };
     }
+
     public double getSpeed(String origin) {
         return origin.equals("Avian") ? 0.125 : 0.1;
     }

@@ -44,7 +44,8 @@ public class Enderian implements Listener {
         });
     }
 
-    NamespacedKey teleportingKey = new NamespacedKey(OriginsReborn.getInstance(), "teleporting");
+    NamespacedKey teleportingKey = new
+            NamespacedKey(OriginsReborn.getInstance(), "teleporting");
     NamespacedKey enderianDroppingKey = new NamespacedKey(OriginsReborn.getInstance(), "dropping");
 
     @EventHandler

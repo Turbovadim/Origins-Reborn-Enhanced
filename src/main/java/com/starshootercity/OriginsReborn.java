@@ -32,7 +32,7 @@ public class OriginsReborn extends JavaPlugin {
     public void onEnable() {
         instance = this;
         if (!setupEconomy()) {
-            getLogger().warning("Vault is not enabled");
+            getLogger().warning("Vault is not enabled, origin swaps will not cost currency");
         }
         saveDefaultConfig();
         PluginCommand command = getCommand("origin-swap");

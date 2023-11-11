@@ -24,7 +24,6 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public class Arachnid implements Listener {
-
     NamespacedKey stoppedClimbingKey = new NamespacedKey(OriginsReborn.getInstance(), "stoppedclimbing");
     NamespacedKey startedClimbingKey = new NamespacedKey(OriginsReborn.getInstance(), "startedclimbing");
 

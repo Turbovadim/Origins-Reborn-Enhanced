@@ -2,7 +2,6 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
-import io.papermc.paper.event.player.PlayerDeepSleepEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -20,6 +19,7 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Avian implements Listener {
 
     @EventHandler
@@ -27,9 +27,7 @@ public class Avian implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             String origin = OriginSwapper.getOrigin(player);
             if (origin == null) continue;
-            OriginSwapper.runForOrigin(player, "Avian", () -> {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, -1, 1, false, false));
-            });
+            OriginSwapper.runForOrigin(player, "Avian", () -> player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, -1, 1, false, false)));
         }
     }
 
@@ -48,7 +46,6 @@ public class Avian implements Listener {
             });
         }
     }
-
     List<Material> meat = new ArrayList<>() {{
         add(Material.PORKCHOP);
         add(Material.COOKED_PORKCHOP);

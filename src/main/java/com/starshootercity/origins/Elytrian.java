@@ -58,7 +58,6 @@ public class Elytrian implements Listener {
         }
     }
 
-
     @EventHandler
     public void onItemSpawn(ItemSpawnEvent event) {
         if (Boolean.TRUE.equals(event.getEntity().getItemStack().getItemMeta().getPersistentDataContainer().get(cannotDropKey, PersistentDataType.BOOLEAN))) {

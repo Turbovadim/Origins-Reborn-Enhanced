@@ -35,12 +35,15 @@ public class Phantom implements Listener {
                     () -> player.setInvisible(player.getPotionEffect(PotionEffectType.INVISIBILITY) != null));
         }
     }
+
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         event.getPlayer().getPersistentDataContainer().set(phantomDroppingKey, PersistentDataType.BOOLEAN, true);
         Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(phantomDroppingKey, PersistentDataType.BOOLEAN, false));
     }
+
     NamespacedKey phantomDroppingKey = new NamespacedKey(OriginsReborn.getInstance(), "dropping");
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (Boolean.TRUE.equals(event.getPlayer().getPersistentDataContainer().get(phantomDroppingKey, PersistentDataType.BOOLEAN))) {
