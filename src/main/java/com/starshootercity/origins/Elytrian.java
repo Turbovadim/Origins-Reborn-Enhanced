@@ -19,13 +19,16 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +58,29 @@ public class Elytrian implements Listener {
                         }
                         player.getEquipment().setChestplate(elytra);
                     });
+        }
+    }
+
+    NamespacedKey boostUsedKey = new NamespacedKey(OriginsReborn.getInstance(), "boostused");
+
+    @EventHandler
+    public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
+        if (event.isSneaking()) {
+            OriginSwapper.runForOrigin(event.getPlayer(), "Elytrian", () -> {
+                if (!event.getPlayer().isGliding()) return;
+                Long time = event.getPlayer().getPersistentDataContainer().get(boostUsedKey, PersistentDataType.LONG);
+                long deltaTime;
+                if (time == null) deltaTime = Long.MAX_VALUE;
+                else {
+                    deltaTime = Instant.now().getEpochSecond() - time;
+                }
+                if (deltaTime > 30) {
+                    event.getPlayer().getPersistentDataContainer().set(boostUsedKey, PersistentDataType.LONG, Instant.now().getEpochSecond());
+                    Vector vector = event.getPlayer().getVelocity();
+                    vector.add(new Vector(0, 3, 0));
+                    event.getPlayer().setVelocity(vector);
+                }
+            });
         }
     }
 
