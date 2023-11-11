@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
@@ -63,6 +64,15 @@ public class OriginSwapper implements Listener, CommandExecutor {
         put("Shulk", Material.SHULKER_SHELL);
         put("Feline", Material.ORANGE_WOOL);
     }};
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getPlayer() instanceof Player player) {
+            if (getOrigin(player) == null) {
+                player.kick(Component.text("You must select an Origin!").color(NamedTextColor.RED));
+            }
+        }
+    }
 
     Map<String, List<Component>> information = new HashMap<>() {{
         put("Enderian", new ArrayList<>() {{

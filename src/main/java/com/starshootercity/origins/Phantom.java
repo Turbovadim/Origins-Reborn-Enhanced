@@ -27,7 +27,7 @@ public class Phantom implements Listener {
                         boolean height = player.getWorld().getHighestBlockAt(player.getLocation()).getY() < player.getY();
                         boolean overworld = player.getWorld().getEnvironment() == World.Environment.NORMAL;
                         boolean day = player.getWorld().isDayTime();
-                        if (!player.isSneaking() && height && overworld && day) {
+                        if (!player.isSneaking() && height && overworld && day && player.getWorld().isClearWeather()) {
                             player.setFireTicks(Math.max(player.getFireTicks(), 60));
                         }
                         if (player.isSneaking()) player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 1, 9, false, false));
