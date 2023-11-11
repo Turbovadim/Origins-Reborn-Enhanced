@@ -69,7 +69,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
             if (getOrigin(player) == null) {
-                player.kick(Component.text("You must select an Origin!").color(NamedTextColor.RED));
+                openOriginSwapper(player, true);
             }
         }
     }
