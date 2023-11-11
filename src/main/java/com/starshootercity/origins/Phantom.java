@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -15,6 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+@SuppressWarnings("unused")
 public class Phantom implements Listener {
 
     @EventHandler
@@ -37,11 +38,9 @@ public class Phantom implements Listener {
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         event.getPlayer().getPersistentDataContainer().set(phantomDroppingKey, PersistentDataType.BOOLEAN, true);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(OrigamiOrigins.getInstance(), () -> {
-            event.getPlayer().getPersistentDataContainer().set(phantomDroppingKey, PersistentDataType.BOOLEAN, false);
-        });
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(phantomDroppingKey, PersistentDataType.BOOLEAN, false));
     }
-    NamespacedKey phantomDroppingKey = new NamespacedKey(OrigamiOrigins.getInstance(), "dropping");
+    NamespacedKey phantomDroppingKey = new NamespacedKey(OriginsReborn.getInstance(), "dropping");
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (Boolean.TRUE.equals(event.getPlayer().getPersistentDataContainer().get(phantomDroppingKey, PersistentDataType.BOOLEAN))) {

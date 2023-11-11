@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
@@ -17,13 +17,12 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.persistence.PersistentDataType;
 
+@SuppressWarnings("unused")
 public class Enderian implements Listener {
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         event.getPlayer().getPersistentDataContainer().set(enderianDroppingKey, PersistentDataType.BOOLEAN, true);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(OrigamiOrigins.getInstance(), () -> {
-            event.getPlayer().getPersistentDataContainer().set(enderianDroppingKey, PersistentDataType.BOOLEAN, false);
-        });
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(enderianDroppingKey, PersistentDataType.BOOLEAN, false));
     }
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -41,12 +40,12 @@ public class Enderian implements Listener {
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         OriginSwapper.runForOrigin(event.getPlayer(), "Enderian", () -> {
             event.getPlayer().getPersistentDataContainer().set(teleportingKey, PersistentDataType.BOOLEAN, true);
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OrigamiOrigins.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(teleportingKey, PersistentDataType.BOOLEAN, false));
+            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(teleportingKey, PersistentDataType.BOOLEAN, false));
         });
     }
 
-    NamespacedKey teleportingKey = new NamespacedKey(OrigamiOrigins.getInstance(), "teleporting");
-    NamespacedKey enderianDroppingKey = new NamespacedKey(OrigamiOrigins.getInstance(), "dropping");
+    NamespacedKey teleportingKey = new NamespacedKey(OriginsReborn.getInstance(), "teleporting");
+    NamespacedKey enderianDroppingKey = new NamespacedKey(OriginsReborn.getInstance(), "dropping");
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
@@ -59,7 +58,7 @@ public class Enderian implements Listener {
     }
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
+    public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             OriginSwapper.runForOrigin(player, "Enderian", () -> {
                 double temp = player.getLocation().getBlock().getTemperature();

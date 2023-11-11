@@ -7,10 +7,10 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class OrigamiOrigins extends JavaPlugin {
-    private static OrigamiOrigins instance;
+public class OriginsReborn extends JavaPlugin {
+    private static OriginsReborn instance;
 
-    public static OrigamiOrigins getInstance() {
+    public static OriginsReborn getInstance() {
         return instance;
     }
 

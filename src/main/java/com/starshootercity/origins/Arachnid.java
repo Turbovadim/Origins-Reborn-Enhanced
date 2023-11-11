@@ -2,15 +2,12 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,20 +17,20 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.w3c.dom.Attr;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Arachnid implements Listener {
 
-    NamespacedKey stoppedClimbingKey = new NamespacedKey(OrigamiOrigins.getInstance(), "stoppedclimbing");
-    NamespacedKey startedClimbingKey = new NamespacedKey(OrigamiOrigins.getInstance(), "startedclimbing");
+    NamespacedKey stoppedClimbingKey = new NamespacedKey(OriginsReborn.getInstance(), "stoppedclimbing");
+    NamespacedKey startedClimbingKey = new NamespacedKey(OriginsReborn.getInstance(), "startedclimbing");
 
     @EventHandler
     @SuppressWarnings("deprecation")
-    public void onServerTickEnd(ServerTickEndEvent event) {
+    public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
                 player.setAllowFlight(true);

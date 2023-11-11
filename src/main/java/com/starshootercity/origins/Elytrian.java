@@ -2,7 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
@@ -29,8 +29,9 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Elytrian implements Listener {
-    NamespacedKey cannotDropKey = new NamespacedKey(OrigamiOrigins.getInstance(), "cannotdrop");
+    NamespacedKey cannotDropKey = new NamespacedKey(OriginsReborn.getInstance(), "cannotdrop");
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         ItemStack elytra = new ItemStack(Material.ELYTRA);

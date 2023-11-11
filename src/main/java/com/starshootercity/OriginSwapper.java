@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class OriginSwapper implements Listener, CommandExecutor {
     Map<String, Team> originTeams = new HashMap<>();
     public OriginSwapper() {
@@ -182,7 +183,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
         return true;
     }
 
-    public static NamespacedKey key = new NamespacedKey(OrigamiOrigins.getInstance(), "Origin");
+    public static NamespacedKey key = new NamespacedKey(OriginsReborn.getInstance(), "Origin");
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -196,7 +197,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
     public static String getOrigin(Player player) {
         String origin = player.getPersistentDataContainer().get(key, PersistentDataType.STRING);
         if (origin == null) {
-            origin = OrigamiOrigins.getInstance().getConfig().getString("origins.%s".formatted(player.getUniqueId().toString()));
+            origin = OriginsReborn.getInstance().getConfig().getString("origins.%s".formatted(player.getUniqueId().toString()));
             if (origin == null) return null;
             player.getPersistentDataContainer().set(key, PersistentDataType.STRING, origin);
         }
@@ -215,13 +216,13 @@ public class OriginSwapper implements Listener, CommandExecutor {
     }
 
     public void setOrigin(Player player, String origin) {
-        OrigamiOrigins.getInstance().getConfig().set("origins.%s".formatted(player.getUniqueId().toString()), origin);
+        OriginsReborn.getInstance().getConfig().set("origins.%s".formatted(player.getUniqueId().toString()), origin);
         player.getPersistentDataContainer().set(key, PersistentDataType.STRING, origin);
         for (Team team : originTeams.values()) {
             team.removePlayer(player);
         }
         originTeams.get(origin).addPlayer(player);
-        OrigamiOrigins.getInstance().saveConfig();
+        OriginsReborn.getInstance().saveConfig();
     }
 
     public void openOriginSwapper(Player player, boolean firstTime) {
@@ -241,8 +242,8 @@ public class OriginSwapper implements Listener, CommandExecutor {
         meta.displayName(Component.text(origin)
                 .decoration(TextDecoration.ITALIC, false)
                 .color(NamedTextColor.GRAY));
-        meta.getPersistentDataContainer().set(new NamespacedKey(OrigamiOrigins.getInstance(), "firsttime"), PersistentDataType.BOOLEAN, firstTime);
-        int price = OrigamiOrigins.getInstance().getConfig().getInt("change-cost");
+        meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "firsttime"), PersistentDataType.BOOLEAN, firstTime);
+        int price = OriginsReborn.getInstance().getConfig().getInt("change-cost");
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(""));
         lore.addAll(information.get(origin));
@@ -266,10 +267,10 @@ public class OriginSwapper implements Listener, CommandExecutor {
         if (meta.getPersistentDataContainer().has(key)) {
             event.setCancelled(true);
             if (event.getWhoClicked() instanceof Player player) {
-                Integer cost = meta.getPersistentDataContainer().get(new NamespacedKey(OrigamiOrigins.getInstance(), "cost"), PersistentDataType.INTEGER);
+                Integer cost = meta.getPersistentDataContainer().get(new NamespacedKey(OriginsReborn.getInstance(), "cost"), PersistentDataType.INTEGER);
                 if (cost != null) {
-                    if (OrigamiOrigins.economy != null && !OrigamiOrigins.economy.has(player, cost)) return;
-                    if (OrigamiOrigins.economy != null) OrigamiOrigins.economy.withdrawPlayer(player, cost);
+                    if (OriginsReborn.economy != null && !OriginsReborn.economy.has(player, cost)) return;
+                    if (OriginsReborn.economy != null) OriginsReborn.economy.withdrawPlayer(player, cost);
                 }
                 player.getInventory().clear();
                 player.getEnderChest().clear();
@@ -298,22 +299,22 @@ public class OriginSwapper implements Listener, CommandExecutor {
                 }
                 player.setBedSpawnLocation(null);
                 player.closeInventory();
-                String nether = OrigamiOrigins.getInstance().getConfig().getString("worlds.world_nether");
-                String overworld = OrigamiOrigins.getInstance().getConfig().getString("worlds.world");
+                String nether = OriginsReborn.getInstance().getConfig().getString("worlds.world_nether");
+                String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                 if (nether == null) {
                     nether = "world_nether";
-                    OrigamiOrigins.getInstance().getConfig().set("worlds.world_nether", "world_nether");
-                    OrigamiOrigins.getInstance().saveConfig();
+                    OriginsReborn.getInstance().getConfig().set("worlds.world_nether", "world_nether");
+                    OriginsReborn.getInstance().saveConfig();
                 }
                 if (overworld == null) {
                     overworld = "world";
-                    OrigamiOrigins.getInstance().getConfig().set("worlds.world", "world");
-                    OrigamiOrigins.getInstance().saveConfig();
+                    OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
+                    OriginsReborn.getInstance().saveConfig();
                 }
                 String worldToUse = origin.equals("Blazeborn") ? nether : overworld;
                 World world = Bukkit.getWorld(worldToUse);
                 if (world == null) {
-                    OrigamiOrigins.getInstance().getLogger().warning("World '%s' could not be found".formatted(worldToUse));
+                    OriginsReborn.getInstance().getLogger().warning("World '%s' could not be found".formatted(worldToUse));
                     return;
                 }
                 player.teleport(world.getSpawnLocation());
@@ -345,9 +346,6 @@ public class OriginSwapper implements Listener, CommandExecutor {
         };
     }
     public double getSpeed(String origin) {
-        return switch (origin) {
-            case "Avian" -> 0.125;
-            default -> 0.1;
-        };
+        return origin.equals("Avian") ? 0.125 : 0.1;
     }
 }

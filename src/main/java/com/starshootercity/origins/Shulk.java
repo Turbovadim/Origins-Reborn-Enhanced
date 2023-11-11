@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -27,14 +27,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("unused")
 public class Shulk implements Listener {
     private static File inventories;
     private static FileConfiguration inventoriesConfig;
     public Shulk() {
-        inventories = new File(OrigamiOrigins.getInstance().getDataFolder(), "inventories.yml");
+        inventories = new File(OriginsReborn.getInstance().getDataFolder(), "inventories.yml");
         if (!inventories.exists()) {
             boolean ignore = inventories.getParentFile().mkdirs();
-            OrigamiOrigins.getInstance().saveResource("inventories.yml", false);
+            OriginsReborn.getInstance().saveResource("inventories.yml", false);
         }
 
         inventoriesConfig = new AutosavingYamlConfiguration();
@@ -52,7 +53,7 @@ public class Shulk implements Listener {
         }
     }
 
-    NamespacedKey openedBoxKey = new NamespacedKey(OrigamiOrigins.getInstance(), "openedbox");
+    NamespacedKey openedBoxKey = new NamespacedKey(OriginsReborn.getInstance(), "openedbox");
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
@@ -76,7 +77,7 @@ public class Shulk implements Listener {
                     }
                 }
             }
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OrigamiOrigins.getInstance(), () -> {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(openedBoxKey, PersistentDataType.BOOLEAN))) {
                     for (int i = 0; i < 9; i++) {
                         getInventoriesConfig().set("%s.%s".formatted(player.getUniqueId().toString(), i), player.getOpenInventory().getItem(i));
@@ -93,18 +94,14 @@ public class Shulk implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Shulk", () -> {
-                event.setFoodLevel(Math.max(player.getFoodLevel() - ((player.getFoodLevel() - event.getFoodLevel()) * 3), 0));
-            });
+            OriginSwapper.runForOrigin(player, "Shulk", () -> event.setFoodLevel(Math.max(player.getFoodLevel() - ((player.getFoodLevel() - event.getFoodLevel()) * 3), 0)));
         }
     }
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
+    public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Shulk", () -> {
-                player.setCooldown(Material.SHIELD, 1000);
-            });
+            OriginSwapper.runForOrigin(player, "Shulk", () -> player.setCooldown(Material.SHIELD, 1000));
         }
     }
 

@@ -1,6 +1,6 @@
-name: OrigamiOrigins
+name: OriginsReborn
 version: 1.0.0
-main: com.starshootercity.OrigamiOrigins
+main: com.starshootercity.OriginsReborn
 description: Paper plugin inspired by the Origins mod
 api-version: '1.20'
 

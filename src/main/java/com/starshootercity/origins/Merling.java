@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OrigamiOrigins;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.OriginSwapper;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
@@ -15,6 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+@SuppressWarnings("unused")
 public class Merling implements Listener {
     @EventHandler
     public void onEntityAirChange(EntityAirChangeEvent event) {
@@ -32,8 +33,8 @@ public class Merling implements Listener {
         }
     }
 
-    NamespacedKey airKey = new NamespacedKey(OrigamiOrigins.getInstance(), "fullair");
-    NamespacedKey dehydrationKey = new NamespacedKey(OrigamiOrigins.getInstance(), "dehydrating");
+    NamespacedKey airKey = new NamespacedKey(OriginsReborn.getInstance(), "fullair");
+    NamespacedKey dehydrationKey = new NamespacedKey(OriginsReborn.getInstance(), "dehydrating");
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
