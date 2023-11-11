@@ -1,2 +1,2 @@
-rootProject.name = "OriginsReborn"
+rootProject.name = "Origins-Reborn"
 
