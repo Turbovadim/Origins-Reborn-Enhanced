@@ -18,7 +18,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
@@ -280,7 +279,9 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     }
                     if (OriginsReborn.economy != null) OriginsReborn.economy.withdrawPlayer(player, cost);
                 }
-                if (cost != null) {
+                Boolean firstTime = meta.getPersistentDataContainer().get(new NamespacedKey(OriginsReborn.getInstance(), "firsttime"), PersistentDataType.BOOLEAN);
+
+                if (Boolean.FALSE.equals(firstTime)) {
                     player.getInventory().clear();
                     player.getEnderChest().clear();
                     player.setSaturation(5);
