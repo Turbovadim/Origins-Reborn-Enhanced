@@ -22,7 +22,8 @@ public class Feline implements Listener {
                         if (player.isSprinting()) {
                             player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 5, 1, false, false));
                         }
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, -1, 1, false, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, -1, 0, false, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, -1, 0, false, false));
                     });
         }
     }
