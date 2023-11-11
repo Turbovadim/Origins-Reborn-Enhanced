@@ -65,15 +65,6 @@ public class OriginSwapper implements Listener, CommandExecutor {
         put("Feline", Material.ORANGE_WOOL);
     }};
 
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            if (getOrigin(player) == null) {
-                openOriginSwapper(player, true);
-            }
-        }
-    }
-
     Map<String, List<Component>> information = new HashMap<>() {{
         put("Enderian", new ArrayList<>() {{
             add(Component.text("+ Can teleport without ender pearls")
@@ -255,7 +246,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
                 .decoration(TextDecoration.ITALIC, false)
                 .color(NamedTextColor.GRAY));
         meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "firsttime"), PersistentDataType.BOOLEAN, firstTime);
-        meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "cost"), PersistentDataType.INTEGER, OriginsReborn.getInstance().getConfig().getInt("change-cost"));
+        if (!firstTime) meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "cost"), PersistentDataType.INTEGER, OriginsReborn.getInstance().getConfig().getInt("change-cost"));
         int price = OriginsReborn.getInstance().getConfig().getInt("change-cost");
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(""));
@@ -346,7 +337,13 @@ public class OriginSwapper implements Listener, CommandExecutor {
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             String origin = getOrigin(player);
-            if (origin == null) continue;
+            if (origin == null) {
+                if (player.getOpenInventory().getType() != InventoryType.DISPENSER) {
+                    player.closeInventory();
+                    openOriginSwapper(player, true);
+                }
+                return;
+            }
             AttributeInstance maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (maxHealth == null) continue;
             maxHealth.setBaseValue(getMaxHealth(origin));
