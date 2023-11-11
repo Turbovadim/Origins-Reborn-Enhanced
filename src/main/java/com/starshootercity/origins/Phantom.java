@@ -25,9 +25,15 @@ public class Phantom implements Listener {
                     () -> {
                         player.setInvisible(player.isSneaking() || player.getPotionEffect(PotionEffectType.INVISIBILITY) != null);
                         boolean height = player.getWorld().getHighestBlockAt(player.getLocation()).getY() < player.getY();
-                        boolean overworld = player.getWorld().getEnvironment() == World.Environment.NORMAL;
+                        String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
+                        if (overworld == null) {
+                            overworld = "world";
+                            OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
+                            OriginsReborn.getInstance().saveConfig();
+                        }
+                        boolean isInOverworld = player.getWorld() == Bukkit.getWorld(overworld);
                         boolean day = player.getWorld().isDayTime();
-                        if (!player.isSneaking() && height && overworld && day && player.getWorld().isClearWeather()) {
+                        if (!player.isSneaking() && height && isInOverworld && day && player.getWorld().isClearWeather()) {
                             player.setFireTicks(Math.max(player.getFireTicks(), 60));
                         }
                         if (player.isSneaking()) player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 1, 9, false, false));

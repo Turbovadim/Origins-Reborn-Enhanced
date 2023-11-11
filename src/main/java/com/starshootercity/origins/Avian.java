@@ -2,11 +2,11 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
+import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -36,8 +36,15 @@ public class Avian implements Listener {
         if (event.getClickedBlock() == null) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
             OriginSwapper.runForOrigin(event.getPlayer(), "Avian", () -> {
-                if (event.getClickedBlock().getY() < 128) {
-                    if (event.getClickedBlock().getWorld().getEnvironment() != World.Environment.NORMAL) return;
+                if (event.getClickedBlock().getY() < 128) {String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
+                    if (overworld == null) {
+                        overworld = "world";
+                        OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
+                        OriginsReborn.getInstance().saveConfig();
+                    }
+                    boolean isInOverworld = event.getPlayer().getWorld() == Bukkit.getWorld(overworld);
+
+                    if (!isInOverworld) return;
                     if (event.getClickedBlock().getWorld().isDayTime() && event.getClickedBlock().getWorld().isClearWeather()) return;
                     event.setCancelled(true);
                     event.getPlayer().swingMainHand();

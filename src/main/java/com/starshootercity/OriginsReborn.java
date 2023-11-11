@@ -28,10 +28,13 @@ public class OriginsReborn extends JavaPlugin {
         }
     }
 
+    public static boolean vaultEnabled;
+
     @Override
     public void onEnable() {
         instance = this;
-        if (!setupEconomy()) {
+        vaultEnabled = setupEconomy();
+        if (!vaultEnabled) {
             getLogger().warning("Vault is not enabled, origin swaps will not cost currency");
         }
         saveDefaultConfig();

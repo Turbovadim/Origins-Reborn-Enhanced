@@ -255,6 +255,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
                 .decoration(TextDecoration.ITALIC, false)
                 .color(NamedTextColor.GRAY));
         meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "firsttime"), PersistentDataType.BOOLEAN, firstTime);
+        meta.getPersistentDataContainer().set(new NamespacedKey(OriginsReborn.getInstance(), "cost"), PersistentDataType.INTEGER, OriginsReborn.getInstance().getConfig().getInt("change-cost"));
         int price = OriginsReborn.getInstance().getConfig().getInt("change-cost");
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(""));
@@ -263,7 +264,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
         lore.add(Component.text("Warning:")
                 .color(NamedTextColor.YELLOW)
                 .decoration(TextDecoration.ITALIC, false));
-        lore.add(Component.text("Switching origins will wipe your inventory and cost $%s".formatted(price))
+        lore.add(Component.text("Switching origins will wipe your inventory%s".formatted(OriginsReborn.vaultEnabled && OriginsReborn.getInstance().getConfig().getInt("change-cost") > 0 ? " and cost $%s".formatted(price) : ""))
                 .color(NamedTextColor.YELLOW)
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
@@ -312,12 +313,12 @@ public class OriginSwapper implements Listener, CommandExecutor {
                 player.setBedSpawnLocation(null);
                 player.closeInventory();
                 String nether = OriginsReborn.getInstance().getConfig().getString("worlds.world_nether");
-                String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                 if (nether == null) {
                     nether = "world_nether";
                     OriginsReborn.getInstance().getConfig().set("worlds.world_nether", "world_nether");
                     OriginsReborn.getInstance().saveConfig();
                 }
+                String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                 if (overworld == null) {
                     overworld = "world";
                     OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
