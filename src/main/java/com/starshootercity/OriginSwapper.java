@@ -289,9 +289,18 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     }
                     if (OriginsReborn.economy != null) OriginsReborn.economy.withdrawPlayer(player, cost);
                 }
-                player.getInventory().clear();
-                player.getEnderChest().clear();
-                player.setSaturation(5);
+                if (cost != null) {
+                    player.getInventory().clear();
+                    player.getEnderChest().clear();
+                    player.setSaturation(5);
+                    player.setFallDistance(0);
+                    player.setCooldown(Material.SHIELD, 0);
+                    player.setAllowFlight(false);
+                    player.setFlying(false);
+                    player.setRemainingAir(player.getMaximumAir());
+                    player.setFoodLevel(20);
+                    player.setFireTicks(0);
+                }
                 AttributeInstance instance = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                 double maxHealth;
                 String origin = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
@@ -304,13 +313,6 @@ public class OriginSwapper implements Listener, CommandExecutor {
                 }
                 player.setHealth(maxHealth);
                 Shulk.getInventoriesConfig().set(player.getUniqueId().toString(), null);
-                player.setFallDistance(0);
-                player.setCooldown(Material.SHIELD, 0);
-                player.setAllowFlight(false);
-                player.setFlying(false);
-                player.setRemainingAir(player.getMaximumAir());
-                player.setFoodLevel(20);
-                player.setFireTicks(0);
                 for (PotionEffect effect : player.getActivePotionEffects()) {
                     player.removePotionEffect(effect.getType());
                 }
