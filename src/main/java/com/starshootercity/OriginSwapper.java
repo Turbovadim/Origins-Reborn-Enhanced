@@ -96,7 +96,9 @@ public class OriginSwapper implements Listener, CommandExecutor {
                     .color(NamedTextColor.RED));
         }});
         put("Phantom", new ArrayList<>() {{
-            add(Component.text("+ Can walk through up to 3 solid blocks other than bedrock and obsidian by crouching next to them and clicking")
+            add(Component.text("+ Can walk through up to 3 solid blocks other than")
+                    .color(NamedTextColor.GREEN));
+            add(Component.text("bedrock and obsidian by crouching next to them and clicking")
                     .color(NamedTextColor.GREEN));
             add(Component.text("+ Invisible while sneaking")
                     .color(NamedTextColor.GREEN));
