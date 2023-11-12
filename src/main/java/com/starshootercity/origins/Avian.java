@@ -27,7 +27,10 @@ public class Avian implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             String origin = OriginSwapper.getOrigin(player);
             if (origin == null) continue;
-            OriginSwapper.runForOrigin(player, "Avian", () -> player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, -1, 1, false, false)));
+            OriginSwapper.runForOrigin(player, "Avian", () -> {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, -1, 0, false, false));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, -1, 0, false, false));
+            });
         }
     }
 

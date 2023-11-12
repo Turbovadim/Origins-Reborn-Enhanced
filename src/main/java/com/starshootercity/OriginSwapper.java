@@ -350,7 +350,7 @@ public class OriginSwapper implements Listener, CommandExecutor {
             maxHealth.setBaseValue(getMaxHealth(origin));
             AttributeInstance speed = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
             if (speed == null) continue;
-            speed.setBaseValue(getSpeed(origin));
+            speed.setBaseValue(0.1);
         }
     }
 
@@ -362,9 +362,5 @@ public class OriginSwapper implements Listener, CommandExecutor {
             case "Feline" -> 18;
             default -> 20;
         };
-    }
-
-    public double getSpeed(String origin) {
-        return origin.equals("Avian") ? 0.125 : 0.1;
     }
 }
