@@ -31,7 +31,7 @@ public class Feline implements Listener {
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Blazeborn", () -> {
+            OriginSwapper.runForOrigin(player, "Feline", () -> {
                 if (event.getCause() == EntityDamageEvent.DamageCause.FALL) event.setCancelled(true);
             });
         }
@@ -40,10 +40,12 @@ public class Feline implements Listener {
     @EventHandler
     public void onEntityTarget(EntityTargetEvent event) {
         if (event.getEntity() instanceof Creeper) {
-            if (event.getTarget() instanceof Player) {
-                if (event.getReason() != EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY) {
-                    event.setCancelled(true);
-                }
+            if (event.getTarget() instanceof Player player) {
+                OriginSwapper.runForOrigin(player, "Feline", () -> {
+                    if (event.getReason() != EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY) {
+                        event.setCancelled(true);
+                    }
+                });
             }
         }
     }
