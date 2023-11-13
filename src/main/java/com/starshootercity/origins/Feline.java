@@ -2,6 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
@@ -14,6 +15,7 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,7 @@ public class Feline implements Listener {
             } else if (event.getDamager() instanceof Player player) {
                 trueDamager = player;
             } else return;
+            attackedCreepers.computeIfAbsent(trueDamager, k -> new ArrayList<>());
             attackedCreepers.get(trueDamager).add(creeper);
         }
     }
