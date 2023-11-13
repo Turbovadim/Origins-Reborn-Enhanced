@@ -5,8 +5,10 @@ import com.starshootercity.OriginSwapper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.potion.PotionEffect;
@@ -42,9 +44,11 @@ public class Feline implements Listener {
         if (event.getEntity() instanceof Creeper) {
             if (event.getTarget() instanceof Player player) {
                 OriginSwapper.runForOrigin(player, "Feline", () -> {
-                    if (event.getReason() != EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY) {
-                        event.setCancelled(true);
-                    }
+                    if (event.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent e) {
+                        if (e.getDamager() instanceof Projectile projectile) {
+                            if (projectile.getShooter() == player) event.setCancelled(true);
+                        } else if (e.getDamager() == player) event.setCancelled(true);
+                    } else event.setCancelled(true);
                 });
             }
         }
