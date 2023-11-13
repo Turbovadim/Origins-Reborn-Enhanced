@@ -63,27 +63,29 @@ public class Shulk implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player player) {
-            if (event.isRightClick()) {
-                if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
-                    if (event.getSlot() == 38) {
-                        Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.text("Storage Pouch"));
-                        player.openInventory(inventory);
-                        for (int i = 0; i < 9; i++) {
-                            ItemStack item = getInventoriesConfig().getItemStack("%s.%s".formatted(player.getUniqueId().toString(), i));
-                            if (item != null) inventory.setItem(i, item);
+                OriginSwapper.runForOrigin(player, "Shulk", () -> {
+                    if (event.isRightClick()) {
+                        if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
+                            if (event.getSlot() == 38) {
+                                Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.text("Storage Pouch"));
+                                player.openInventory(inventory);
+                                for (int i = 0; i < 9; i++) {
+                                    ItemStack item = getInventoriesConfig().getItemStack("%s.%s".formatted(player.getUniqueId().toString(), i));
+                                    if (item != null) inventory.setItem(i, item);
+                                }
+                                player.getPersistentDataContainer().set(openedBoxKey, PersistentDataType.BOOLEAN, true);
+                                return;
+                            }
                         }
-                        player.getPersistentDataContainer().set(openedBoxKey, PersistentDataType.BOOLEAN, true);
-                        return;
                     }
-                }
-            }
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-                if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(openedBoxKey, PersistentDataType.BOOLEAN))) {
-                    for (int i = 0; i < 9; i++) {
-                        getInventoriesConfig().set("%s.%s".formatted(player.getUniqueId().toString(), i), player.getOpenInventory().getItem(i));
-                    }
-                }
-            });
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
+                        if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(openedBoxKey, PersistentDataType.BOOLEAN))) {
+                            for (int i = 0; i < 9; i++) {
+                                getInventoriesConfig().set("%s.%s".formatted(player.getUniqueId().toString(), i), player.getOpenInventory().getItem(i));
+                            }
+                        }
+                    });
+                });
         }
     }
 
