@@ -14,6 +14,10 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class Feline implements Listener {
     @EventHandler
@@ -41,16 +45,34 @@ public class Feline implements Listener {
 
     @EventHandler
     public void onEntityTarget(EntityTargetEvent event) {
-        if (event.getEntity() instanceof Creeper) {
+        if (event.getEntity() instanceof Creeper creeper) {
             if (event.getTarget() instanceof Player player) {
                 OriginSwapper.runForOrigin(player, "Feline", () -> {
-                    if (event.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent e) {
-                        if (e.getDamager() instanceof Projectile projectile) {
-                            if (projectile.getShooter() == player) event.setCancelled(true);
-                        } else if (e.getDamager() == player) event.setCancelled(true);
-                    } else event.setCancelled(true);
+                    List<Creeper> attacked = attackedCreepers.get(player);
+                    if (attacked == null) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                    if (!attacked.contains(creeper)) event.setCancelled(true);
                 });
             }
         }
     }
+
+    @EventHandler
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (event.getEntity() instanceof Creeper creeper) {
+            Player trueDamager;
+            if (event.getDamager() instanceof Projectile projectile) {
+                if (projectile.getShooter() instanceof Player player) {
+                    trueDamager = player;
+                } else return;
+            } else if (event.getDamager() instanceof Player player) {
+                trueDamager = player;
+            } else return;
+            attackedCreepers.get(trueDamager).add(creeper);
+        }
+    }
+
+    Map<Player, List<Creeper>> attackedCreepers = new HashMap<>();
 }
