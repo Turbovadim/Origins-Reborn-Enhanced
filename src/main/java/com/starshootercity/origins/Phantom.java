@@ -17,7 +17,6 @@ import org.bukkit.potion.PotionEffectType;
 
 @SuppressWarnings("unused")
 public class Phantom implements Listener {
-
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
