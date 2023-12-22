@@ -15,6 +15,7 @@ public class OriginsReborn extends JavaPlugin {
     }
 
     public static Economy economy;
+
     private boolean setupEconomy() {
         try {
             RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
