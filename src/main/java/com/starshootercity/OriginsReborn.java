@@ -14,7 +14,6 @@ public class OriginsReborn extends JavaPlugin {
         return instance;
     }
 
-
     public static Economy economy;
     private boolean setupEconomy() {
         try {
