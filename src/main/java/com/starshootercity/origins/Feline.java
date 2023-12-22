@@ -2,7 +2,6 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
