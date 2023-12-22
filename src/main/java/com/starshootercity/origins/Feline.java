@@ -21,6 +21,7 @@ import java.util.Map;
 
 @SuppressWarnings("unused")
 public class Feline implements Listener {
+
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
