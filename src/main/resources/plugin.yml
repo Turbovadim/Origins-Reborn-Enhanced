@@ -5,13 +5,22 @@ description: Paper plugin inspired by the Origins mod
 api-version: '1.20'
 author: cometcake575
 
+softdepend:
+  - CustomEnchantmentAPI
+
 permissions:
   originsreborn.default:
     default: true
+    description: Default permissions for Origins-Reborn
+  originsreborn.costbypass:
+    default: false
+    description: Bypass cost of origin swapping
+  originsreborn.admin:
+    default: op
+    description: Use admin commands for Origins-Reborn
 
 commands:
-  origin-swap:
-    aliases: oswap
+  origin:
     permission: originsreborn.default
-    description: Swap your origin for a different one
+    description: Modify origins
     usage: /<command>

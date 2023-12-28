@@ -2,7 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -49,7 +49,7 @@ public class Shulk implements Listener {
     @EventHandler
     public void onEntityDamageEvent(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Shulk", () -> event.setDamage(event.getDamage() * 0.75));
+            OldOriginSwapper.runForOrigin(player, "Shulk", () -> event.setDamage(event.getDamage() * 0.75));
         }
     }
 
@@ -63,7 +63,7 @@ public class Shulk implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player player) {
-                OriginSwapper.runForOrigin(player, "Shulk", () -> {
+                OldOriginSwapper.runForOrigin(player, "Shulk", () -> {
                     if (event.isRightClick()) {
                         if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
                             if (event.getSlot() == 38) {
@@ -96,14 +96,14 @@ public class Shulk implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Shulk", () -> event.setFoodLevel(Math.max(player.getFoodLevel() - ((player.getFoodLevel() - event.getFoodLevel()) * 3), 0)));
+            OldOriginSwapper.runForOrigin(player, "Shulk", () -> event.setFoodLevel(Math.max(player.getFoodLevel() - ((player.getFoodLevel() - event.getFoodLevel()) * 3), 0)));
         }
     }
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Shulk", () -> player.setCooldown(Material.SHIELD, 1000));
+            OldOriginSwapper.runForOrigin(player, "Shulk", () -> player.setCooldown(Material.SHIELD, 1000));
         }
     }
 

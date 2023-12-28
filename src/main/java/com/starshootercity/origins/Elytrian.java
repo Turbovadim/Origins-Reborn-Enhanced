@@ -3,7 +3,7 @@ package com.starshootercity.origins;
 import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
@@ -46,7 +46,7 @@ public class Elytrian implements Listener {
         meta.getPersistentDataContainer().set(cannotDropKey, PersistentDataType.BOOLEAN, true);
         elytra.setItemMeta(meta);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Elytrian",
+            OldOriginSwapper.runForOrigin(player, "Elytrian",
                     () -> {
                         if (player.getLocation().getBlock().getRelative(BlockFace.UP, 2).isSolid()) {
                             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 5, 2, false, false));
@@ -66,7 +66,7 @@ public class Elytrian implements Listener {
     @EventHandler
     public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
         if (event.isSneaking()) {
-            OriginSwapper.runForOrigin(event.getPlayer(), "Elytrian", () -> {
+            OldOriginSwapper.runForOrigin(event.getPlayer(), "Elytrian", () -> {
                 if (!event.getPlayer().isGliding()) return;
                 Long time = event.getPlayer().getPersistentDataContainer().get(boostUsedKey, PersistentDataType.LONG);
                 long deltaTime;
@@ -101,7 +101,7 @@ public class Elytrian implements Listener {
         } else if (event.getDamager() instanceof Player player) {
             trueDamager = player;
         } else return;
-        OriginSwapper.runForOrigin(trueDamager, "Elytrian", () -> {
+        OldOriginSwapper.runForOrigin(trueDamager, "Elytrian", () -> {
             if (trueDamager.isGliding()) event.setDamage(event.getDamage() * 2);
         });
     }
@@ -168,7 +168,7 @@ public class Elytrian implements Listener {
     }
 
     public void checkArmorEvent(Cancellable event, Player player, ItemStack armor) {
-        OriginSwapper.runForOrigin(player, "Elytrian", () -> {
+        OldOriginSwapper.runForOrigin(player, "Elytrian", () -> {
             List<Material> allowedTypes = new ArrayList<>() {{
                 add(Material.CHAINMAIL_HELMET);
                 add(Material.CHAINMAIL_LEGGINGS);
@@ -188,7 +188,7 @@ public class Elytrian implements Listener {
     @EventHandler
     public void onEntityDamageEvent(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Elytrian", () -> {
+            OldOriginSwapper.runForOrigin(player, "Elytrian", () -> {
                 if (event.getCause() == EntityDamageEvent.DamageCause.FLY_INTO_WALL) {
                     event.setDamage(event.getDamage() * 2);
                 }

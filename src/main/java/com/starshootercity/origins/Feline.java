@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
@@ -21,11 +21,10 @@ import java.util.Map;
 
 @SuppressWarnings("unused")
 public class Feline implements Listener {
-
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Feline",
+            OldOriginSwapper.runForOrigin(player, "Feline",
                     () -> {
                         if (player.isSprinting()) {
                             player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 5, 1, false, false));
@@ -39,7 +38,7 @@ public class Feline implements Listener {
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Feline", () -> {
+            OldOriginSwapper.runForOrigin(player, "Feline", () -> {
                 if (event.getCause() == EntityDamageEvent.DamageCause.FALL) event.setCancelled(true);
             });
         }
@@ -49,7 +48,7 @@ public class Feline implements Listener {
     public void onEntityTarget(EntityTargetEvent event) {
         if (event.getEntity() instanceof Creeper creeper) {
             if (event.getTarget() instanceof Player player) {
-                OriginSwapper.runForOrigin(player, "Feline", () -> {
+                OldOriginSwapper.runForOrigin(player, "Feline", () -> {
                     List<Creeper> attacked = attackedCreepers.get(player);
                     if (attacked == null) {
                         event.setCancelled(true);

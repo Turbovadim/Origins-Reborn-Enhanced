@@ -3,7 +3,7 @@ package com.starshootercity.origins;
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -35,7 +35,7 @@ public class Arachnid implements Listener {
                 player.setAllowFlight(true);
                 continue;
             }
-            OriginSwapper.runForOrigin(player, "Arachnid", () -> {
+            OldOriginSwapper.runForOrigin(player, "Arachnid", () -> {
                 boolean anySolid = false;
                 boolean anysolidAbove = false;
                 for (BlockFace face : new ArrayList<BlockFace>() {{
@@ -94,7 +94,7 @@ public class Arachnid implements Listener {
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Arachnid", () -> {
+            OldOriginSwapper.runForOrigin(player, "Arachnid", () -> {
                 if (!event.getEntity().getLocation().getBlock().isSolid()) {
                     event.getEntity().getLocation().getBlock().setType(Material.COBWEB);
                 }
@@ -105,7 +105,7 @@ public class Arachnid implements Listener {
 
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        OriginSwapper.runForOrigin(event.getPlayer(), "Arachnid", () -> {
+        OldOriginSwapper.runForOrigin(event.getPlayer(), "Arachnid", () -> {
             if (!meat.contains(event.getItem().getType())) {
                 event.setCancelled(true);
                 ItemStack item = event.getItem();

@@ -2,7 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -33,12 +33,12 @@ public class Enderian implements Listener {
         if (event.getClickedBlock() != null) return;
         if (event.getAction().isRightClick()) return;
         if (event.getItem() != null) return;
-        OriginSwapper.runForOrigin(event.getPlayer(), "Enderian", () -> event.getPlayer().launchProjectile(EnderPearl.class));
+        OldOriginSwapper.runForOrigin(event.getPlayer(), "Enderian", () -> event.getPlayer().launchProjectile(EnderPearl.class));
     }
 
     @EventHandler
     public void onPlayerTeleport(PlayerTeleportEvent event) {
-        OriginSwapper.runForOrigin(event.getPlayer(), "Enderian", () -> {
+        OldOriginSwapper.runForOrigin(event.getPlayer(), "Enderian", () -> {
             event.getPlayer().getPersistentDataContainer().set(teleportingKey, PersistentDataType.BOOLEAN, true);
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(teleportingKey, PersistentDataType.BOOLEAN, false));
         });
@@ -61,7 +61,7 @@ public class Enderian implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Enderian", () -> {
+            OldOriginSwapper.runForOrigin(player, "Enderian", () -> {
                 double temp = player.getLocation().getBlock().getTemperature();
                 boolean height = player.getWorld().getHighestBlockAt(player.getLocation()).getY() < player.getY();
                 if (((CraftPlayer) player).getHandle().wasTouchingWater || (!player.getWorld().isClearWeather() && height && temp > 0.15 && temp < 0.95)) {

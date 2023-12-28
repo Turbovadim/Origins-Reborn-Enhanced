@@ -1,5 +1,48 @@
-change-cost: 100
+# Worlds used for some abilities
 worlds:
-  world: 'world'
-  world_nether: 'world_nether'
-origins: []
+  # Overworld dimension
+  world: "world"
+  # Nether dimension
+  world_nether: "world_nether"
+  # End dimension
+  world_the_end: "world_the_end"
+
+# The /origin swap command, allowing players to switch origin at will
+swap-command:
+  # Permission required for origin swap command
+  permission: originsreborn.default
+  # Reset player info when switching origins using the /oswap command
+  reset-player: false
+  # Charge players using Vault to switch their origins
+  vault:
+    # Enable charging players with Vault
+    enabled: false
+    # Permission to bypass the cost of the swap command
+    bypass-permission: originsreborn.costbypass
+    # Cost of switching origin
+    cost: 100
+    # Currency symbol for the economy
+    currency-symbol: "$"
+
+# Settings for origin selection
+origin-selection:
+  # Randomise origins instead of letting players pick
+  randomise: false
+  # Allows players to choose a new origin when they die
+  # If randomise is enabled this will reroll their origin to something random
+  death-choice:
+    # Whether to enable setting
+    enabled: false
+    # Allow players to pick the previous origin as before
+    allow-previous-origin: false
+
+
+# Settings for Orb of Origin
+orb-of-origin:
+  # Enable recipe for crafting Orb of Origin
+  enable-recipe: false
+  # Crafting recipe for Orb of Origin
+  recipe:
+    - [minecraft:air, minecraft:diamond, minecraft:air]
+    - [minecraft:diamond, minecraft:nether_star, minecraft:diamond]
+    - [minecraft:air, minecraft:diamond, minecraft:air]

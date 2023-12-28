@@ -2,7 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -21,7 +21,7 @@ public class Phantom implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Phantom",
+            OldOriginSwapper.runForOrigin(player, "Phantom",
                     () -> {
                         player.setInvisible(player.isSneaking() || player.getPotionEffect(PotionEffectType.INVISIBILITY) != null);
                         boolean height = player.getWorld().getHighestBlockAt(player.getLocation()).getY() < player.getY();
@@ -59,7 +59,7 @@ public class Phantom implements Listener {
         if (event.getClickedBlock() == null) return;
         if (event.getAction().isRightClick()) return;
         if (!event.getPlayer().isSneaking()) return;
-        OriginSwapper.runForOrigin(event.getPlayer(), "Phantom", () -> {
+        OldOriginSwapper.runForOrigin(event.getPlayer(), "Phantom", () -> {
             Block block = event.getClickedBlock();
             double distance = block.getLocation().distance(event.getPlayer().getLocation());
             if (distance > 2.2) return;

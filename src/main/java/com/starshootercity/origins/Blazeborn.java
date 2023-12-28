@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
@@ -21,7 +21,7 @@ public class Blazeborn implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            OriginSwapper.runForOrigin(player, "Blazeborn", () -> {
+            OldOriginSwapper.runForOrigin(player, "Blazeborn", () -> {
                 double temp = player.getLocation().getBlock().getTemperature();
                 boolean height = player.getWorld().getHighestBlockAt(player.getLocation()).getY() < player.getY();
                 if (((CraftPlayer) player).getHandle().wasTouchingWater || (!player.getWorld().isClearWeather() && height && temp > 0.15 && temp < 0.95)) {
@@ -43,7 +43,7 @@ public class Blazeborn implements Listener {
         } else if (event.getDamager() instanceof Player player) {
             trueDamager = player;
         } else return;
-        OriginSwapper.runForOrigin(trueDamager, "Blazeborn", () -> {
+        OldOriginSwapper.runForOrigin(trueDamager, "Blazeborn", () -> {
             if (trueDamager.getFireTicks() > 0) {
                 event.setDamage(event.getDamage() * 2);
             }
@@ -53,7 +53,7 @@ public class Blazeborn implements Listener {
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Blazeborn", () -> {
+            OldOriginSwapper.runForOrigin(player, "Blazeborn", () -> {
                 if (new ArrayList<>() {{
                     add(EntityDamageEvent.DamageCause.FIRE);
                     add(EntityDamageEvent.DamageCause.FIRE_TICK);

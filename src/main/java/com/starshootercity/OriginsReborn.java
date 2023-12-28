@@ -39,7 +39,8 @@ public class OriginsReborn extends JavaPlugin {
         }
         saveDefaultConfig();
         PluginCommand command = getCommand("origin-swap");
-        OriginSwapper swapper = new OriginSwapper();
+        OriginLoader.loadOrigins();
+        OldOriginSwapper swapper = new OldOriginSwapper();
         if (command != null) command.setExecutor(swapper);
         Bukkit.getPluginManager().registerEvents(swapper, this);
         Bukkit.getPluginManager().registerEvents(new Arachnid(), this);

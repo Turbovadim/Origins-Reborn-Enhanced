@@ -2,7 +2,7 @@ package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -20,7 +20,7 @@ public class Merling implements Listener {
     @EventHandler
     public void onEntityAirChange(EntityAirChangeEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OriginSwapper.runForOrigin(player, "Merling", () -> {
+            OldOriginSwapper.runForOrigin(player, "Merling", () -> {
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, PersistentDataType.BOOLEAN)))
                     return;
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, PersistentDataType.BOOLEAN)))
@@ -39,9 +39,9 @@ public class Merling implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            String origin = OriginSwapper.getOrigin(player);
+            String origin = OldOriginSwapper.getOrigin(player);
             if (origin == null) continue;
-            OriginSwapper.runForOrigin(player, "Merling", () -> {
+            OldOriginSwapper.runForOrigin(player, "Merling", () -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, -1, 1, false, false));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, -1, 1, false, false));
                 if (player.isUnderWater()) {

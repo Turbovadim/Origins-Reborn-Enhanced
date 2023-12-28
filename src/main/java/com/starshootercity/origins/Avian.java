@@ -1,7 +1,7 @@
 package com.starshootercity.origins;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
+import com.starshootercity.OldOriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -25,9 +25,9 @@ public class Avian implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            String origin = OriginSwapper.getOrigin(player);
+            String origin = OldOriginSwapper.getOrigin(player);
             if (origin == null) continue;
-            OriginSwapper.runForOrigin(player, "Avian", () -> {
+            OldOriginSwapper.runForOrigin(player, "Avian", () -> {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, -1, 0, false, false));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, -1, 0, false, false));
             });
@@ -38,7 +38,7 @@ public class Avian implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
-            OriginSwapper.runForOrigin(event.getPlayer(), "Avian", () -> {
+            OldOriginSwapper.runForOrigin(event.getPlayer(), "Avian", () -> {
                 if (event.getClickedBlock().getY() < 128) {String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                     if (overworld == null) {
                         overworld = "world";
@@ -71,7 +71,7 @@ public class Avian implements Listener {
 
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        OriginSwapper.runForOrigin(event.getPlayer(), "Avian", () -> {
+        OldOriginSwapper.runForOrigin(event.getPlayer(), "Avian", () -> {
             if (meat.contains(event.getItem().getType())) {
                 event.setCancelled(true);
                 ItemStack item = event.getItem();
