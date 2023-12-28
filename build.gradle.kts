@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.papermc.paperweight.userdev") version "1.5.11"
 }
 
@@ -18,7 +19,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     compileOnly("io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
-    compileOnly("com.github.stleary:JSON-java:20231013")
+    implementation("com.github.stleary:JSON-java:20231013")
     paperweight.paperDevBundle("1.20.2-R0.1-SNAPSHOT")
 }
 
