@@ -5,9 +5,6 @@ description: Paper plugin inspired by the Origins mod
 api-version: '1.20'
 author: cometcake575
 
-softdepend:
-  - CustomEnchantmentAPI
-
 permissions:
   originsreborn.default:
     default: true

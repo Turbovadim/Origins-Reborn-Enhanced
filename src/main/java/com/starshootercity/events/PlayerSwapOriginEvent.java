@@ -6,11 +6,8 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
+@SuppressWarnings("unused")
 public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
     private boolean cancelled = false;
     private boolean resetPlayer;
@@ -81,7 +78,20 @@ public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
         /**
          * Swapped origin due to having died and respawned
          */
-        DIED("died");
+        DIED("died"),
+        /**
+         * Swapped origin due to not having one yet
+         */
+        INITIAL("initial"),
+        /**
+         * Swapped origin due to another plugin
+         */
+        PLUGIN("plugin"),
+
+        /**
+         * Unknown swap reason
+         */
+        UNKNOWN("unknown");
 
         private final String reason;
 
@@ -89,19 +99,16 @@ public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
             return reason;
         }
 
-        public @Nullable SwapReason get(String reason) {
-            return swapReasonMap.getOrDefault(reason, null);
+        public static SwapReason get(String reason) {
+            for (SwapReason swapReason : SwapReason.values()) {
+                if (swapReason.getReason().equals(reason)) return swapReason;
+            }
+            return SwapReason.UNKNOWN;
         }
-
-        private static final Map<String, SwapReason> swapReasonMap = new HashMap<>();
 
         SwapReason(String reason) {
             this.reason = reason;
-            registerSwapReason(this, reason);
         }
 
-        private void registerSwapReason(SwapReason reason, String reasonName) {
-            swapReasonMap.put(reasonName, reason);
-        }
     }
 }

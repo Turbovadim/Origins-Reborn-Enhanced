@@ -11,5 +11,6 @@
 		"item": "minecraft:elytra"
 	},
 	"order": 3,
-	"impact": 1
+	"impact": 1,
+	"description": "Often\u0020flying\u0020around\u0020in\u0020the\u0020winds,\u0020Elytrians\u0020are\u0020uncomfortable\u0020when\u0020they\u0020don't\u0020have\u0020enough\u0020space\u0020above\u0020their\u0020head."
 }

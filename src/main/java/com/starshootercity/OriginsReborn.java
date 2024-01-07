@@ -1,11 +1,16 @@
 package com.starshootercity;
 
-import com.starshootercity.origins.*;
+import com.starshootercity.abilities.*;
+import com.starshootercity.abilities.incomplete.*;
+import com.starshootercity.commands.OriginCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OriginsReborn extends JavaPlugin {
     private static OriginsReborn instance;
@@ -14,7 +19,11 @@ public class OriginsReborn extends JavaPlugin {
         return instance;
     }
 
-    public static Economy economy;
+    private Economy economy;
+
+    public Economy getEconomy() {
+        return economy;
+    }
 
     private boolean setupEconomy() {
         try {
@@ -28,29 +37,87 @@ public class OriginsReborn extends JavaPlugin {
         }
     }
 
-    public static boolean vaultEnabled;
+    private boolean vaultEnabled;
+
+    public boolean isVaultEnabled() {
+        return vaultEnabled;
+    }
 
     @Override
     public void onEnable() {
         instance = this;
-        vaultEnabled = setupEconomy();
-        if (!vaultEnabled) {
-            getLogger().warning("Vault is not enabled, origin swaps will not cost currency");
-        }
+
+        if (getConfig().getBoolean("swap-command.vault.enabled")) {
+            vaultEnabled = setupEconomy();
+            if (!vaultEnabled) {
+                getLogger().warning("Vault is not missing, origin swaps will not cost currency");
+            }
+        } else vaultEnabled = false;
         saveDefaultConfig();
-        PluginCommand command = getCommand("origin-swap");
+        PluginCommand command = getCommand("origin");
+        if (command != null) command.setExecutor(new OriginCommand());
         OriginLoader.loadOrigins();
-        OldOriginSwapper swapper = new OldOriginSwapper();
-        if (command != null) command.setExecutor(swapper);
-        Bukkit.getPluginManager().registerEvents(swapper, this);
-        Bukkit.getPluginManager().registerEvents(new Arachnid(), this);
-        Bukkit.getPluginManager().registerEvents(new Avian(), this);
-        Bukkit.getPluginManager().registerEvents(new Blazeborn(), this);
-        Bukkit.getPluginManager().registerEvents(new Elytrian(), this);
-        Bukkit.getPluginManager().registerEvents(new Enderian(), this);
-        Bukkit.getPluginManager().registerEvents(new Feline(), this);
-        Bukkit.getPluginManager().registerEvents(new Merling(), this);
-        Bukkit.getPluginManager().registerEvents(new Phantom(), this);
-        Bukkit.getPluginManager().registerEvents(new Shulk(), this);
+        Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
+        Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
+        Bukkit.getPluginManager().registerEvents(new BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener(), this);
+
+        //<editor-fold desc="Register abilities">
+        List<Ability> abilities = new ArrayList<>() {{
+            add(new PumpkinHate());
+            add(new FallImmunity());
+            add(new WeakArms());
+            add(new Fragile());
+            add(new SlowFalling());
+            add(new FreshAir());
+            add(new Vegetarian());
+            add(new LayEggs());
+            add(new Unwieldy());
+            add(new MasterOfWebs());
+            add(new Tailwind());
+            add(new Arthropod());
+            add(new Climbing());
+            add(new Carnivore());
+            add(new WaterBreathing());
+            add(new WaterVision());
+            add(new CatVision());
+            add(new NineLives());
+            add(new BurnInDaylight());
+            add(new WaterVulnerability());
+            add(new Phantomize());
+            add(new Invisibility());
+            add(new ThrowEnderPearl());
+            add(new PhantomizeOverlay());
+            add(new FireImmunity());
+            add(new AirFromPotions());
+            add(new SwimSpeed());
+            add(new LikeWater());
+            add(new LightArmor());
+            add(new MoreKineticDamage());
+            add(new DamageFromPotions());
+            add(new DamageFromSnowballs());
+            add(new Hotblooded());
+            add(new BurningWrath());
+            add(new SprintJump());
+            add(new AerialCombatant());
+            add(new Elytra());
+            add(new LaunchIntoAir());
+            add(new HungerOverTime());
+            add(new MoreExhaustion());
+            add(new Aquatic());
+            add(new NetherSpawn());
+            add(new Claustrophobia());
+            add(new VelvetPaws());
+            add(new AquaAffinity());
+            add(new FlameParticles());
+            add(new EnderParticles());
+            add(new Phasing());
+            add(new ScareCreepers());
+            add(new StrongArms());
+            add(new StrongArmsBreakSpeed());
+        }};
+        for (Ability ability : abilities) {
+            AbilityRegister.registerAbility(ability);
+        }
+        //</editor-fold>
     }
 }

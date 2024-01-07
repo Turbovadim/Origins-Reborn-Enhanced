@@ -9,9 +9,11 @@ worlds:
 
 # The /origin swap command, allowing players to switch origin at will
 swap-command:
+  # Enable the swap command
+  enabled: true
   # Permission required for origin swap command
-  permission: originsreborn.default
-  # Reset player info when switching origins using the /oswap command
+  permission: originsreborn.admin
+  # Reset player data like inventory and spawn point when switching origins using the /origin swap command
   reset-player: false
   # Charge players using Vault to switch their origins
   vault:
@@ -30,19 +32,34 @@ origin-selection:
   randomise: false
   # Allows players to choose a new origin when they die
   # If randomise is enabled this will reroll their origin to something random
-  death-choice:
-    # Whether to enable setting
-    enabled: false
-    # Allow players to pick the previous origin as before
-    allow-previous-origin: false
+  death-origin-change: false
+  # Amount to scroll per scroll button click
+  scroll-amount: 1
+  # Allows the player to pick a 'Random' option
+  random-option:
+    # Enable the random option choice - does nothing if randomise is enabled
+    enabled: true
+    # Origins to exclude from random options
+    exclude:
+      - Human
 
-
-# Settings for Orb of Origin
+# Settings for the Orb of Origin
 orb-of-origin:
-  # Enable recipe for crafting Orb of Origin
+  # Reset player data like inventory and spawn point when switching origins using the Orb of Origin
+  reset-player: false
+  # Consume the Orb of Origin upon use
+  consume: true
+  # Enable recipe for crafting the Orb of Origin
   enable-recipe: false
-  # Crafting recipe for Orb of Origin
+  # Crafting recipe for the Orb of Origin
   recipe:
     - [minecraft:air, minecraft:diamond, minecraft:air]
     - [minecraft:diamond, minecraft:nether_star, minecraft:diamond]
     - [minecraft:air, minecraft:diamond, minecraft:air]
+
+# Settings for the resource pack, you can change this to merge with other packs or put the pack elsewhere.
+resource-pack:
+  # Whether to enable the resource pack - if this is set to false you should send the pack to players either in server.properties or in another plugin
+  enabled: true
+  # Link to the pack - this can be changed but the pack should always contain the files needed for the GUI
+  link:

@@ -1,33 +1,35 @@
-package com.starshootercity.origins;
+package com.starshootercity.abilities;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
-import com.starshootercity.OldOriginSwapper;
+import net.kyori.adventure.key.Key;
 import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
-public class Merling implements Listener {
+import java.util.List;
+
+public class WaterBreathing implements Listener, VisibleAbility {
     @EventHandler
     public void onEntityAirChange(EntityAirChangeEvent event) {
         if (event.getEntity() instanceof Player player) {
-            OldOriginSwapper.runForOrigin(player, "Merling", () -> {
+            AbilityRegister.runForAbility(player, getKey(), () -> {
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, PersistentDataType.BOOLEAN)))
                     return;
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, PersistentDataType.BOOLEAN)))
                     return;
                 if (player.getRemainingAir() - event.getAmount() > 0) {
-                    if (!player.isUnderWater()) return;
-                } else if (player.isUnderWater()) return;
+                    if (!player.isUnderWater() && !player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) return;
+                } else if (player.isUnderWater() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) return;
                 event.setCancelled(true);
             });
         }
@@ -39,12 +41,8 @@ public class Merling implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            String origin = OldOriginSwapper.getOrigin(player);
-            if (origin == null) continue;
-            OldOriginSwapper.runForOrigin(player, "Merling", () -> {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, -1, 1, false, false));
-                player.addPotionEffect(new PotionEffect(PotionEffectType.CONDUIT_POWER, -1, 1, false, false));
-                if (player.isUnderWater()) {
+            AbilityRegister.runForAbility(player, getKey(), () -> {
+                if (player.isUnderWater() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING) || player.isInRain()) {
                     if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, PersistentDataType.BOOLEAN))) {
                         player.setRemainingAir(-5);
                         return;
@@ -75,5 +73,20 @@ public class Merling implements Listener {
                 }
             });
         }
+    }
+
+    @Override
+    public @NotNull Key getKey() {
+        return Key.key("origins:water_breathing");
+    }
+
+    @Override
+    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
+        return OriginSwapper.LineData.makeLineFor("You can breathe underwater, but not on land.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    }
+
+    @Override
+    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
+        return OriginSwapper.LineData.makeLineFor("Gills", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }
