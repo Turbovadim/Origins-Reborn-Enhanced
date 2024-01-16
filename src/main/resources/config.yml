@@ -66,3 +66,6 @@ resource-pack:
   # Link to the pack
   # This can be changed, but it should always contain the files in the original pack for the GUI
   link: "https://github.com/cometcake575/Origins-Reborn/blob/main/src/main/Origins%20Pack.zip"
+
+# Config version - do not touch this!
+config-version: 2.0.0

@@ -41,6 +41,12 @@ public class OriginsReborn extends OriginsAddon {
         return vaultEnabled;
     }
 
+    public void updateConfig() {
+        String version = getConfig().getString("config-version", "1.0.0");
+        if (version.equals("1.0.0")) saveResource("config.yml", true);
+    }
+
+
     @Override
     public void onRegister() {
         instance = this;
@@ -51,6 +57,7 @@ public class OriginsReborn extends OriginsAddon {
             }
         } else vaultEnabled = false;
         saveDefaultConfig();
+        updateConfig();
         PluginCommand command = getCommand("origin");
         if (command != null) command.setExecutor(new OriginCommand());
         OriginLoader.register(this);
