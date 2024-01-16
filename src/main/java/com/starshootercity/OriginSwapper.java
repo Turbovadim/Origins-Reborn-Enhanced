@@ -150,7 +150,7 @@ public class OriginSwapper implements Listener {
         invisibleConfirmMeta.setCustomModelData(6);
         invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
 
-        if (cost) {
+        if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
             String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
             List<Component> costsCurrency = List.of(
@@ -255,7 +255,7 @@ public class OriginSwapper implements Listener {
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
                     int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
-                    if (Boolean.TRUE.equals(currentItem.getItemMeta().getPersistentDataContainer().get(costsCurrencyKey, PersistentDataType.BOOLEAN))) {
+                    if (!player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass")) && Boolean.TRUE.equals(currentItem.getItemMeta().getPersistentDataContainer().get(costsCurrencyKey, PersistentDataType.BOOLEAN))) {
                         if (!OriginsReborn.getInstance().getEconomy().has(player, amount)) {
                             return;
                         } else {
