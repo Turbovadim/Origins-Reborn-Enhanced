@@ -41,7 +41,8 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                 }
-                OriginLoader.loadOrigins();
+                OriginLoader.reloadOrigins();
+                OriginsReborn.getInstance().reloadConfig();
                 return true;
             }
             case "set" -> {

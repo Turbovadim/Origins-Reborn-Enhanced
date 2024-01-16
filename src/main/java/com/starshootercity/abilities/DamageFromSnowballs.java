@@ -1,7 +1,7 @@
 package com.starshootercity.abilities;
 
+import com.starshootercity.DamageApplier;
 import net.kyori.adventure.key.Key;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,8 +21,7 @@ public class DamageFromSnowballs implements Ability, Listener {
         if (event.getEntity().getType() != EntityType.SNOWBALL) return;
         if (event.getHitEntity() instanceof Player player) {
             AbilityRegister.runForAbility(player, getKey(), () -> {
-                net.minecraft.world.entity.player.Player NMSPlayer = ((CraftPlayer) player).getHandle();
-                NMSPlayer.hurt(NMSPlayer.damageSources().freeze(), 3);
+                DamageApplier.damage(player, DamageApplier.DamageSource.FREEZING, 3);
                 Vector vector = event.getEntity().getLocation().getDirection();
                 player.knockback(0.5, -vector.getX(), -vector.getZ());
             });

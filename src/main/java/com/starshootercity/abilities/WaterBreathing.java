@@ -1,13 +1,12 @@
 package com.starshootercity.abilities;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.starshootercity.DamageApplier;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
-import net.minecraft.world.damagesource.DamageSource;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,11 +27,15 @@ public class WaterBreathing implements Listener, VisibleAbility {
                 if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, PersistentDataType.BOOLEAN)))
                     return;
                 if (player.getRemainingAir() - event.getAmount() > 0) {
-                    if (!player.isUnderWater() && !player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) return;
-                } else if (player.isUnderWater() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)) return;
+                    if (!player.isUnderWater() && !hasWaterBreathing(player)) return;
+                } else if (player.isUnderWater() || hasWaterBreathing(player)) return;
                 event.setCancelled(true);
             });
         }
+    }
+
+    public boolean hasWaterBreathing(Player player) {
+        return player.hasPotionEffect(PotionEffectType.CONDUIT_POWER) || player.hasPotionEffect(PotionEffectType.WATER_BREATHING);
     }
 
     NamespacedKey airKey = new NamespacedKey(OriginsReborn.getInstance(), "fullair");
@@ -42,14 +45,14 @@ public class WaterBreathing implements Listener, VisibleAbility {
     public void onServerTickEnd(ServerTickEndEvent ignored) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (player.isUnderWater() || player.hasPotionEffect(PotionEffectType.WATER_BREATHING) || player.isInRain()) {
+                if (player.isUnderWater() || hasWaterBreathing(player) || player.isInRain()) {
                     if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, PersistentDataType.BOOLEAN))) {
-                        player.setRemainingAir(-5);
+                        player.setRemainingAir(-50);
                         return;
                     }
                     player.setRemainingAir(Math.min(Math.max(player.getRemainingAir() + 4, 4), player.getMaximumAir()));
                     if (player.getRemainingAir() == player.getMaximumAir()) {
-                        player.setRemainingAir(-5);
+                        player.setRemainingAir(-50);
                         player.getPersistentDataContainer().set(airKey, PersistentDataType.BOOLEAN, true);
                     }
                 } else {
@@ -62,8 +65,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
                         player.getPersistentDataContainer().set(dehydrationKey, PersistentDataType.BOOLEAN, true);
                         player.setRemainingAir(-5);
                         player.getPersistentDataContainer().set(dehydrationKey, PersistentDataType.BOOLEAN, false);
-                        DamageSource source = ((CraftPlayer) player).getHandle().damageSources().dryOut();
-                        ((CraftPlayer) player).getHandle().hurt(source, 2);
+                        DamageApplier.damage(player, DamageApplier.DamageSource.DRY_OUT, 2);
                     }
                 }
             }, () -> {

@@ -10,10 +10,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseArmorEvent;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +32,15 @@ public class LightArmor implements VisibleAbility, Listener {
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
         return OriginSwapper.LineData.makeLineFor("Need for Mobility", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getInventorySlots().contains(38)) {
+            if (event.getWhoClicked() instanceof Player player) {
+                checkArmorEvent(event, player, event.getOldCursor());
+            }
+        }
     }
 
     @EventHandler

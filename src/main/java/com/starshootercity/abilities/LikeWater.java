@@ -21,7 +21,7 @@ public class LikeWater implements VisibleAbility, FlightAllowingAbility, Listene
 
     @Override
     public boolean canFly(Player player) {
-        return player.isInWater();
+        return player.isInWater() && !player.isInBubbleColumn();
     }
 
     @Override

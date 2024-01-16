@@ -1,18 +1,18 @@
 package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
+import net.kyori.adventure.util.TriState;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class Elytra implements VisibleAbility, Listener {
+public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:elytra");
@@ -29,21 +29,36 @@ public class Elytra implements VisibleAbility, Listener {
     }
 
     @EventHandler
-    @SuppressWarnings("deprecation")
-    public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (!event.getPlayer().isOnGround() && !event.getPlayer().isGliding()) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().setGliding(true));
-            }
-        });
-    }
-
-    @EventHandler
     public void onEntityToggleGlide(EntityToggleGlideEvent event) {
         AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
             if (!event.getEntity().isOnGround() && !event.isGliding()) {
                 event.setCancelled(true);
             }
         });
+    }
+
+    @Override
+    public boolean canFly(Player player) {
+        return !player.isGliding();
+    }
+
+    @Override
+    public float getFlightSpeed(Player player) {
+        return 0;
+    }
+
+    @EventHandler
+    public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+            if (event.isFlying()) {
+                event.setCancelled(true);
+                event.getPlayer().setGliding(true);
+            }
+        });
+    }
+
+    @Override
+    public @NotNull TriState getFlyingFallDamage(Player player) {
+        return TriState.TRUE;
     }
 }

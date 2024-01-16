@@ -205,6 +205,6 @@ public class MasterOfWebs implements FlightAllowingAbility, Listener, VisibleAbi
 
     @Override
     public float getFlightSpeed(Player player) {
-        return 0.025f;
+        return 0.04f;
     }
 }

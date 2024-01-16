@@ -57,9 +57,12 @@ orb-of-origin:
     - [minecraft:diamond, minecraft:nether_star, minecraft:diamond]
     - [minecraft:air, minecraft:diamond, minecraft:air]
 
-# Settings for the resource pack, you can change this to merge with other packs or put the pack elsewhere.
+# Settings for the resource pack
+# You can change this to merge with other packs or disable it to put the pack elsewhere.
 resource-pack:
-  # Whether to enable the resource pack - if this is set to false you should send the pack to players either in server.properties or in another plugin
+  # Whether to enable the resource pack
+  # If this is set to false you should send the pack to players either in server.properties or in another plugin
   enabled: true
-  # Link to the pack - this can be changed but the pack should always contain the files needed for the GUI
-  link:
+  # Link to the pack
+  # This can be changed, but it should always contain the files in the original pack for the GUI
+  link: "https://github.com/cometcake575/Origins-Reborn/blob/main/src/main/Origins%20Pack.zip"

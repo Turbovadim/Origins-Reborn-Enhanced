@@ -1,5 +1,6 @@
 package com.starshootercity;
 
+import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.abilities.*;
 import com.starshootercity.events.PlayerSwapOriginEvent;
@@ -10,6 +11,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.minecraft.network.protocol.game.ClientboundSetBorderWarningDistancePacket;
 import net.minecraft.world.level.border.WorldBorder;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -23,6 +25,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -37,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class OriginSwapper implements Listener {
@@ -46,6 +50,7 @@ public class OriginSwapper implements Listener {
     private final static NamespacedKey swapTypeKey = new NamespacedKey(OriginsReborn.getInstance(), "swap-type");
     private final static NamespacedKey pageSetKey = new NamespacedKey(OriginsReborn.getInstance(), "page-set");
     private final static NamespacedKey pageScrollKey = new NamespacedKey(OriginsReborn.getInstance(), "page-scroll");
+    private final static NamespacedKey randomOriginKey = new NamespacedKey(OriginsReborn.getInstance(), "random-origin");
     private final static Random random = new Random();
 
     public static String getInverse(String string) {
@@ -58,24 +63,26 @@ public class OriginSwapper implements Listener {
 
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom) {
         if (OriginLoader.origins.size() == 0) return;
+        List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+        origins.removeIf(Origin::isUnchoosable);
         boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
-        while (slot > OriginLoader.origins.size() || slot == OriginLoader.origins.size() && !enableRandom) {
-            slot -= OriginLoader.origins.size() + (enableRandom ? 1 : 0);
+        while (slot > origins.size() || slot == origins.size() && !enableRandom) {
+            slot -= origins.size() + (enableRandom ? 1 : 0);
         }
         while (slot < 0) {
-            slot += OriginLoader.origins.size() + (enableRandom ? 1 : 0);
+            slot += origins.size() + (enableRandom ? 1 : 0);
         }
         ItemStack icon;
         String name;
         char impact;
         LineData data;
-        if (slot == OriginLoader.origins.size()) {
+        if (slot == origins.size()) {
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             icon = OrbOfOrigin.orb;
             name = "Random";
             impact = '\uE002';
             StringBuilder names = new StringBuilder("You'll be assigned one of the following:\n\n");
-            for (Origin origin : OriginLoader.origins) {
+            for (Origin origin : origins) {
                 if (!excludedOrigins.contains(origin.getName())) {
                     names.append(origin.getName()).append("\n");
                 }
@@ -85,7 +92,7 @@ public class OriginSwapper implements Listener {
                     LineData.LineComponent.LineType.DESCRIPTION
             ));
         } else {
-            Origin origin = OriginLoader.origins.get(slot);
+            Origin origin = origins.get(slot);
             icon = origin.getIcon();
             name = origin.getName();
             impact = origin.getImpact();
@@ -139,15 +146,47 @@ public class OriginSwapper implements Listener {
         invisibleConfirmMeta.setCustomModelData(6);
         invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
 
+        ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+        ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+        ItemMeta upMeta = up.getItemMeta();
+        ItemMeta downMeta = down.getItemMeta();
+
+        int scrollSize = OriginsReborn.getInstance().getConfig().getInt("origin-selection.scroll-amount", 1);
+
+        upMeta.displayName(Component.text("Up")
+                .color(NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false));
+        if (scrollAmount != 0) {
+            upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
+            upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
+            upMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
+        }
+        upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
+
+
+        int size = data.lines.size() - scrollAmount - 6;
+        boolean canGoDown = size > 0;
+
+        downMeta.displayName(Component.text("Down")
+                .color(NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false));
+        if (canGoDown) {
+            downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
+            downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
+            downMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
+        }
+        downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
+
+        up.setItemMeta(upMeta);
+        down.setItemMeta(downMeta);
+        swapperInventory.setItem(52, up);
+        swapperInventory.setItem(53, down);
+
         if (!forceRandom) {
             ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-            ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-            ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemMeta leftMeta = left.getItemMeta();
             ItemMeta rightMeta = right.getItemMeta();
-            ItemMeta upMeta = up.getItemMeta();
-            ItemMeta downMeta = down.getItemMeta();
 
             leftMeta.displayName(Component.text("Previous origin")
                     .color(NamedTextColor.WHITE)
@@ -164,39 +203,11 @@ public class OriginSwapper implements Listener {
             rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
             rightMeta.setCustomModelData(2);
 
-            int scrollSize = OriginsReborn.getInstance().getConfig().getInt("origin-selection.scroll-amount", 1);
-
-            upMeta.displayName(Component.text("Up")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false));
-            if (scrollAmount != 0) {
-                upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-                upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
-            }
-            upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
-
-
-            int size = data.lines.size() - scrollAmount - 6;
-            boolean canGoDown = size > 0;
-
-            downMeta.displayName(Component.text("Down")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false));
-            if (canGoDown) {
-                downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-                downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
-            }
-            downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
-
             left.setItemMeta(leftMeta);
             right.setItemMeta(rightMeta);
-            up.setItemMeta(upMeta);
-            down.setItemMeta(downMeta);
 
             swapperInventory.setItem(47, left);
             swapperInventory.setItem(51, right);
-            swapperInventory.setItem(52, up);
-            swapperInventory.setItem(53, down);
         }
 
         confirm.setItemMeta(confirmMeta);
@@ -220,10 +231,11 @@ public class OriginSwapper implements Listener {
                 if (currentItem == null) return;
                 Integer page = currentItem.getItemMeta().getPersistentDataContainer().get(pageSetKey, PersistentDataType.INTEGER);
                 if (page != null) {
+                    boolean forceRandom = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(randomOriginKey, PersistentDataType.BOOLEAN, false);
                     Integer scroll = currentItem.getItemMeta().getPersistentDataContainer().get(pageScrollKey, PersistentDataType.INTEGER);
                     if (scroll == null) return;
                     player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
-                    openOriginSwapper(player, getReason(item), page, scroll, false);
+                    openOriginSwapper(player, getReason(item), page, scroll, forceRandom);
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
                     String originName = item.getItemMeta().getPersistentDataContainer().get(originKey, PersistentDataType.STRING);
@@ -233,6 +245,7 @@ public class OriginSwapper implements Listener {
                         List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
                         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
                         origins.removeIf(origin1 -> excludedOrigins.contains(origin1.getName()));
+                        origins.removeIf(Origin::isUnchoosable);
                         if (origins.isEmpty()) {
                             origin = OriginLoader.origins.get(0);
                         } else {
@@ -322,10 +335,7 @@ public class OriginSwapper implements Listener {
     public static Map<Player, Long> orbCooldown = new HashMap<>();
 
     public static void resetPlayer(Player player, boolean full) {
-        AttributeInstance speedInstance = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-        if (speedInstance != null) {
-            speedInstance.removeModifier(player.getUniqueId());
-        }
+        resetAttributes(player);
         ClientboundSetBorderWarningDistancePacket warningDistancePacket = new ClientboundSetBorderWarningDistancePacket(new WorldBorder() {{
             setWarningBlocks(player.getWorld().getWorldBorder().getWarningDistance());
         }});
@@ -335,11 +345,6 @@ public class OriginSwapper implements Listener {
         player.setFlying(false);
         for (Player otherPlayer : Bukkit.getOnlinePlayers()) {
             AbilityRegister.updateEntity(player, otherPlayer);
-        }
-        AttributeInstance instance = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-        double maxHealth = getMaxHealth(player);
-        if (instance != null) {
-            instance.setBaseValue(maxHealth);
         }
         for (PotionEffect effect : player.getActivePotionEffects()) {
             if (effect.getAmplifier() == -1 || effect.getDuration() == PotionEffect.INFINITE_DURATION) player.removePotionEffect(effect.getType());
@@ -352,7 +357,7 @@ public class OriginSwapper implements Listener {
         player.setRemainingAir(player.getMaximumAir());
         player.setFoodLevel(20);
         player.setFireTicks(0);
-        player.setHealth(maxHealth);
+        player.setHealth(getMaxHealth(player));
         ShulkerInventory.getInventoriesConfig().set(player.getUniqueId().toString(), null);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
@@ -383,25 +388,41 @@ public class OriginSwapper implements Listener {
     }
 
     public static double getMaxHealth(Player player) {
-        Origin origin = getOrigin(player);
-        if (origin == null) return 20;
-        for (Ability ability : origin.getAbilities()) {
-            if (ability instanceof HealthModifierAbility healthModifierAbility) {
-                return healthModifierAbility.getHealth();
-            }
-        }
-        return 20;
+        applyAttributeChanges(player);
+        AttributeInstance instance = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (instance == null) return 20;
+        return instance.getValue();
     }
 
-    public static double getSpeedIncrease(Player player) {
+    public static void applyAttributeChanges(Player player) {
         Origin origin = getOrigin(player);
-        if (origin == null) return 0;
-        for (Ability ability : origin.getAbilities()) {
-            if (ability instanceof SpeedModifierAbility speedModifierAbility) {
-                return speedModifierAbility.getSpeedIncrease();
+        if (origin == null) return;
+        for (Ability ability : AbilityRegister.abilityMap.values()) {
+            if (ability instanceof AttributeModifierAbility attributeModifierAbility) {
+                AttributeInstance instance = player.getAttribute(attributeModifierAbility.getAttribute());
+                if (instance == null) continue;
+                UUID u = UUID.nameUUIDFromBytes(StringUtils.getBytes(ability.getKey().asString(), (Charset) null));
+                if (origin.hasAbility(ability.getKey())) {
+                    if (instance.getModifier(u) != null) continue;
+                    instance.addModifier(new AttributeModifier(u, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getAmount(), attributeModifierAbility.getOperation()));
+                } else if (instance.getModifier(u) != null) instance.removeModifier(u);
             }
         }
-        return 0;
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        resetAttributes(event.getPlayer());
+    }
+
+    public static void resetAttributes(Player player) {
+        for (Attribute attribute : Attribute.values()) {
+            AttributeInstance instance = player.getAttribute(attribute);
+            if (instance == null) continue;
+            for (AttributeModifier modifier : instance.getModifiers()) {
+                instance.removeModifier(modifier);
+            }
+        }
     }
 
     @EventHandler
@@ -415,19 +436,10 @@ public class OriginSwapper implements Listener {
                     } else openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
                 }
             } else {
-                AttributeInstance healthInstance = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-                if (healthInstance != null) healthInstance.setBaseValue(getMaxHealth(player));
-                AttributeInstance speedInstance = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-                if (speedInstance != null) {
-                    AttributeModifier modifier = speedInstance.getModifier(player.getUniqueId());
-                    if (modifier == null) {
-                        modifier = new AttributeModifier(player.getUniqueId(), "speed-increase", getSpeedIncrease(player), AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-                        speedInstance.addModifier(modifier);
-                    }
-                }
+                AbilityRegister.updateFlight(player);
                 player.setAllowFlight(AbilityRegister.canFly(player));
-                player.setFlySpeed(AbilityRegister.getFlySpeed(player));
                 player.setInvisible(AbilityRegister.isInvisible(player));
+                applyAttributeChanges(player);
             }
         }
     }
@@ -438,13 +450,20 @@ public class OriginSwapper implements Listener {
         openOriginSwapper(player, reason, OriginLoader.origins.indexOf(origin), 0, true);
     }
 
+    private final Map<Player, PlayerRespawnEvent.RespawnReason> lastRespawnReasons = new HashMap<>();
+
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         if (event.getPlayer().getBedSpawnLocation() == null) {
             World world = getRespawnWorld(getOrigin(event.getPlayer()));
             event.setRespawnLocation(world.getSpawnLocation());
         }
-        if (event.getRespawnReason() != PlayerRespawnEvent.RespawnReason.DEATH) return;
+        lastRespawnReasons.put(event.getPlayer(), event.getRespawnReason());
+    }
+
+    @EventHandler
+    public void onPlayerPostRespawn(PlayerPostRespawnEvent event) {
+        if (lastRespawnReasons.get(event.getPlayer()) != PlayerRespawnEvent.RespawnReason.DEATH) return;
         FileConfiguration config = OriginsReborn.getInstance().getConfig();
         if (config.getBoolean("origin-selection.death-origin-change")) {
             setOrigin(event.getPlayer(), null, PlayerSwapOriginEvent.SwapReason.DIED, false);

@@ -1,5 +1,6 @@
 package com.starshootercity.abilities;
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
@@ -20,13 +21,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Phantomize implements DependencyAbility, Listener {
+
+    @EventHandler
+    public void onServerTickEnd(ServerTickEndEvent event) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (isEnabled(player) && player.getFoodLevel() <= 6) {
+                phantomizedPlayers.put(player, false);
+                PhantomizeToggleEvent phantomizeToggleEvent = new PhantomizeToggleEvent(player, false);
+                phantomizeToggleEvent.callEvent();
+            }
+        }
+    }
+
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         event.getPlayer().getPersistentDataContainer().set(phantomizeDroppingKey, PersistentDataType.BOOLEAN, true);
         Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> event.getPlayer().getPersistentDataContainer().set(phantomizeDroppingKey, PersistentDataType.BOOLEAN, false));
     }
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getPlayer().getFoodLevel() <= 6) return;
         if (Boolean.TRUE.equals(event.getPlayer().getPersistentDataContainer().get(phantomizeDroppingKey, PersistentDataType.BOOLEAN))) {
             event.getPlayer().getPersistentDataContainer().set(phantomizeDroppingKey, PersistentDataType.BOOLEAN, false);
             return;
@@ -38,7 +53,7 @@ public class Phantomize implements DependencyAbility, Listener {
                 phantomizedPlayers.put(event.getPlayer(), enabling);
                 PhantomizeToggleEvent phantomizeToggleEvent = new PhantomizeToggleEvent(event.getPlayer(), enabling);
                 phantomizeToggleEvent.callEvent();
-            }, () -> phantomizedPlayers.put(event.getPlayer(), false));
+            });
         }
     }
 

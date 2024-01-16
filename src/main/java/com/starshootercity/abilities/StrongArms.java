@@ -17,6 +17,8 @@ public class StrongArms implements VisibleAbility, Listener {
     private static final List<Material> naturalStones = new ArrayList<>() {{
         add(Material.STONE);
         add(Material.TUFF);
+        add(Material.GRANITE);
+        add(Material.DIORITE);
         add(Material.ANDESITE);
         add(Material.SANDSTONE);
         add(Material.SMOOTH_SANDSTONE);

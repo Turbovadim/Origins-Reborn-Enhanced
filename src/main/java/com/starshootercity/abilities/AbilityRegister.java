@@ -2,8 +2,8 @@ package com.starshootercity.abilities;
 
 import com.starshootercity.Origin;
 import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.util.TriState;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -16,6 +16,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
@@ -26,14 +27,14 @@ import java.util.Map;
 public class AbilityRegister {
     public static Map<Key, Ability> abilityMap = new HashMap<>();
     public static Map<Key, DependencyAbility> dependencyAbilityMap = new HashMap<>();
-    public static void registerAbility(Ability ability) {
-        abilityMap.put(ability.getKey(), ability);
+    public static void registerAbility(Ability ability, JavaPlugin instance) {
         if (ability instanceof DependencyAbility dependencyAbility) {
             dependencyAbilityMap.put(ability.getKey(), dependencyAbility);
         }
         if (ability instanceof Listener listener) {
-            Bukkit.getPluginManager().registerEvents(listener, OriginsReborn.getInstance());
+            Bukkit.getPluginManager().registerEvents(listener, instance);
         }
+        abilityMap.put(ability.getKey(), ability);
     }
 
     public static void runForAbility(Entity entity, Key key, Runnable runnable) {
@@ -91,19 +92,28 @@ public class AbilityRegister {
         return false;
     }
 
-    public static float getFlySpeed(Player player) {
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return 0.2f;
+    public static void updateFlight(Player player) {
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+            player.setFlySpeed(0.1f);
+            return;
+        }
         Origin origin = OriginSwapper.getOrigin(player);
-        if (origin == null) return 1f;
-        float speed = 1f;
+        if (origin == null) return;
+        TriState flyingFallDamage = TriState.FALSE;
+        float speed = -1f;
         for (Ability ability : origin.getAbilities()) {
             if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
                 if (flightAllowingAbility.canFly(player)) {
-                    speed = Math.min(speed, flightAllowingAbility.getFlightSpeed(player));
+                    float abilitySpeed = flightAllowingAbility.getFlightSpeed(player);
+                    speed = speed == -1 ? abilitySpeed : Math.min(speed, abilitySpeed);
+                    if (flightAllowingAbility.getFlyingFallDamage(player) == TriState.TRUE) {
+                        flyingFallDamage = TriState.TRUE;
+                    }
                 }
             }
         }
-        return speed;
+        player.setFlyingFallDamage(flyingFallDamage);
+        player.setFlySpeed(speed == -1 ? 0 : speed);
     }
 
     public static void updateEntity(Player player, Entity target) {

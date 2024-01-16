@@ -108,4 +108,9 @@ public class Climbing implements FlightAllowingAbility, Listener, VisibleAbility
     public float getFlightSpeed(Player player) {
         return 0.05f;
     }
+
+    @Override
+    public @NotNull TriState getFlyingFallDamage(Player player) {
+        return TriState.TRUE;
+    }
 }

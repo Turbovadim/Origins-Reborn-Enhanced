@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HungerOverTime implements VisibleAbility, Listener {
+public class HungerOverTime implements DependantAbility, VisibleAbility, Listener {
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:hunger_over_time");
@@ -33,5 +33,10 @@ public class HungerOverTime implements VisibleAbility, Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             AbilityRegister.runForAbility(player, getKey(), () -> player.setExhaustion(player.getExhaustion() + 0.812f));
         }
+    }
+
+    @Override
+    public @NotNull Key getDependencyKey() {
+        return Key.key("origins:phantomize");
     }
 }

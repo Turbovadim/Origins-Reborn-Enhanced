@@ -1,18 +1,16 @@
 package com.starshootercity;
 
 import com.starshootercity.abilities.*;
-import com.starshootercity.abilities.incomplete.*;
 import com.starshootercity.commands.OriginCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class OriginsReborn extends JavaPlugin {
+public class OriginsReborn extends OriginsAddon {
     private static OriginsReborn instance;
 
     public static OriginsReborn getInstance() {
@@ -44,9 +42,8 @@ public class OriginsReborn extends JavaPlugin {
     }
 
     @Override
-    public void onEnable() {
+    public void onRegister() {
         instance = this;
-
         if (getConfig().getBoolean("swap-command.vault.enabled")) {
             vaultEnabled = setupEconomy();
             if (!vaultEnabled) {
@@ -56,68 +53,70 @@ public class OriginsReborn extends JavaPlugin {
         saveDefaultConfig();
         PluginCommand command = getCommand("origin");
         if (command != null) command.setExecutor(new OriginCommand());
-        OriginLoader.loadOrigins();
+        OriginLoader.register(this);
         Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
+        Bukkit.getPluginManager().registerEvents(new PackApplier(), this);
+        Bukkit.getPluginManager().registerEvents(new ParticleAbility.ParticleAbilityListener(), this);
         Bukkit.getPluginManager().registerEvents(new BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener(), this);
+    }
 
-        //<editor-fold desc="Register abilities">
-        List<Ability> abilities = new ArrayList<>() {{
-            add(new PumpkinHate());
-            add(new FallImmunity());
-            add(new WeakArms());
-            add(new Fragile());
-            add(new SlowFalling());
-            add(new FreshAir());
-            add(new Vegetarian());
-            add(new LayEggs());
-            add(new Unwieldy());
-            add(new MasterOfWebs());
-            add(new Tailwind());
-            add(new Arthropod());
-            add(new Climbing());
-            add(new Carnivore());
-            add(new WaterBreathing());
-            add(new WaterVision());
-            add(new CatVision());
-            add(new NineLives());
-            add(new BurnInDaylight());
-            add(new WaterVulnerability());
-            add(new Phantomize());
-            add(new Invisibility());
-            add(new ThrowEnderPearl());
-            add(new PhantomizeOverlay());
-            add(new FireImmunity());
-            add(new AirFromPotions());
-            add(new SwimSpeed());
-            add(new LikeWater());
-            add(new LightArmor());
-            add(new MoreKineticDamage());
-            add(new DamageFromPotions());
-            add(new DamageFromSnowballs());
-            add(new Hotblooded());
-            add(new BurningWrath());
-            add(new SprintJump());
-            add(new AerialCombatant());
-            add(new Elytra());
-            add(new LaunchIntoAir());
-            add(new HungerOverTime());
-            add(new MoreExhaustion());
-            add(new Aquatic());
-            add(new NetherSpawn());
-            add(new Claustrophobia());
-            add(new VelvetPaws());
-            add(new AquaAffinity());
-            add(new FlameParticles());
-            add(new EnderParticles());
-            add(new Phasing());
-            add(new ScareCreepers());
-            add(new StrongArms());
-            add(new StrongArmsBreakSpeed());
-        }};
-        for (Ability ability : abilities) {
-            AbilityRegister.registerAbility(ability);
-        }
-        //</editor-fold>
+    @Override
+    public @NotNull List<Ability> getAbilities() {
+        return List.of(
+                new PumpkinHate(),
+                new FallImmunity(),
+                new WeakArms(),
+                new Fragile(),
+                new SlowFalling(),
+                new FreshAir(),
+                new Vegetarian(),
+                new LayEggs(),
+                new Unwieldy(),
+                new MasterOfWebs(),
+                new Tailwind(),
+                new Arthropod(),
+                new Climbing(),
+                new Carnivore(),
+                new WaterBreathing(),
+                new WaterVision(),
+                new CatVision(),
+                new NineLives(),
+                new BurnInDaylight(),
+                new WaterVulnerability(),
+                new Phantomize(),
+                new Invisibility(),
+                new ThrowEnderPearl(),
+                new PhantomizeOverlay(),
+                new FireImmunity(),
+                new AirFromPotions(),
+                new SwimSpeed(),
+                new LikeWater(),
+                new LightArmor(),
+                new MoreKineticDamage(),
+                new DamageFromPotions(),
+                new DamageFromSnowballs(),
+                new Hotblooded(),
+                new BurningWrath(),
+                new SprintJump(),
+                new AerialCombatant(),
+                new Elytra(),
+                new LaunchIntoAir(),
+                new HungerOverTime(),
+                new MoreExhaustion(),
+                new Aquatic(),
+                new NetherSpawn(),
+                new Claustrophobia(),
+                new VelvetPaws(),
+                new AquaAffinity(),
+                new FlameParticles(),
+                new EnderParticles(),
+                new Phasing(),
+                new ScareCreepers(),
+                new StrongArms(),
+                new StrongArmsBreakSpeed(),
+                new ShulkerInventory(),
+                new NaturalArmor()
+        );
     }
 }

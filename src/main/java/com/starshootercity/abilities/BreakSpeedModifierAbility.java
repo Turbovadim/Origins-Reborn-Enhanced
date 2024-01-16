@@ -108,7 +108,6 @@ public interface BreakSpeedModifierAbility extends Ability {
                 blockbreakingTasks.remove(event.getPlayer());
             }
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-
                 Origin origin = OriginSwapper.getOrigin(event.getPlayer());
                 if (origin == null) return;
                 BreakSpeedModifierAbility speedModifierAbility = null;
