@@ -1,0 +1,33 @@
+{
+    "providers": [
+        {
+            "type": "bitmap",
+            "file": "minecraft:gui/origin_selector/bold_text_shadow.png",
+            "ascent": -26,
+            "height": 10,
+            "chars":  [
+                "^lJ:\\ny<w(L*ijk[",
+                "ZY1{z+,A2TdBbRq\u0022",
+                "FaQ6eC3USu&cDE54",
+                "rts$%#oMP9v'`I=_",
+                "] f)!K;xpVmNO|70",
+                "8@HG-?>~}h\u0000gWX./"
+            ]
+        },
+        {
+            "type": "space",
+            "advances":{
+                "\uF000":-3,
+                "\uF001":-2,
+                "\uF002": -3,
+                "\uF003": -4,
+                "\uF004": -5,
+                "\uF005": -6,
+                "\uF006": -7,
+                "\uF007": -8,
+                "\uF008": -9,
+                "\uF009": -10
+            }
+        }
+    ]
+}

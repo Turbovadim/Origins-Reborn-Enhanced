@@ -1,0 +1,26 @@
+{
+    "providers": [
+        {
+            "type": "bitmap",
+            "file": "minecraft:gui/origin_selector/text_shadow.png",
+            "ascent": -9,
+            "height": 10,
+            "chars":  [
+                "^lJ:\\ny<w(L*ijk[",
+                "ZY1{z+,A2TdBbRq\u0022",
+                "FaQ6eC3USu&cDE54",
+                "rts$%#oMP9v'`I=_",
+                "]\u0000f)!K;xpVmNO|70",
+                "8@HG-?>~}h\u0000gWX./"
+            ]
+        },
+        {
+            "type": "space",
+            "advances":{
+                "\uF000":-2,
+                "\uF001":-104,
+                " ":6
+            }
+        }
+    ]
+}
