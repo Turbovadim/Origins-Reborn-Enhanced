@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExtraReach implements VisibleAbility {
+    // Requires upcoming 1.20.5 update, will be added when update releases
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:extra_reach");

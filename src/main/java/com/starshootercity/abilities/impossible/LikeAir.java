@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class LikeAir implements VisibleAbility {
+    // Currently thought to be impossible on 1.20.4
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:like_air");
