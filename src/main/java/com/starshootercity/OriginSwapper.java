@@ -46,6 +46,7 @@ import java.util.*;
 public class OriginSwapper implements Listener {
     private final static NamespacedKey displayKey = new NamespacedKey(OriginsReborn.getInstance(), "display-item");
     private final static NamespacedKey confirmKey = new NamespacedKey(OriginsReborn.getInstance(), "confirm-select");
+    private final static NamespacedKey costsCurrencyKey = new NamespacedKey(OriginsReborn.getInstance(), "costs-currency");
     private final static NamespacedKey originKey = new NamespacedKey(OriginsReborn.getInstance(), "origin-name");
     private final static NamespacedKey swapTypeKey = new NamespacedKey(OriginsReborn.getInstance(), "swap-type");
     private final static NamespacedKey pageSetKey = new NamespacedKey(OriginsReborn.getInstance(), "page-set");
@@ -62,6 +63,9 @@ public class OriginSwapper implements Listener {
     }
 
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom) {
+        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, false);
+    }
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost) {
         if (OriginLoader.origins.size() == 0) return;
         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
         origins.removeIf(Origin::isUnchoosable);
@@ -145,6 +149,18 @@ public class OriginSwapper implements Listener {
                 .decoration(TextDecoration.ITALIC, false));
         invisibleConfirmMeta.setCustomModelData(6);
         invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+
+        if (cost) {
+            String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+            List<Component> costsCurrency = List.of(
+                    Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
+            );
+            confirmMeta.lore(costsCurrency);
+            invisibleConfirmMeta.lore(costsCurrency);
+            confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
+            invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
+        }
 
         ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
         ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
@@ -238,6 +254,14 @@ public class OriginSwapper implements Listener {
                     openOriginSwapper(player, getReason(item), page, scroll, forceRandom);
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
+                    int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+                    if (Boolean.TRUE.equals(currentItem.getItemMeta().getPersistentDataContainer().get(costsCurrencyKey, PersistentDataType.BOOLEAN))) {
+                        if (!OriginsReborn.getInstance().getEconomy().has(player, amount)) {
+                            return;
+                        } else {
+                            OriginsReborn.getInstance().getEconomy().withdrawPlayer(player, amount);
+                        }
+                    }
                     String originName = item.getItemMeta().getPersistentDataContainer().get(originKey, PersistentDataType.STRING);
                     if (originName == null) return;
                     Origin origin;

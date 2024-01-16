@@ -25,7 +25,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case "swap" -> {
                 if (sender instanceof Player player) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.enabled")) {
-                        OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, false);
+                        OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, false, OriginsReborn.getInstance().isVaultEnabled());
                     } else {
                         sender.sendMessage(Component.text("This command has been disabled in the configuration").color(NamedTextColor.RED));
                     }

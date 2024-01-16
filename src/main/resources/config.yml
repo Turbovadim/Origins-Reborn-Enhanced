@@ -22,7 +22,7 @@ swap-command:
     # Permission to bypass the cost of the swap command
     bypass-permission: originsreborn.costbypass
     # Cost of switching origin
-    cost: 100
+    cost: 1000
     # Currency symbol for the economy
     currency-symbol: "$"
 
