@@ -427,8 +427,13 @@ public class OriginSwapper implements Listener {
                 if (instance == null) continue;
                 UUID u = UUID.nameUUIDFromBytes(StringUtils.getBytes(ability.getKey().asString(), (Charset) null));
                 if (origin.hasAbility(ability.getKey())) {
-                    if (instance.getModifier(u) != null) continue;
-                    instance.addModifier(new AttributeModifier(u, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getAmount(), attributeModifierAbility.getOperation()));
+                    AttributeModifier modifier = instance.getModifier(u);
+                    if (modifier != null) {
+                        if (modifier.getAmount() == attributeModifierAbility.getTotalAmount(player)) {
+                            continue;
+                        } else instance.removeModifier(modifier);
+                    }
+                    instance.addModifier(new AttributeModifier(u, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getTotalAmount(player), attributeModifierAbility.getOperation()));
                 } else if (instance.getModifier(u) != null) instance.removeModifier(u);
             }
         }

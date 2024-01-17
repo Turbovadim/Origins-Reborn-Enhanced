@@ -2,6 +2,7 @@ package com.starshootercity;
 
 import com.starshootercity.abilities.*;
 import com.starshootercity.commands.OriginCommand;
+import com.starshootercity.events.PlayerLeftClickEvent;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -64,6 +65,7 @@ public class OriginsReborn extends OriginsAddon {
         Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
         Bukkit.getPluginManager().registerEvents(new PackApplier(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerLeftClickEvent.PlayerLeftClickEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new ParticleAbility.ParticleAbilityListener(), this);
         Bukkit.getPluginManager().registerEvents(new BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener(), this);
     }

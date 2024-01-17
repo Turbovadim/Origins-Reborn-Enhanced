@@ -19,7 +19,8 @@ public class FreshAir implements VisibleAbility, Listener {
         if (event.getClickedBlock() == null) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
             AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-                if (event.getClickedBlock().getY() < 86) {String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
+                if (event.getClickedBlock().getY() < 86) {
+                    String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                     if (overworld == null) {
                         overworld = "world";
                         OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
