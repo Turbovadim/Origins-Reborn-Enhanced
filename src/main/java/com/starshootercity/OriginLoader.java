@@ -119,7 +119,7 @@ public class OriginLoader {
                 Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
                 if (previouslyRegisteredOrigin != null) {
                     if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
-                        return;
+                        continue;
                     } else {
                         origins.remove(previouslyRegisteredOrigin);
                         originNameMap.remove(name.replace("_", " "));
