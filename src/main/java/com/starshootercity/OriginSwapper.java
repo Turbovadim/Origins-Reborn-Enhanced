@@ -52,6 +52,9 @@ public class OriginSwapper implements Listener {
     private final static NamespacedKey pageSetKey = new NamespacedKey(OriginsReborn.getInstance(), "page-set");
     private final static NamespacedKey pageScrollKey = new NamespacedKey(OriginsReborn.getInstance(), "page-scroll");
     private final static NamespacedKey randomOriginKey = new NamespacedKey(OriginsReborn.getInstance(), "random-origin");
+    private final static NamespacedKey costKey = new NamespacedKey(OriginsReborn.getInstance(), "enable-cost");
+    private final static NamespacedKey allowUnchoosableKey = new NamespacedKey(OriginsReborn.getInstance(), "allow-unchoosable");
+    private final static NamespacedKey closeKey = new NamespacedKey(OriginsReborn.getInstance(), "close");
     private final static Random random = new Random();
 
     public static String getInverse(String string) {
@@ -63,12 +66,15 @@ public class OriginSwapper implements Listener {
     }
 
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom) {
-        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, false);
+        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, false, false);
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost) {
+        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, cost, false);
+    }
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost, boolean showUnchoosable) {
         if (OriginLoader.origins.size() == 0) return;
         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-        origins.removeIf(Origin::isUnchoosable);
+        if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
         boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
         while (slot > origins.size() || slot == origins.size() && !enableRandom) {
             slot -= origins.size() + (enableRandom ? 1 : 0);
@@ -142,13 +148,15 @@ public class OriginSwapper implements Listener {
                 .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false));
         confirmMeta.setCustomModelData(5);
-        confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+        if (!showUnchoosable) confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+        else confirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
 
         invisibleConfirmMeta.displayName(Component.text("Confirm")
                 .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false));
         invisibleConfirmMeta.setCustomModelData(6);
-        invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+        if (!showUnchoosable) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+        else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
 
         if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
             String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
@@ -178,6 +186,8 @@ public class OriginSwapper implements Listener {
             upMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
         }
         upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
+        upMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+        upMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
 
 
         int size = data.lines.size() - scrollAmount - 6;
@@ -192,6 +202,9 @@ public class OriginSwapper implements Listener {
             downMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
         }
         downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
+        downMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+        downMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+
 
         up.setItemMeta(upMeta);
         down.setItemMeta(downMeta);
@@ -210,7 +223,8 @@ public class OriginSwapper implements Listener {
             leftMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
             leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
             leftMeta.setCustomModelData(1);
-
+            leftMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+            leftMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
 
             rightMeta.displayName(Component.text("Next origin")
                     .color(NamedTextColor.WHITE)
@@ -218,6 +232,9 @@ public class OriginSwapper implements Listener {
             rightMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
             rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
             rightMeta.setCustomModelData(2);
+            rightMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+            rightMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+
 
             left.setItemMeta(leftMeta);
             right.setItemMeta(rightMeta);
@@ -244,14 +261,16 @@ public class OriginSwapper implements Listener {
             }
             if (event.getWhoClicked() instanceof Player player) {
                 ItemStack currentItem = event.getCurrentItem();
-                if (currentItem == null) return;
+                if (currentItem == null || currentItem.getItemMeta() == null) return;
                 Integer page = currentItem.getItemMeta().getPersistentDataContainer().get(pageSetKey, PersistentDataType.INTEGER);
                 if (page != null) {
                     boolean forceRandom = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(randomOriginKey, PersistentDataType.BOOLEAN, false);
+                    boolean cost = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(costKey, PersistentDataType.BOOLEAN, false);
+                    boolean allowUnchoosable = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(allowUnchoosableKey, PersistentDataType.BOOLEAN, false);
                     Integer scroll = currentItem.getItemMeta().getPersistentDataContainer().get(pageScrollKey, PersistentDataType.INTEGER);
                     if (scroll == null) return;
                     player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
-                    openOriginSwapper(player, getReason(item), page, scroll, forceRandom);
+                    openOriginSwapper(player, getReason(item), page, scroll, forceRandom, cost, allowUnchoosable);
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
                     int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
@@ -308,7 +327,7 @@ public class OriginSwapper implements Listener {
                     }
                     boolean resetPlayer = shouldResetPlayer(reason);
                     setOrigin(player, origin, reason, resetPlayer);
-                }
+                } else if (currentItem.getItemMeta().getPersistentDataContainer().has(closeKey)) event.getWhoClicked().closeInventory();
             }
         }
     }
@@ -360,6 +379,7 @@ public class OriginSwapper implements Listener {
 
     public static void resetPlayer(Player player, boolean full) {
         resetAttributes(player);
+        player.closeInventory();
         ClientboundSetBorderWarningDistancePacket warningDistancePacket = new ClientboundSetBorderWarningDistancePacket(new WorldBorder() {{
             setWarningBlocks(player.getWorld().getWorldBorder().getWarningDistance());
         }});

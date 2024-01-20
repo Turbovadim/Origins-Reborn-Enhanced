@@ -72,6 +72,14 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 }
                 return true;
             }
+            case "check" -> {
+                if (sender instanceof Player player) {
+                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, OriginLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, true, false, true);
+                } else {
+                    sender.sendMessage(Component.text("This command can only be run by a player").color(NamedTextColor.RED));
+                }
+                return true;
+            }
             default -> {
                 return false;
             }
@@ -86,6 +94,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case 1 -> {
                 List<String> r = new ArrayList<>() {{
                     add("swap");
+                    add("check");
                 }};
                 if (sender instanceof Player player) {
                     if (!player.hasPermission("originsreborn.admin")) yield r;
