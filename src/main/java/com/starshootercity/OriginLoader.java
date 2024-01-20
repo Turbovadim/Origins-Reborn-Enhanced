@@ -1,6 +1,8 @@
 package com.starshootercity;
 
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.intellij.lang.annotations.Subst;
@@ -115,7 +117,17 @@ public class OriginLoader {
                             add(Key.key(((String) o)));
                         }
                     }
-                }}, object.getString("description"), addon, unchoosable);
+                }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1);
+                Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
+                if (previouslyRegisteredOrigin != null) {
+                    if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
+                        Bukkit.broadcast(Component.text(previouslyRegisteredOrigin.getPriority() + " " + origin.getPriority() + " " + previouslyRegisteredOrigin.getName() + " " + origin.getName()));
+                        return;
+                    } else {
+                        origins.remove(previouslyRegisteredOrigin);
+                        originNameMap.remove(name.replace("_", " "));
+                    }
+                }
                 origins.add(origin);
                 originNameMap.put(name.replace("_", " "), origin);
             } catch (IOException e) {

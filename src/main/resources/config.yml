@@ -67,5 +67,10 @@ resource-pack:
   # This can be changed, but it should always contain the files in the original pack for the GUI
   link: "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip"
 
+# Miscellaneous display options
+display:
+  # Enable prefixes in tab and on display names with the names of origins
+  enable-prefixes: false
+
 # Config version - do not touch this!
-config-version: 2.0.0
+config-version: 2.0.3

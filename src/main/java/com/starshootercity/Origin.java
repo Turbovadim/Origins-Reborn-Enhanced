@@ -16,6 +16,7 @@ public class Origin {
     private final int position;
     private final char impact;
     private final String name;
+    private final int priority;
     private final boolean unchoosable;
     private final JavaPlugin plugin;
     private final List<Key> abilities;
@@ -29,7 +30,11 @@ public class Origin {
         return unchoosable;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, JavaPlugin plugin, boolean unchoosable) {
+    public int getPriority() {
+        return priority;
+    }
+
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, JavaPlugin plugin, boolean unchoosable, int priority) {
         this.lineComponent = OriginSwapper.LineData.makeLineFor(description, OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
         this.name = name;
         this.abilities = abilities;
@@ -43,6 +48,7 @@ public class Origin {
             default -> '\uE005';
         };
         this.plugin = plugin;
+        this.priority = priority;
     }
 
     public List<VisibleAbility> getVisibleAbilities() {

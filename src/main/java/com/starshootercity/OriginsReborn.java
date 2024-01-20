@@ -45,6 +45,13 @@ public class OriginsReborn extends OriginsAddon {
     public void updateConfig() {
         String version = getConfig().getString("config-version", "1.0.0");
         if (version.equals("1.0.0")) saveResource("config.yml", true);
+        else if (version.equals("2.0.0")) {
+            getConfig().set("config-version", "2.0.3");
+            getConfig().set("display.enable-prefixes", false);
+            getConfig().setComments("display", List.of("Miscellaneous display options"));
+            getConfig().setComments("display.enable-prefixes", List.of("Enable prefixes in tab and on display names with the names of origins"));
+            saveConfig();
+        }
     }
 
 
