@@ -25,7 +25,11 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case "swap" -> {
                 if (sender instanceof Player player) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.enabled")) {
-                        OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, false, OriginsReborn.getInstance().isVaultEnabled());
+                        if (player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.permission", "originsreborn.admin"))) {
+                            OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, false, OriginsReborn.getInstance().isVaultEnabled());
+                        } else {
+                            sender.sendMessage(Component.text("You don't have permission to do this!").color(NamedTextColor.RED));
+                        }
                     } else {
                         sender.sendMessage(Component.text("This command has been disabled in the configuration").color(NamedTextColor.RED));
                     }
@@ -92,13 +96,12 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
         List<String> result = new ArrayList<>();
         List<String> data = switch (args.length) {
             case 1 -> {
-                List<String> r = new ArrayList<>() {{
-                    add("swap");
-                    add("check");
-                }};
-                if (sender instanceof Player player) {
-                    if (!player.hasPermission("originsreborn.admin")) yield r;
+                List<String> r = new ArrayList<>();
+                r.add("check");
+                if (sender.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.permission", "originsreborn.admin"))) {
+                    r.add("swap");
                 }
+                if (!sender.hasPermission("originsreborn.admin")) yield r;
                 r.add("reload");
                 r.add("set");
                 r.add("orb");
