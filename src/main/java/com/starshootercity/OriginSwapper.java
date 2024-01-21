@@ -462,6 +462,11 @@ public class OriginSwapper implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         resetAttributes(event.getPlayer());
+        Origin origin = getOrigin(event.getPlayer());
+        if (origin != null) {
+            if (origin.getTeam() == null) return;
+            origin.getTeam().addPlayer(event.getPlayer());
+        }
     }
 
     public static void resetAttributes(Player player) {
@@ -536,6 +541,7 @@ public class OriginSwapper implements Listener {
             return OriginLoader.originNameMap.get(name);
         }
     }
+
     public static void setOrigin(Player player, @Nullable Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean resetPlayer) {
         PlayerSwapOriginEvent swapOriginEvent = new PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player), origin);
         if (!swapOriginEvent.callEvent()) return;
@@ -545,6 +551,9 @@ public class OriginSwapper implements Listener {
             saveOrigins();
             resetPlayer(player, swapOriginEvent.isResetPlayer());
             return;
+        }
+        if (swapOriginEvent.getNewOrigin().getTeam() != null) {
+            swapOriginEvent.getNewOrigin().getTeam().addPlayer(player);
         }
         originFileConfiguration.set(player.getUniqueId().toString(), swapOriginEvent.getNewOrigin().getName().toLowerCase());
         player.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, swapOriginEvent.getNewOrigin().getName().toLowerCase());

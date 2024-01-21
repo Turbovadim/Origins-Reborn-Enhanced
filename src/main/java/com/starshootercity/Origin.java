@@ -4,8 +4,13 @@ import com.starshootercity.abilities.Ability;
 import com.starshootercity.abilities.VisibleAbility;
 import com.starshootercity.abilities.AbilityRegister;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
@@ -34,9 +39,28 @@ public class Origin {
         return priority;
     }
 
+    private final Team team;
+
+    public Team getTeam() {
+        return team;
+    }
+
     public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, JavaPlugin plugin, boolean unchoosable, int priority) {
         this.lineComponent = OriginSwapper.LineData.makeLineFor(description, OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
         this.name = name;
+        if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+            Team oldTeam = scoreboard.getTeam(name);
+            if (oldTeam != null) oldTeam.unregister();
+            team = scoreboard.registerNewTeam(name);
+            team.displayName(Component.text("[")
+                            .color(NamedTextColor.DARK_GRAY)
+                            .append(Component.text(name)
+                                    .color(NamedTextColor.WHITE))
+                    .append(Component.text("] ")
+                            .color(NamedTextColor.DARK_GRAY)
+                    ));
+        } else team = null;
         this.abilities = abilities;
         this.icon = icon;
         this.position = position;

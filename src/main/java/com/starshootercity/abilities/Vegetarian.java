@@ -30,6 +30,7 @@ public class Vegetarian implements VisibleAbility, Listener {
     }};
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
+        if (event.getItem().getType() == Material.POTION) return;
         AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
             if (meat.contains(event.getItem().getType())) {
                 event.setCancelled(true);
