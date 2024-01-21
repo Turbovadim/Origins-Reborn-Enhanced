@@ -103,10 +103,6 @@ public interface BreakSpeedModifierAbility extends Ability {
         Random random = new Random();
         @EventHandler
         public void onBlockDamage(BlockDamageEvent event) {
-            if (blockbreakingTasks.containsKey(event.getPlayer())) {
-                cancelTask(blockbreakingTasks.get(event.getPlayer()));
-                blockbreakingTasks.remove(event.getPlayer());
-            }
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
                 Origin origin = OriginSwapper.getOrigin(event.getPlayer());
                 if (origin == null) return;
@@ -125,54 +121,63 @@ public interface BreakSpeedModifierAbility extends Ability {
                 BreakSpeedModifierAbility finalSpeedModifierAbility = speedModifierAbility;
                 int task = Bukkit.getScheduler().scheduleSyncRepeatingTask(OriginsReborn.getInstance(), () -> {
 
-                    BreakSpeedModifierAbility.BlockMiningContext context = finalSpeedModifierAbility.provideContextFor(event.getPlayer());
+                    try {
+                        BreakSpeedModifierAbility.BlockMiningContext context = finalSpeedModifierAbility.provideContextFor(event.getPlayer());
 
-                    float damage = getBlockDamage(event.getBlock(), context, time.getAndIncrement());
-                    if (damage >= 1) {
-                        int taskNum = blockbreakingTasks.get(event.getPlayer());
-                        cancelTask(taskNum);
-                        BlockBreakEvent blockBreakEvent = new StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent(event.getBlock(), event.getPlayer());
-                        blockBreakEvent.callEvent();
-                        ItemStack handItem = event.getPlayer().getInventory().getItemInMainHand();
-                        if (Tag.ITEMS_TOOLS.isTagged(handItem.getType())) {
-                            int unbreakingLevel = handItem.getEnchantmentLevel(Enchantment.DURABILITY) + 1;
-                            int itemDamage = 0;
-                            if (random.nextDouble() <= 1d / unbreakingLevel) {
-                                itemDamage += 1;
-                            }
-                            if (event.getBlock().getDrops(context.getHeldItem()).size() == 0) {
+                        float damage = getBlockDamage(event.getBlock(), context, time.getAndIncrement());
+                        if (damage >= 1) {
+                            int taskNum = blockbreakingTasks.get(event.getPlayer());
+                            cancelTask(taskNum);
+                            BlockBreakEvent blockBreakEvent = new StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent(event.getBlock(), event.getPlayer());
+                            blockBreakEvent.callEvent();
+                            ItemStack handItem = event.getPlayer().getInventory().getItemInMainHand();
+                            if (Tag.ITEMS_TOOLS.isTagged(handItem.getType())) {
+                                int unbreakingLevel = handItem.getEnchantmentLevel(Enchantment.DURABILITY) + 1;
+                                int itemDamage = 0;
                                 if (random.nextDouble() <= 1d / unbreakingLevel) {
                                     itemDamage += 1;
                                 }
-                            }
-                            if (handItem.getItemMeta() instanceof Damageable damageable) {
-                                damageable.setDamage(damageable.getDamage() + itemDamage);
-                                if (handItem.getType().getMaxDurability() <= damageable.getDamage()) {
-                                    event.getPlayer().broadcastSlotBreak(EquipmentSlot.HAND, new ArrayList<>() {{
-                                        for (Player player : Bukkit.getOnlinePlayers()) {
-                                            if (player.getWorld() != event.getPlayer().getWorld()) continue;
-                                            if (player.getLocation().distance(event.getPlayer().getLocation()) < 32) {
-                                                add(player);
+                                if (event.getBlock().getDrops(context.getHeldItem()).size() == 0) {
+                                    if (random.nextDouble() <= 1d / unbreakingLevel) {
+                                        itemDamage += 1;
+                                    }
+                                }
+                                if (handItem.getItemMeta() instanceof Damageable damageable) {
+                                    damageable.setDamage(damageable.getDamage() + itemDamage);
+                                    if (handItem.getType().getMaxDurability() <= damageable.getDamage()) {
+                                        event.getPlayer().broadcastSlotBreak(EquipmentSlot.HAND, new ArrayList<>() {{
+                                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                                if (player.getWorld() != event.getPlayer().getWorld()) continue;
+                                                if (player.getLocation().distance(event.getPlayer().getLocation()) < 32) {
+                                                    add(player);
+                                                }
                                             }
-                                        }
-                                    }});
-                                    event.getPlayer().getInventory().setItemInMainHand(new ItemStack(Material.AIR));
-                                } else handItem.setItemMeta(damageable);
+                                        }});
+                                        event.getPlayer().getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                                    } else handItem.setItemMeta(damageable);
+                                }
                             }
+                            if (!blockBreakEvent.isCancelled()) {
+                                event.getBlock().breakNaturally(event.getPlayer().getInventory().getItemInMainHand(), true, true);
+                            }
+                            return;
                         }
-                        if (!blockBreakEvent.isCancelled()) {
-                            event.getBlock().breakNaturally(event.getPlayer().getInventory().getItemInMainHand(), true, true);
-                        }
-                        return;
-                    }
-                    event.getPlayer().sendBlockDamage(event.getBlock().getLocation(), damage, marker);
+                        event.getPlayer().sendBlockDamage(event.getBlock().getLocation(), damage, marker);
 
-                    Block target = event.getPlayer().getTargetBlockExact(8, FluidCollisionMode.NEVER);
-                    if (target == null || !target.getLocation().equals(event.getBlock().getLocation())) {
+                        Block target = event.getPlayer().getTargetBlockExact(8, FluidCollisionMode.NEVER);
+                        if (target == null || !target.getLocation().equals(event.getBlock().getLocation())) {
+                            int taskNum = blockbreakingTasks.get(event.getPlayer());
+                            cancelTask(taskNum);
+                        }
+                    } catch (NullPointerException e) {
                         int taskNum = blockbreakingTasks.get(event.getPlayer());
                         cancelTask(taskNum);
                     }
                 }, 1, 0);
+                if (blockbreakingTasks.containsKey(event.getPlayer())) {
+                    cancelTask(blockbreakingTasks.get(event.getPlayer()));
+                    blockbreakingTasks.remove(event.getPlayer());
+                }
                 blockbreakingTasks.put(event.getPlayer(), task);
                 taskEntityMap.put(task, marker);
                 taskBlockMap.put(task, event.getBlock());
@@ -187,14 +192,15 @@ public interface BreakSpeedModifierAbility extends Ability {
 
         private void cancelTask(int task) {
             Bukkit.getScheduler().cancelTask(task);
-            if (taskEntityMap.containsKey(task)) {
-                Entity marker = taskEntityMap.get(task);
-                taskPlayerMap.get(task).sendBlockDamage(taskBlockMap.get(task).getLocation(), 0, marker);
+            Entity marker = taskEntityMap.get(task);
+            Player player = taskPlayerMap.get(task);
+            if (player != null && marker != null) {
+                player.sendBlockDamage(taskBlockMap.get(task).getLocation(), 0, marker);
                 marker.remove();
-                taskEntityMap.remove(task);
-                taskBlockMap.remove(task);
-                taskPlayerMap.remove(task);
             }
+            taskEntityMap.remove(task);
+            taskBlockMap.remove(task);
+            taskPlayerMap.remove(task);
         }
 
         private static float getBlockDamage(Block block, BreakSpeedModifierAbility.BlockMiningContext context, int time) {
