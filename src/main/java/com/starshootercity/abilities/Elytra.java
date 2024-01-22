@@ -44,7 +44,7 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
 
     @Override
     public float getFlightSpeed(Player player) {
-        return 0;
+        return player.getFlySpeed();
     }
 
     @EventHandler
