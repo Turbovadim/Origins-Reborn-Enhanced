@@ -38,8 +38,8 @@ public class GeyserSwapper {
             if (origin.getName().equals("Human")) {
                 form.button(origin.getName(), FormImage.Type.URL, "https://minotar.net/avatar/" + player.getName() + "/32");
             } else {
-                form.button(origin.getName(), FormImage.Type.URL, origin.getResourceLocation());
-                System.out.println(origin.getResourceLocation());
+//                form.button(origin.getName(), FormImage.Type.URL, origin.getResourceLocation());
+                form.button(origin.getName());
             }
         }
         form.button("Random");
