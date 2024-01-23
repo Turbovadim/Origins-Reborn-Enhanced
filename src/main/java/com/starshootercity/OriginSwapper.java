@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.abilities.*;
 import com.starshootercity.events.PlayerSwapOriginEvent;
+import com.starshootercity.geysermc.GeyserSwapper;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -24,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -34,6 +36,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
+import org.geysermc.api.Geyser;
+import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,183 +77,187 @@ public class OriginSwapper implements Listener {
         openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, cost, false);
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost, boolean showUnchoosable) {
-        if (OriginLoader.origins.size() == 0) return;
-        List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-        if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
-        boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
-        while (slot > origins.size() || slot == origins.size() && !enableRandom) {
-            slot -= origins.size() + (enableRandom ? 1 : 0);
-        }
-        while (slot < 0) {
-            slot += origins.size() + (enableRandom ? 1 : 0);
-        }
-        ItemStack icon;
-        String name;
-        char impact;
-        LineData data;
-        if (slot == origins.size()) {
-            List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
-            icon = OrbOfOrigin.orb;
-            name = "Random";
-            impact = '\uE002';
-            StringBuilder names = new StringBuilder("You'll be assigned one of the following:\n\n");
-            for (Origin origin : origins) {
-                if (!excludedOrigins.contains(origin.getName())) {
-                    names.append(origin.getName()).append("\n");
-                }
-            }
-            data = new LineData(LineData.makeLineFor(
-                    names.toString(),
-                    LineData.LineComponent.LineType.DESCRIPTION
-            ));
+        if (GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
+            GeyserSwapper.openOriginSwapper(player, reason, showUnchoosable);
         } else {
-            Origin origin = origins.get(slot);
-            icon = origin.getIcon();
-            name = origin.getName();
-            impact = origin.getImpact();
-            data = new LineData(origin);
-        }
-        StringBuilder compressedName = new StringBuilder("\uF001");
-        for (char c : name.toCharArray()) {
-            compressedName.append(c);
-            compressedName.append('\uF000');
-        }
-        Component component = Component.text("\uF000\uE000\uF001\uE001\uF002" + impact)
-                .font(Key.key("minecraft:origin_selector"))
-                .color(NamedTextColor.WHITE)
-                .append(Component.text(compressedName.toString())
-                        .font(Key.key("minecraft:origin_title_text"))
-                        .color(NamedTextColor.WHITE)
-                )
-                .append(Component.text(getInverse(name) + "\uF000")
-                        .font(Key.key("minecraft:reverse_text"))
-                        .color(NamedTextColor.WHITE)
-                );
-        for (Component c : data.getLines(scrollAmount)) {
-            component = component.append(c);
-        }
-        Inventory swapperInventory = Bukkit.createInventory(null, 54,
-                component
-        );
-        ItemMeta meta = icon.getItemMeta();
-        meta.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, name.toLowerCase());
-        if (meta instanceof SkullMeta skullMeta) {
-            skullMeta.setOwningPlayer(player);
-        }
-        meta.getPersistentDataContainer().set(displayKey, PersistentDataType.BOOLEAN, true);
-        meta.getPersistentDataContainer().set(swapTypeKey, PersistentDataType.STRING, reason.getReason());
-        icon.setItemMeta(meta);
-        swapperInventory.setItem(1, icon);
-        ItemStack confirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-        ItemStack invisibleConfirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-        ItemMeta confirmMeta = confirm.getItemMeta();
-        ItemMeta invisibleConfirmMeta = invisibleConfirm.getItemMeta();
-
-        confirmMeta.displayName(Component.text("Confirm")
-                .color(NamedTextColor.WHITE)
-                .decoration(TextDecoration.ITALIC, false));
-        confirmMeta.setCustomModelData(5);
-        if (!showUnchoosable) confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
-        else confirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
-
-        invisibleConfirmMeta.displayName(Component.text("Confirm")
-                .color(NamedTextColor.WHITE)
-                .decoration(TextDecoration.ITALIC, false));
-        invisibleConfirmMeta.setCustomModelData(6);
-        if (!showUnchoosable) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
-        else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
-
-        if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
-            String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
-            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
-            List<Component> costsCurrency = List.of(
-                    Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
+            if (OriginLoader.origins.isEmpty()) return;
+            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
+            boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
+            while (slot > origins.size() || slot == origins.size() && !enableRandom) {
+                slot -= origins.size() + (enableRandom ? 1 : 0);
+            }
+            while (slot < 0) {
+                slot += origins.size() + (enableRandom ? 1 : 0);
+            }
+            ItemStack icon;
+            String name;
+            char impact;
+            LineData data;
+            if (slot == origins.size()) {
+                List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+                icon = OrbOfOrigin.orb;
+                name = "Random";
+                impact = '\uE002';
+                StringBuilder names = new StringBuilder("You'll be assigned one of the following:\n\n");
+                for (Origin origin : origins) {
+                    if (!excludedOrigins.contains(origin.getName())) {
+                        names.append(origin.getName()).append("\n");
+                    }
+                }
+                data = new LineData(LineData.makeLineFor(
+                        names.toString(),
+                        LineData.LineComponent.LineType.DESCRIPTION
+                ));
+            } else {
+                Origin origin = origins.get(slot);
+                icon = origin.getIcon();
+                name = origin.getName();
+                impact = origin.getImpact();
+                data = new LineData(origin);
+            }
+            StringBuilder compressedName = new StringBuilder("\uF001");
+            for (char c : name.toCharArray()) {
+                compressedName.append(c);
+                compressedName.append('\uF000');
+            }
+            Component component = Component.text("\uF000\uE000\uF001\uE001\uF002" + impact)
+                    .font(Key.key("minecraft:origin_selector"))
+                    .color(NamedTextColor.WHITE)
+                    .append(Component.text(compressedName.toString())
+                            .font(Key.key("minecraft:origin_title_text"))
+                            .color(NamedTextColor.WHITE)
+                    )
+                    .append(Component.text(getInverse(name) + "\uF000")
+                            .font(Key.key("minecraft:reverse_text"))
+                            .color(NamedTextColor.WHITE)
+                    );
+            for (Component c : data.getLines(scrollAmount)) {
+                component = component.append(c);
+            }
+            Inventory swapperInventory = Bukkit.createInventory(null, 54,
+                    component
             );
-            confirmMeta.lore(costsCurrency);
-            invisibleConfirmMeta.lore(costsCurrency);
-            confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
-            invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
-        }
+            ItemMeta meta = icon.getItemMeta();
+            meta.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, name.toLowerCase());
+            if (meta instanceof SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(player);
+            }
+            meta.getPersistentDataContainer().set(displayKey, PersistentDataType.BOOLEAN, true);
+            meta.getPersistentDataContainer().set(swapTypeKey, PersistentDataType.STRING, reason.getReason());
+            icon.setItemMeta(meta);
+            swapperInventory.setItem(1, icon);
+            ItemStack confirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+            ItemStack invisibleConfirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+            ItemMeta confirmMeta = confirm.getItemMeta();
+            ItemMeta invisibleConfirmMeta = invisibleConfirm.getItemMeta();
 
-        ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-        ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-        ItemMeta upMeta = up.getItemMeta();
-        ItemMeta downMeta = down.getItemMeta();
-
-        int scrollSize = OriginsReborn.getInstance().getConfig().getInt("origin-selection.scroll-amount", 1);
-
-        upMeta.displayName(Component.text("Up")
-                .color(NamedTextColor.WHITE)
-                .decoration(TextDecoration.ITALIC, false));
-        if (scrollAmount != 0) {
-            upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-            upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
-            upMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
-        }
-        upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
-        upMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-        upMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
-
-
-        int size = data.lines.size() - scrollAmount - 6;
-        boolean canGoDown = size > 0;
-
-        downMeta.displayName(Component.text("Down")
-                .color(NamedTextColor.WHITE)
-                .decoration(TextDecoration.ITALIC, false));
-        if (canGoDown) {
-            downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-            downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
-            downMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
-        }
-        downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
-        downMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-        downMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
-
-
-        up.setItemMeta(upMeta);
-        down.setItemMeta(downMeta);
-        swapperInventory.setItem(52, up);
-        swapperInventory.setItem(53, down);
-
-        if (!forceRandom) {
-            ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-            ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-            ItemMeta leftMeta = left.getItemMeta();
-            ItemMeta rightMeta = right.getItemMeta();
-
-            leftMeta.displayName(Component.text("Previous origin")
+            confirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            leftMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
-            leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-            leftMeta.setCustomModelData(1);
-            leftMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-            leftMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+            confirmMeta.setCustomModelData(5);
+            if (!showUnchoosable) confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+            else confirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
 
-            rightMeta.displayName(Component.text("Next origin")
+            invisibleConfirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            rightMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
-            rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-            rightMeta.setCustomModelData(2);
-            rightMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-            rightMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+            invisibleConfirmMeta.setCustomModelData(6);
+            if (!showUnchoosable) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+            else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
+
+            if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
+                String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+                int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+                List<Component> costsCurrency = List.of(
+                        Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
+                );
+                confirmMeta.lore(costsCurrency);
+                invisibleConfirmMeta.lore(costsCurrency);
+                confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
+                invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.BOOLEAN, true);
+            }
+
+            ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+            ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+            ItemMeta upMeta = up.getItemMeta();
+            ItemMeta downMeta = down.getItemMeta();
+
+            int scrollSize = OriginsReborn.getInstance().getConfig().getInt("origin-selection.scroll-amount", 1);
+
+            upMeta.displayName(Component.text("Up")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false));
+            if (scrollAmount != 0) {
+                upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
+                upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
+                upMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
+            }
+            upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
+            upMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+            upMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
 
 
-            left.setItemMeta(leftMeta);
-            right.setItemMeta(rightMeta);
+            int size = data.lines.size() - scrollAmount - 6;
+            boolean canGoDown = size > 0;
 
-            swapperInventory.setItem(47, left);
-            swapperInventory.setItem(51, right);
+            downMeta.displayName(Component.text("Down")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false));
+            if (canGoDown) {
+                downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
+                downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
+                downMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
+            }
+            downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
+            downMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+            downMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+
+
+            up.setItemMeta(upMeta);
+            down.setItemMeta(downMeta);
+            swapperInventory.setItem(52, up);
+            swapperInventory.setItem(53, down);
+
+            if (!forceRandom) {
+                ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+                ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+                ItemMeta leftMeta = left.getItemMeta();
+                ItemMeta rightMeta = right.getItemMeta();
+
+                leftMeta.displayName(Component.text("Previous origin")
+                        .color(NamedTextColor.WHITE)
+                        .decoration(TextDecoration.ITALIC, false));
+                leftMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
+                leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
+                leftMeta.setCustomModelData(1);
+                leftMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+                leftMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+
+                rightMeta.displayName(Component.text("Next origin")
+                        .color(NamedTextColor.WHITE)
+                        .decoration(TextDecoration.ITALIC, false));
+                rightMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
+                rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
+                rightMeta.setCustomModelData(2);
+                rightMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
+                rightMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+
+
+                left.setItemMeta(leftMeta);
+                right.setItemMeta(rightMeta);
+
+                swapperInventory.setItem(47, left);
+                swapperInventory.setItem(51, right);
+            }
+
+            confirm.setItemMeta(confirmMeta);
+            invisibleConfirm.setItemMeta(invisibleConfirmMeta);
+            swapperInventory.setItem(48, confirm);
+            swapperInventory.setItem(49, invisibleConfirm);
+            swapperInventory.setItem(50, invisibleConfirm);
+            player.openInventory(swapperInventory);
         }
-
-        confirm.setItemMeta(confirmMeta);
-        invisibleConfirm.setItemMeta(invisibleConfirmMeta);
-        swapperInventory.setItem(48, confirm);
-        swapperInventory.setItem(49, invisibleConfirm);
-        swapperInventory.setItem(50, invisibleConfirm);
-        player.openInventory(swapperInventory);
     }
 
     @EventHandler
@@ -466,6 +475,12 @@ public class OriginSwapper implements Listener {
         if (origin != null) {
             if (origin.getTeam() == null) return;
             origin.getTeam().addPlayer(event.getPlayer());
+        } else {
+            if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
+                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false);
+            } else {
+                openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
+            }
         }
     }
 
@@ -480,21 +495,26 @@ public class OriginSwapper implements Listener {
     }
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
+    public void onInventoryClosed(InventoryCloseEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (getOrigin(player) == null) {
                 if (player.isDead()) continue;
-                if (player.getOpenInventory().getType() != InventoryType.CHEST) {
+                if (player.getOpenInventory().getType() != InventoryType.CHEST && !Geyser.api().isBedrockPlayer(player.getUniqueId())) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
                         selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
                     } else openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
                 }
-            } else {
-                AbilityRegister.updateFlight(player);
-                player.setAllowFlight(AbilityRegister.canFly(player));
-                player.setInvisible(AbilityRegister.isInvisible(player));
-                applyAttributeChanges(player);
             }
+        }
+    }
+
+    @EventHandler
+    public void onServerTickEnd(ServerTickEndEvent event) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            AbilityRegister.updateFlight(player);
+            player.setAllowFlight(AbilityRegister.canFly(player));
+            player.setInvisible(AbilityRegister.isInvisible(player));
+            applyAttributeChanges(player);
         }
     }
 

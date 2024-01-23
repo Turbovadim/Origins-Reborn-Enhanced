@@ -61,7 +61,7 @@ public class OriginsReborn extends OriginsAddon {
         if (getConfig().getBoolean("swap-command.vault.enabled")) {
             vaultEnabled = setupEconomy();
             if (!vaultEnabled) {
-                getLogger().warning("Vault is not missing, origin swaps will not cost currency");
+                getLogger().warning("Vault is missing, origin swaps will not cost currency");
             }
         } else vaultEnabled = false;
         saveDefaultConfig();
