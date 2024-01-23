@@ -38,7 +38,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.geysermc.api.Geyser;
 import org.geysermc.geyser.api.GeyserApi;
-import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,9 +76,7 @@ public class OriginSwapper implements Listener {
         openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, cost, false);
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost, boolean showUnchoosable) {
-        if (GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
-            GeyserSwapper.openOriginSwapper(player, reason, showUnchoosable);
-        } else {
+        if (GeyserSwapper.checkBedrockSwap(player, reason, forceRandom, cost, showUnchoosable)) {
             if (OriginLoader.origins.isEmpty()) return;
             List<Origin> origins = new ArrayList<>(OriginLoader.origins);
             if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
@@ -341,7 +338,7 @@ public class OriginSwapper implements Listener {
         }
     }
 
-    public boolean shouldResetPlayer(PlayerSwapOriginEvent.SwapReason reason) {
+    public static boolean shouldResetPlayer(PlayerSwapOriginEvent.SwapReason reason) {
         return switch (reason) {
             case COMMAND -> OriginsReborn.getInstance().getConfig().getBoolean("swap-command.reset-player");
             case ORB_OF_ORIGIN -> OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.reset-player");
@@ -477,7 +474,7 @@ public class OriginSwapper implements Listener {
             origin.getTeam().addPlayer(event.getPlayer());
         } else {
             if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
-                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false);
+                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false, false);
             } else {
                 openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
             }
@@ -644,7 +641,8 @@ public class OriginSwapper implements Listener {
                         Component.text(result.toString())
                                 .color(type == LineComponent.LineType.TITLE ? NamedTextColor.WHITE : TextColor.fromHexString("#CACACA"))
                                 .append(Component.text(getInverse(finalText))),
-                        type
+                        type,
+                    result.toString()
                 ));
             if (otherPart.length() != 0) {
                 list.addAll(makeLineFor(otherPart.toString(), type));
@@ -658,15 +656,22 @@ public class OriginSwapper implements Listener {
             }
             private final Component component;
             private final LineType type;
+            private final String rawText;
 
-            public LineComponent(Component component, LineType type) {
+            public LineComponent(Component component, LineType type, String rawText) {
                 this.component = component;
                 this.type = type;
+                this.rawText = rawText;
             }
 
             public LineComponent() {
                 this.type = LineType.DESCRIPTION;
                 this.component = Component.empty();
+                this.rawText = "";
+            }
+
+            public String getRawText() {
+                return rawText;
             }
 
             public Component getComponent(int lineNumber) {
@@ -677,6 +682,7 @@ public class OriginSwapper implements Listener {
             }
         }
         private final List<LineComponent> lines;
+
         public LineData(Origin origin) {
             lines = new ArrayList<>();
             lines.addAll(origin.getLineData());
