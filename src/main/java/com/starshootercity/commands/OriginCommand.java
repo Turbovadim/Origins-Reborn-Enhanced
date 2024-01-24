@@ -26,7 +26,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 if (sender instanceof Player player) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.enabled")) {
                         if (player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.permission", "originsreborn.admin"))) {
-                            OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, false, OriginsReborn.getInstance().isVaultEnabled());
+                            OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, OriginsReborn.getInstance().isVaultEnabled());
                         } else {
                             sender.sendMessage(Component.text("You don't have permission to do this!").color(NamedTextColor.RED));
                         }
@@ -78,7 +78,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             }
             case "check" -> {
                 if (sender instanceof Player player) {
-                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, OriginLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, true, false, true);
+                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, OriginLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, false, true);
                 } else {
                     sender.sendMessage(Component.text("This command can only be run by a player").color(NamedTextColor.RED));
                 }

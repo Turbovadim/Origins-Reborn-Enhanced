@@ -55,9 +55,8 @@ public class OriginSwapper implements Listener {
     private final static NamespacedKey swapTypeKey = new NamespacedKey(OriginsReborn.getInstance(), "swap-type");
     private final static NamespacedKey pageSetKey = new NamespacedKey(OriginsReborn.getInstance(), "page-set");
     private final static NamespacedKey pageScrollKey = new NamespacedKey(OriginsReborn.getInstance(), "page-scroll");
-    private final static NamespacedKey randomOriginKey = new NamespacedKey(OriginsReborn.getInstance(), "random-origin");
     private final static NamespacedKey costKey = new NamespacedKey(OriginsReborn.getInstance(), "enable-cost");
-    private final static NamespacedKey allowUnchoosableKey = new NamespacedKey(OriginsReborn.getInstance(), "allow-unchoosable");
+    private final static NamespacedKey displayOnlyKey = new NamespacedKey(OriginsReborn.getInstance(), "display-only");
     private final static NamespacedKey closeKey = new NamespacedKey(OriginsReborn.getInstance(), "close");
     private final static Random random = new Random();
 
@@ -69,18 +68,18 @@ public class OriginSwapper implements Listener {
         return result.toString();
     }
 
-    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom) {
-        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, false, false);
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount) {
+        openOriginSwapper(player, reason, slot, scrollAmount, false, false);
     }
-    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost) {
-        openOriginSwapper(player, reason, slot, scrollAmount, forceRandom, cost, false);
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean cost) {
+        openOriginSwapper(player, reason, slot, scrollAmount, cost, false);
     }
-    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean forceRandom, boolean cost, boolean showUnchoosable) {
-        if (GeyserSwapper.checkBedrockSwap(player, reason, forceRandom, cost, showUnchoosable)) {
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean cost, boolean displayOnly) {
+        boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
+        if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
             if (OriginLoader.origins.isEmpty()) return;
             List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-            if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
-            boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
+            if (!displayOnly) origins.removeIf(Origin::isUnchoosable);
             while (slot > origins.size() || slot == origins.size() && !enableRandom) {
                 slot -= origins.size() + (enableRandom ? 1 : 0);
             }
@@ -153,14 +152,14 @@ public class OriginSwapper implements Listener {
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
             confirmMeta.setCustomModelData(5);
-            if (!showUnchoosable) confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+            if (!displayOnly) confirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
             else confirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
 
             invisibleConfirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
             invisibleConfirmMeta.setCustomModelData(6);
-            if (!showUnchoosable) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
+            if (!displayOnly) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, PersistentDataType.BOOLEAN, true);
             else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, PersistentDataType.BOOLEAN, true);
 
             if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
@@ -188,11 +187,10 @@ public class OriginSwapper implements Listener {
             if (scrollAmount != 0) {
                 upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
                 upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
-                upMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
             }
             upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
             upMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-            upMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+            upMeta.getPersistentDataContainer().set(displayOnlyKey, PersistentDataType.BOOLEAN, displayOnly);
 
 
             int size = data.lines.size() - scrollAmount - 6;
@@ -204,11 +202,10 @@ public class OriginSwapper implements Listener {
             if (canGoDown) {
                 downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
                 downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
-                downMeta.getPersistentDataContainer().set(randomOriginKey, PersistentDataType.BOOLEAN, forceRandom);
             }
             downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
             downMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-            downMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+            downMeta.getPersistentDataContainer().set(displayOnlyKey, PersistentDataType.BOOLEAN, displayOnly);
 
 
             up.setItemMeta(upMeta);
@@ -216,7 +213,9 @@ public class OriginSwapper implements Listener {
             swapperInventory.setItem(52, up);
             swapperInventory.setItem(53, down);
 
-            if (!forceRandom) {
+
+            // Change to unchoosable
+            if (!displayOnly) {
                 ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
                 ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
                 ItemMeta leftMeta = left.getItemMeta();
@@ -229,7 +228,7 @@ public class OriginSwapper implements Listener {
                 leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
                 leftMeta.setCustomModelData(1);
                 leftMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-                leftMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+                leftMeta.getPersistentDataContainer().set(displayOnlyKey, PersistentDataType.BOOLEAN, false);
 
                 rightMeta.displayName(Component.text("Next origin")
                         .color(NamedTextColor.WHITE)
@@ -238,7 +237,7 @@ public class OriginSwapper implements Listener {
                 rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
                 rightMeta.setCustomModelData(2);
                 rightMeta.getPersistentDataContainer().set(costKey, PersistentDataType.BOOLEAN, cost);
-                rightMeta.getPersistentDataContainer().set(allowUnchoosableKey, PersistentDataType.BOOLEAN, showUnchoosable);
+                rightMeta.getPersistentDataContainer().set(displayOnlyKey, PersistentDataType.BOOLEAN, false);
 
 
                 left.setItemMeta(leftMeta);
@@ -270,13 +269,12 @@ public class OriginSwapper implements Listener {
                 if (currentItem == null || currentItem.getItemMeta() == null) return;
                 Integer page = currentItem.getItemMeta().getPersistentDataContainer().get(pageSetKey, PersistentDataType.INTEGER);
                 if (page != null) {
-                    boolean forceRandom = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(randomOriginKey, PersistentDataType.BOOLEAN, false);
                     boolean cost = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(costKey, PersistentDataType.BOOLEAN, false);
-                    boolean allowUnchoosable = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(allowUnchoosableKey, PersistentDataType.BOOLEAN, false);
+                    boolean allowUnchoosable = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(displayOnlyKey, PersistentDataType.BOOLEAN, false);
                     Integer scroll = currentItem.getItemMeta().getPersistentDataContainer().get(pageScrollKey, PersistentDataType.INTEGER);
                     if (scroll == null) return;
                     player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
-                    openOriginSwapper(player, getReason(item), page, scroll, forceRandom, cost, allowUnchoosable);
+                    openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable);
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
                     int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
@@ -474,9 +472,9 @@ public class OriginSwapper implements Listener {
             origin.getTeam().addPlayer(event.getPlayer());
         } else {
             if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
-                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false, false);
+                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false);
             } else {
-                openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
+                openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
             }
         }
     }
@@ -499,7 +497,7 @@ public class OriginSwapper implements Listener {
                 if (player.getOpenInventory().getType() != InventoryType.CHEST && !Geyser.api().isBedrockPlayer(player.getUniqueId())) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
                         selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
-                    } else openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
+                    } else openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
                 }
             }
         }
@@ -518,7 +516,7 @@ public class OriginSwapper implements Listener {
     public void selectRandomOrigin(Player player, PlayerSwapOriginEvent.SwapReason reason) {
         Origin origin = OriginLoader.origins.get(random.nextInt(OriginLoader.origins.size()));
         setOrigin(player, origin, reason, shouldResetPlayer(reason));
-        openOriginSwapper(player, reason, OriginLoader.origins.indexOf(origin), 0, true);
+        openOriginSwapper(player, reason, OriginLoader.origins.indexOf(origin), 0, false, true);
     }
 
     private final Map<Player, PlayerRespawnEvent.RespawnReason> lastRespawnReasons = new HashMap<>();
@@ -540,7 +538,7 @@ public class OriginSwapper implements Listener {
             setOrigin(event.getPlayer(), null, PlayerSwapOriginEvent.SwapReason.DIED, false);
             if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
                 selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL);
-            } else openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, false);
+            } else openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
         }
     }
 
@@ -606,6 +604,7 @@ public class OriginSwapper implements Listener {
     public static class LineData {
         public static List<LineComponent> makeLineFor(String text, LineComponent.LineType type) {
             StringBuilder result = new StringBuilder();
+            StringBuilder rawResult = new StringBuilder();
             List<LineComponent> list = new ArrayList<>();
             List<String> splitLines = new ArrayList<>(Arrays.stream(text.split("\n", 2)).toList());
             StringBuilder otherPart = new StringBuilder();
@@ -634,15 +633,17 @@ public class OriginSwapper implements Listener {
             if (type == LineComponent.LineType.DESCRIPTION) firstLine = '\uF00A' + firstLine;
             for (char c : firstLine.toCharArray()) {
                 result.append(c);
+                rawResult.append(c == '\uF00A' ? "" : c);
                 result.append('\uF000');
             }
+            rawResult.append(' ');
             String finalText = firstLine;
             list.add(new LineComponent(
                         Component.text(result.toString())
                                 .color(type == LineComponent.LineType.TITLE ? NamedTextColor.WHITE : TextColor.fromHexString("#CACACA"))
                                 .append(Component.text(getInverse(finalText))),
                         type,
-                    result.toString()
+                    rawResult.toString()
                 ));
             if (otherPart.length() != 0) {
                 list.addAll(makeLineFor(otherPart.toString(), type));
@@ -657,17 +658,28 @@ public class OriginSwapper implements Listener {
             private final Component component;
             private final LineType type;
             private final String rawText;
+            private final boolean empty;
+
+            public boolean isEmpty() {
+                return empty;
+            }
+
+            public LineType getType() {
+                return type;
+            }
 
             public LineComponent(Component component, LineType type, String rawText) {
                 this.component = component;
                 this.type = type;
                 this.rawText = rawText;
+                this.empty = false;
             }
 
             public LineComponent() {
                 this.type = LineType.DESCRIPTION;
                 this.component = Component.empty();
                 this.rawText = "";
+                this.empty = true;
             }
 
             public String getRawText() {
@@ -707,6 +719,10 @@ public class OriginSwapper implements Listener {
                 resultLines.add(lines.get(i).getComponent(i - startingPoint));
             }
             return resultLines;
+        }
+
+        public List<LineComponent> getRawLines() {
+            return lines;
         }
     }
 }

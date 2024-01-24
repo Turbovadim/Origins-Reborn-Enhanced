@@ -1,96 +1,186 @@
 package com.starshootercity.geysermc;
 
-import com.starshootercity.Origin;
-import com.starshootercity.OriginLoader;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
+import com.starshootercity.*;
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.geysermc.cumulus.form.CustomForm;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.geysermc.cumulus.form.Form;
 import org.geysermc.cumulus.form.ModalForm;
 import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
+
+import static com.starshootercity.OriginSwapper.orbCooldown;
 
 public class GeyserSwapper {
-    private final static Random random = new Random();
-    public static boolean checkBedrockSwap(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean forceRandom, boolean cost, boolean showUnchoosable) {
-        if (!Bukkit.getPluginManager().isPluginEnabled("Geyser-Spigot")) return true;
-        if (!GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
+    public static boolean checkBedrockSwap(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean cost, boolean displayOnly) {
+        try {
+            if (!GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
+                return true;
+            } else {
+                openOriginSwapper(player, reason, displayOnly, cost);
+                return false;
+            }
+        } catch (NoClassDefFoundError e) {
             return true;
-        } else {
-            openOriginSwapper(player, reason, showUnchoosable, forceRandom, cost);
-            return false;
         }
     }
-    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean showUnchoosable, boolean forceRandom, boolean cost) {
-        Bukkit.broadcast(Component.text(0));
-        GeyserConnection geyserPlayer = GeyserApi.api().connectionByUuid(player.getUniqueId());
-        if (geyserPlayer == null) return;
-
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-        if (!showUnchoosable) origins.removeIf(Origin::isUnchoosable);
-
-        boolean reset = OriginSwapper.shouldResetPlayer(reason);
-        if (forceRandom) {
-            Origin origin = origins.get(random.nextInt(origins.size()));
-            OriginSwapper.setOrigin(player, origin, reason, reset);
-            openOriginInfo(player, origin, reason, true, false, false);
+        if (!displayOnly) origins.removeIf(Origin::isUnchoosable);
+        else {
+            openOriginInfo(player, OriginSwapper.getOrigin(player), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false);
             return;
         }
+        origins.sort((o1, o2) -> {
+            if (o1.getImpact() == o2.getImpact()) {
+                if (o1.getPosition() == o2.getPosition()) return 0;
+                return o1.getPosition() > o2.getPosition() ? 1 : -1;
+            }
+            return o1.getImpact() > o2.getImpact() ? 1 : -1;
+        });
 
-        SimpleForm.Builder form = SimpleForm.builder().title("Origins");
+        SimpleForm.Builder form = SimpleForm.builder().title("Choose your Origin");
+
         for (Origin origin : origins) {
             if (origin.getIcon().getType() == Material.PLAYER_HEAD) {
-                form.button(origin.getName(), FormImage.Type.URL, "https://minotar.net/avatar/" + player.getName() + "/32");
+                form.button(origin.getName(), FormImage.Type.URL, "https://mc-heads.net/avatar/MHF_Steve");
             } else {
-//                form.button(origin.getName(), FormImage.Type.URL, origin.getResourceLocation());
-                form.button(origin.getName());
+                form.button(origin.getName(), FormImage.Type.URL, origin.getResourceURL());
+            }
+
+        }
+
+        form.button("Random", FormImage.Type.URL, "https://static.wikia.nocookie.net/origins-smp/images/1/13/Origin_Orb.png/revision/latest?cb=20210411202749");
+
+        sendForm(player.getUniqueId(), form
+                .closedOrInvalidResultHandler(() -> {
+                    if (OriginSwapper.getOrigin(player) == null) {
+                        openOriginSwapper(player, reason, false, cost);
+                    }
+                })
+                .validResultHandler(response -> openOriginInfo(player, OriginLoader.originNameMap.get(response.clickedButton().text().toLowerCase()), reason, false, cost)).build());
+
+    }
+
+    private static void sendForm(UUID uuid, Form form) {
+        try {
+            FloodgateApi.getInstance().sendForm(uuid, form);
+        } catch (NoClassDefFoundError e) {
+            GeyserApi.api().sendForm(uuid, form);
+        }
+    }
+
+    private static final Random random = new Random();
+
+    public static void setOrigin(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean cost) {
+        if (OriginsReborn.getInstance().isVaultEnabled() && cost) {
+            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+            Economy economy = OriginsReborn.getInstance().getEconomy();
+            if (economy.has(player, amount)) {
+                economy.withdrawPlayer(player, amount);
+            } else {
+                String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+                player.sendMessage(Component.text("You need %s%s to swap your origin!".formatted(symbol, amount)));
+                return;
             }
         }
-        form.button("Random");
 
-        geyserPlayer.sendForm(form
+
+        ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
+
+        if (reason == PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN) {
+            EquipmentSlot hand = null;
+            if (meta != null) {
+                if (meta.getPersistentDataContainer().has(OrbOfOrigin.orbKey)) {
+                    hand = EquipmentSlot.HAND;
+                }
+            }
+            if (hand == null) {
+                ItemMeta offhandMeta = player.getInventory().getItemInOffHand().getItemMeta();
+                if (offhandMeta != null) {
+                    if (offhandMeta.getPersistentDataContainer().has(OrbOfOrigin.orbKey)) {
+                        hand = EquipmentSlot.OFF_HAND;
+                    }
+                }
+            }
+            if (hand == null) return;
+            orbCooldown.put(player, System.currentTimeMillis());
+            player.swingHand(hand);
+            if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.consume")) {
+                player.getInventory().getItem(hand).setAmount(player.getInventory().getItem(hand).getAmount() - 1);
+            }
+        }
+        boolean resetPlayer = OriginSwapper.shouldResetPlayer(reason);
+        if (origin == null) {
+            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            origins.removeIf(Origin::isUnchoosable);
+            List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+            origins.removeIf(possibleOrigin -> excludedOrigins.contains(possibleOrigin.getName()));
+            origin = origins.get(random.nextInt(origins.size()));
+        }
+        OriginSwapper.setOrigin(player, origin, reason, resetPlayer);
+    }
+
+    public static void openOriginInfo(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
+        GeyserConnection geyserPlayer = GeyserApi.api().connectionByUuid(player.getUniqueId());
+        if (geyserPlayer == null) return;
+        ModalForm.Builder form = ModalForm.builder();
+        StringBuilder info = new StringBuilder();
+        if (origin != null) {
+            form.title(origin.getName());
+            for (OriginSwapper.LineData.LineComponent line : new OriginSwapper.LineData(origin).getRawLines()) {
+                if (line.isEmpty()) {
+                    info.append("\n\n");
+                } else {
+                    info.append(line.getRawText());
+                }
+                if (line.getType() == OriginSwapper.LineData.LineComponent.LineType.TITLE) info.append("\n");
+            }
+        } else {
+            form.title("Random Origin");
+            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            origins.removeIf(Origin::isUnchoosable);
+            List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+            info.append("You'll be assigned one of the following:\n\n");
+            for (Origin possibleOrigin : origins) {
+                if (!excludedOrigins.contains(possibleOrigin.getName())) {
+                    info.append(possibleOrigin.getName()).append("\n");
+                }
+            }
+        }
+        if (cost) {
+            String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+            info.append("\n\n\n§eThis will cost you %s%s!".formatted(symbol, amount));
+        }
+        form.content(info.toString());
+        form.button1("Cancel");
+        form.button2("Confirm");
+        sendForm(player.getUniqueId(), form
                 .closedOrInvalidResultHandler(() -> {
-                    if (reason == PlayerSwapOriginEvent.SwapReason.INITIAL) {
-                        openOriginSwapper(player, reason, showUnchoosable, false, cost);
+                    if (!displayOnly) {
+                        openOriginInfo(player, origin, reason, false, cost);
                     }
                 })
                 .validResultHandler(response -> {
-                    openOriginInfo(player, OriginLoader.originNameMap.get(response.clickedButton().text().toLowerCase()), reason, false, reset, cost);
-                    //setOrigin(player, response.clickedButton().text().toLowerCase(), reason, reset);
-                }).build());
-
-    }
-
-    public static void setOrigin(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean reset, boolean cost) {
-        Bukkit.getScheduler().runTask(OriginsReborn.getInstance(), () -> {
-            OriginSwapper.setOrigin(player, origin, reason, reset);
-        });
-    }
-
-    public static void openOriginInfo(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean reset, boolean cost) {
-        GeyserConnection geyserPlayer = GeyserApi.api().connectionByUuid(player.getUniqueId());
-        if (geyserPlayer == null) return;
-        SimpleForm.Builder form = SimpleForm.builder().title(origin.getName());
-        form.content("Test");
-        form.button("Confirm");
-        Bukkit.broadcast(Component.text(2));
-        geyserPlayer.sendForm(form
-                .closedOrInvalidResultHandler(() -> {
-                    openOriginInfo(player, origin, reason, displayOnly, reset, cost);
-                })
-                .validResultHandler(response -> {
                     if (displayOnly) return;
-                    setOrigin(player, origin, reason, reset, cost);
-                }));
+                    if (response.clickedButtonId() == 0) {
+                        openOriginSwapper(player, reason, false, cost);
+                    } else {
+                        setOrigin(player, origin, reason, cost);
+                    }
+                }).build());
     }
 }

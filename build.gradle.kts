@@ -21,6 +21,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("org.geysermc.geyser:api:2.2.0-SNAPSHOT")
+    compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")
     implementation("com.github.stleary:JSON-java:20231013")
     paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
 }

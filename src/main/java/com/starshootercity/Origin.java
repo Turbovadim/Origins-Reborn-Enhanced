@@ -1,16 +1,13 @@
 package com.starshootercity;
 
 import com.starshootercity.abilities.Ability;
-import com.starshootercity.abilities.VisibleAbility;
 import com.starshootercity.abilities.AbilityRegister;
+import com.starshootercity.abilities.VisibleAbility;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.resources.ResourceLocation;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
@@ -120,9 +117,8 @@ public class Origin {
         return icon;
     }
 
-    public String getResourceLocation() {
+    public String getResourceURL() {
         String key = icon.getType().getKey().value();
-        String texturePath = "textures/item/" + key + ".png";
-        return texturePath;
+        return "https://assets.mcasset.cloud/1.20.4/assets/minecraft/textures/%s/%s.png".formatted(icon.getType().isBlock() ? "block" : "item", key);
     }
 }

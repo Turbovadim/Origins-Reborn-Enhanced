@@ -91,7 +91,7 @@ public class OrbOfOrigin implements Listener {
                 EquipmentSlot hand = EquipmentSlot.OFF_HAND;
                 if (heldMeta != null && heldMeta.getPersistentDataContainer().has(orbKey)) hand = EquipmentSlot.HAND;
                 event.getPlayer().swingHand(hand);
-                OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, 0, 0, false);
+                OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, 0, 0);
             }
         }
     }
