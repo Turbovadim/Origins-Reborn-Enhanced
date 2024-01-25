@@ -37,7 +37,6 @@ public class PackApplier implements Listener {
             throw new RuntimeException(e);
         }
     }
-
     public static void addResourcePack(OriginsAddon addon, @Nullable ResourcePackInfo info) {
         if (info == null) return;
         addonPacks.put(addon.getClass(), info);
