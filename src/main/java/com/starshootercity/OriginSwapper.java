@@ -75,6 +75,7 @@ public class OriginSwapper implements Listener {
         openOriginSwapper(player, reason, slot, scrollAmount, cost, false);
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean cost, boolean displayOnly) {
+        lastSwapReasons.put(player, reason);
         boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
             if (OriginLoader.origins.isEmpty()) return;
@@ -503,6 +504,8 @@ public class OriginSwapper implements Listener {
         }
     }
 
+    private static final Map<Player, PlayerSwapOriginEvent.SwapReason> lastSwapReasons = new HashMap<>();
+
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -510,6 +513,24 @@ public class OriginSwapper implements Listener {
             player.setAllowFlight(AbilityRegister.canFly(player));
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
+            if (getOrigin(player) == null && player.getOpenInventory().getType() != InventoryType.CHEST) {
+                try {
+                    if (!GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
+                        openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0);
+                    }
+                } catch (NoClassDefFoundError e) {
+                    openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
+        if (event.getReason() == PlayerSwapOriginEvent.SwapReason.INITIAL || event.getReason() == PlayerSwapOriginEvent.SwapReason.DIED) {
+            if (event.getPlayer().getBedSpawnLocation() == null) {
+                event.getPlayer().teleport(getRespawnWorld(getOrigin(event.getPlayer())).getSpawnLocation());
+            }
         }
     }
 
