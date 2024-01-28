@@ -413,7 +413,7 @@ public class OriginSwapper implements Listener {
         }
         World world = getRespawnWorld(getOrigin(player));
         player.teleport(world.getSpawnLocation());
-        player.setBedSpawnLocation(null);
+        player.setRespawnLocation(null);
     }
 
     public static @NotNull World getRespawnWorld(@Nullable Origin origin) {
@@ -528,7 +528,7 @@ public class OriginSwapper implements Listener {
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
         if (event.getReason() == PlayerSwapOriginEvent.SwapReason.INITIAL || event.getReason() == PlayerSwapOriginEvent.SwapReason.DIED) {
-            if (event.getPlayer().getBedSpawnLocation() == null) {
+            if (event.getPlayer().getRespawnLocation() == null) {
                 event.getPlayer().teleport(getRespawnWorld(getOrigin(event.getPlayer())).getSpawnLocation());
             }
         }
@@ -544,7 +544,7 @@ public class OriginSwapper implements Listener {
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (event.getPlayer().getBedSpawnLocation() == null) {
+        if (event.getPlayer().getRespawnLocation() == null) {
             World world = getRespawnWorld(getOrigin(event.getPlayer()));
             event.setRespawnLocation(world.getSpawnLocation());
         }

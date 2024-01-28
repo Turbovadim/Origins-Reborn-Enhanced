@@ -38,6 +38,7 @@ public class LightArmor implements VisibleAbility, Listener {
 
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
+        if (event.getNewOrigin() == null) return;
         if (event.getNewOrigin().hasAbility(getKey())) {
             ItemStack helmet = event.getPlayer().getInventory().getHelmet();
             ItemStack chestplate = event.getPlayer().getInventory().getChestplate();

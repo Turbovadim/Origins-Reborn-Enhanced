@@ -6,6 +6,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
@@ -22,11 +23,11 @@ public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
         this.newOrigin = newOrigin;
     }
 
-    public Origin getNewOrigin() {
+    public @Nullable Origin getNewOrigin() {
         return newOrigin;
     }
 
-    public Origin getOldOrigin() {
+    public @Nullable Origin getOldOrigin() {
         return oldOrigin;
     }
 
