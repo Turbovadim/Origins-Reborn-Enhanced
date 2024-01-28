@@ -2,9 +2,12 @@ package com.starshootercity;
 
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.geysermc.geyser.api.GeyserApi;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
@@ -19,6 +22,7 @@ public class PackApplier implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        if (isBedrockPlayer(event.getPlayer())) return;
         try {
             if (OriginsReborn.getInstance().getConfig().getBoolean("resource-pack.enabled")) {
                 ResourcePackInfo packInfo = ResourcePackInfo.resourcePackInfo()
@@ -37,6 +41,29 @@ public class PackApplier implements Listener {
             throw new RuntimeException(e);
         }
     }
+
+    private boolean isBedrockPlayer(Player player) {
+        try {
+            if (GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
+                GeyserConnection connection = GeyserApi.api().connectionByUuid(player.getUniqueId());
+                return connection != null;
+            } else return false;
+        } catch (NoClassDefFoundError e) {
+            return false;
+        }
+    }
+
+/*
+    @Subscribe
+    public void onGeyserLoadResourcePacks(GeyserLoadResourcePacksEvent event) {
+        event.resourcePacks().add(new File(OriginsReborn.getInstance().getDataFolder(), "bedrock-packs/bedrock.mcpack").toPath());
+    }
+
+    public PackApplier() {
+        OriginsReborn.getInstance().saveResource("bedrock.mcpack", false);
+    }
+
+ */
 
     public static void addResourcePack(OriginsAddon addon, @Nullable ResourcePackInfo info) {
         if (info == null) return;
