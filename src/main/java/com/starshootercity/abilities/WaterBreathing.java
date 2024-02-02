@@ -6,12 +6,16 @@ import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityAirChangeEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +38,12 @@ public class WaterBreathing implements Listener, VisibleAbility {
         }
     }
 
+    @EventHandler
+    public void onEntityPotionEffect(EntityPotionEffectEvent event) {
+        if (event.getCause() != EntityPotionEffectEvent.Cause.TURTLE_HELMET) return;
+        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> event.setCancelled(true));
+    }
+
     public boolean hasWaterBreathing(Player player) {
         return player.hasPotionEffect(PotionEffectType.CONDUIT_POWER) || player.hasPotionEffect(PotionEffectType.WATER_BREATHING);
     }
@@ -46,6 +56,12 @@ public class WaterBreathing implements Listener, VisibleAbility {
         for (Player player : Bukkit.getOnlinePlayers()) {
             AbilityRegister.runForAbility(player, getKey(), () -> {
                 if (player.isUnderWater() || hasWaterBreathing(player) || player.isInRain()) {
+                    ItemStack helmet = player.getInventory().getHelmet();
+                    if (helmet != null) {
+                        if (helmet.getType() == Material.TURTLE_HELMET) {
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 200, 0, false, false, true));
+                        }
+                    }
                     if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, PersistentDataType.BOOLEAN))) {
                         player.setRemainingAir(-50);
                         return;
