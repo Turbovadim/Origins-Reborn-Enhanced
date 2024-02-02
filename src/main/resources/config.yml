@@ -72,6 +72,8 @@ display:
   # Enable prefixes in tab and on display names with the names of origins
   enable-prefixes: false
 
+# NOT YET COMPLETED: HAS NO EFFECT ON GAMEPLAY
+
 # Restrictions placed on origin selection
 # These are designed for use with addon plugins that add many new origins
 # If you run out of origins that fit the restrictions you may experience issues
