@@ -93,6 +93,7 @@ public class MasterOfWebs implements FlightAllowingAbility, Listener, VisibleAbi
                 entities.removeIf(entity -> !(entity instanceof LivingEntity));
                 if (entities.size() > 16) entities = entities.subList(0, 16);
                 entities.addAll(Bukkit.getOnlinePlayers());
+                entities.removeIf(entity -> entity.getWorld() != webMaster.getWorld());
                 entities.removeIf(entity -> entity.getLocation().distance(webMaster.getLocation()) > 16);
                 for (Entity webStuck : entities) {
                     AbilityRegister.runWithoutAbility(webStuck, getKey(), () -> {

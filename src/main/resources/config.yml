@@ -72,5 +72,18 @@ display:
   # Enable prefixes in tab and on display names with the names of origins
   enable-prefixes: false
 
+# Restrictions placed on origin selection
+# These are designed for use with addon plugins that add many new origins
+# If you run out of origins that fit the restrictions you may experience issues
+restrictions:
+  # Rule for reusing origins
+  # "NONE" allows origins to be reused
+  # "PERPLAYER" means individual players can only use an origin once
+  # "ALL" means no players can use an origin again after one has selected it
+  reusing-origins: "NONE"
+  # Prevent players from having the same origins as other players
+  # This is locked on if reusing-origins is set to ALL
+  prevent-same-origins: false
+
 # Config version - do not touch this!
-config-version: 2.0.3
+config-version: 2.1.4

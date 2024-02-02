@@ -80,7 +80,7 @@ public class OriginSwapper implements Listener {
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
             if (OriginLoader.origins.isEmpty()) return;
             List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-            if (!displayOnly) origins.removeIf(Origin::isUnchoosable);
+            if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
             while (slot > origins.size() || slot == origins.size() && !enableRandom) {
                 slot -= origins.size() + (enableRandom ? 1 : 0);
             }
@@ -293,7 +293,7 @@ public class OriginSwapper implements Listener {
                         List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
                         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
                         origins.removeIf(origin1 -> excludedOrigins.contains(origin1.getName()));
-                        origins.removeIf(Origin::isUnchoosable);
+                        origins.removeIf(origin1 -> origin1.isUnchoosable(player));
                         if (origins.isEmpty()) {
                             origin = OriginLoader.origins.get(0);
                         } else {
@@ -578,6 +578,10 @@ public class OriginSwapper implements Listener {
         }
     }
 
+    public static FileConfiguration getUsedOriginFileConfiguration() {
+        return usedOriginFileConfiguration;
+    }
+
     public static void setOrigin(Player player, @Nullable Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean resetPlayer) {
         PlayerSwapOriginEvent swapOriginEvent = new PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player), origin);
         if (!swapOriginEvent.callEvent()) return;
@@ -594,12 +598,23 @@ public class OriginSwapper implements Listener {
         originFileConfiguration.set(player.getUniqueId().toString(), swapOriginEvent.getNewOrigin().getName().toLowerCase());
         player.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, swapOriginEvent.getNewOrigin().getName().toLowerCase());
         saveOrigins();
+        List<String> usedOrigins = new ArrayList<>(usedOriginFileConfiguration.getStringList(player.getUniqueId().toString()));
+        usedOrigins.add(swapOriginEvent.getNewOrigin().getName().toLowerCase());
+        usedOriginFileConfiguration.set(player.getUniqueId().toString(), usedOrigins);
+        saveUsedOrigins();
         resetPlayer(player, swapOriginEvent.isResetPlayer());
     }
 
-
     private static File originFile;
     private static FileConfiguration originFileConfiguration;
+
+    private static File usedOriginFile;
+    private static FileConfiguration usedOriginFileConfiguration;
+
+    public static FileConfiguration getOriginFileConfiguration() {
+        return originFileConfiguration;
+    }
+
     public OriginSwapper() {
         originFile = new File(OriginsReborn.getInstance().getDataFolder(), "selected-origins.yml");
         if (!originFile.exists()) {
@@ -612,11 +627,31 @@ public class OriginSwapper implements Listener {
         } catch (IOException | InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }
+
+        usedOriginFile = new File(OriginsReborn.getInstance().getDataFolder(), "used-origins.yml");
+        if (!usedOriginFile.exists()) {
+            boolean ignored = usedOriginFile.getParentFile().mkdirs();
+            OriginsReborn.getInstance().saveResource("used-origins.yml", false);
+        }
+        usedOriginFileConfiguration = new YamlConfiguration();
+        try {
+            usedOriginFileConfiguration.load(usedOriginFile);
+        } catch (IOException | InvalidConfigurationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void saveOrigins() {
         try {
             originFileConfiguration.save(originFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void saveUsedOrigins() {
+        try {
+            usedOriginFileConfiguration.save(usedOriginFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

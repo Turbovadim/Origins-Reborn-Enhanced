@@ -38,7 +38,7 @@ public class GeyserSwapper {
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
         List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-        if (!displayOnly) origins.removeIf(Origin::isUnchoosable);
+        if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
         else {
             openOriginInfo(player, OriginSwapper.getOrigin(player), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false);
             return;
@@ -125,7 +125,7 @@ public class GeyserSwapper {
         boolean resetPlayer = OriginSwapper.shouldResetPlayer(reason);
         if (origin == null) {
             List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-            origins.removeIf(Origin::isUnchoosable);
+            origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             origins.removeIf(possibleOrigin -> excludedOrigins.contains(possibleOrigin.getName()));
             origin = origins.get(random.nextInt(origins.size()));
@@ -151,7 +151,7 @@ public class GeyserSwapper {
         } else {
             form.title("Random Origin");
             List<Origin> origins = new ArrayList<>(OriginLoader.origins);
-            origins.removeIf(Origin::isUnchoosable);
+            origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             info.append("You'll be assigned one of the following:\n\n");
             for (Origin possibleOrigin : origins) {

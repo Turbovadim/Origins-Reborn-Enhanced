@@ -7,6 +7,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
@@ -31,8 +32,25 @@ public class Origin {
         return lineComponent;
     }
 
-    public boolean isUnchoosable() {
-        return unchoosable;
+    public boolean isUnchoosable(Player player) {
+        if (unchoosable) return true;
+        String mode = OriginsReborn.getInstance().getConfig().getString("restrictions.reusing-origins", "NONE");
+        boolean same = OriginsReborn.getInstance().getConfig().getBoolean("restrictions.prevent-same-origins");
+        if (same) {
+            for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
+                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) return false;
+            }
+        }
+        if (mode.equals("PERPLAYER")) {
+            return OriginSwapper.getUsedOriginFileConfiguration().getStringList(player.getUniqueId().toString()).contains(getName().toLowerCase());
+        } else if (mode.equals("ALL")) {
+            for (String p : OriginSwapper.getUsedOriginFileConfiguration().getKeys(false)) {
+                if (OriginSwapper.getUsedOriginFileConfiguration().getStringList(p).contains(getName().toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public int getPriority() {
