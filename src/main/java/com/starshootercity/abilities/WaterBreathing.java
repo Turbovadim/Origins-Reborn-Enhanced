@@ -57,7 +57,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
             AbilityRegister.runForAbility(player, getKey(), () -> {
                 if (player.isUnderWater() || hasWaterBreathing(player) || player.isInRain()) {
                     ItemStack helmet = player.getInventory().getHelmet();
-                    if (helmet != null) {
+                    if (helmet != null && player.isUnderWater()) {
                         if (helmet.getType() == Material.TURTLE_HELMET) {
                             player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 200, 0, false, false, true));
                         }

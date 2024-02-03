@@ -527,10 +527,11 @@ public class OriginSwapper implements Listener {
 
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
+        if (event.getNewOrigin() == null) return;
         if (event.getReason() == PlayerSwapOriginEvent.SwapReason.INITIAL || event.getReason() == PlayerSwapOriginEvent.SwapReason.DIED) {
             if (event.getPlayer().getRespawnLocation() == null) {
-                event.getPlayer().teleport(getRespawnWorld(getOrigin(event.getPlayer())).getSpawnLocation());
-            }
+                event.getPlayer().teleport(getRespawnWorld(event.getNewOrigin()).getSpawnLocation());
+            } else event.getPlayer().teleport(event.getPlayer().getRespawnLocation());
         }
     }
 
@@ -571,8 +572,7 @@ public class OriginSwapper implements Listener {
         if (player.getPersistentDataContainer().has(originKey)) {
             return OriginLoader.originNameMap.get(player.getPersistentDataContainer().get(originKey, PersistentDataType.STRING));
         } else {
-            String name = originFileConfiguration.getString(player.getUniqueId().toString());
-            if (name == null) return null;
+            String name = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
             player.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, name);
             return OriginLoader.originNameMap.get(name);
         }

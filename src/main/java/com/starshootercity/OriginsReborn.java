@@ -45,12 +45,41 @@ public class OriginsReborn extends OriginsAddon {
     public void updateConfig() {
         String version = getConfig().getString("config-version", "1.0.0");
         if (version.equals("1.0.0")) saveResource("config.yml", true);
-        else if (version.equals("2.0.0")) {
-            getConfig().set("config-version", "2.0.3");
-            getConfig().set("display.enable-prefixes", false);
-            getConfig().setComments("display", List.of("Miscellaneous display options"));
-            getConfig().setComments("display.enable-prefixes", List.of("Enable prefixes in tab and on display names with the names of origins"));
-            saveConfig();
+        else {
+            if (version.equals("2.0.0")) {
+                getConfig().set("config-version", "2.0.3");
+                getConfig().set("display.enable-prefixes", false);
+                getConfig().setComments("display", List.of("Miscellaneous display options"));
+                getConfig().setComments("display.enable-prefixes", List.of("Enable prefixes in tab and on display names with the names of origins"));
+                saveConfig();
+            }
+            if (version.equals("2.0.3")) {
+                getConfig().set("config-version", "2.1.7");
+                getConfig().set("restrictions.reusing-origins", "NONE");
+                getConfig().set("restrictions.prevent-same-origins", false);
+                getConfig().setComments("restrictions",
+                        List.of(
+                                "Restrictions placed on origin selection",
+                                "These are designed for use with addon plugins that add many new origins",
+                                "If you run out of origins that fit the restrictions you may experience issues"
+                                )
+                );
+                getConfig().setComments("restrictions.reusing-origins",
+                        List.of(
+                                "Rule for reusing origins",
+                                "\"NONE\" allows origins to be reused",
+                                "\"PERPLAYER\" means individual players can only use an origin once",
+                                "\"ALL\" means no players can use an origin again after one has selected it"
+                                )
+                );
+                getConfig().setComments("restrictions.prevent-same-origins",
+                        List.of(
+                                "Prevent players from having the same origins as other players",
+                                "This is locked on if reusing-origins is set to ALL"
+                                )
+                );
+                saveConfig();
+            }
         }
     }
 

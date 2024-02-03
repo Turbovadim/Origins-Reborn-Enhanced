@@ -38,7 +38,9 @@ public class Origin {
         boolean same = OriginsReborn.getInstance().getConfig().getBoolean("restrictions.prevent-same-origins");
         if (same) {
             for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
-                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) return false;
+                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) {
+                    return true;
+                }
             }
         }
         if (mode.equals("PERPLAYER")) {
