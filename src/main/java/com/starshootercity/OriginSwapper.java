@@ -472,9 +472,13 @@ public class OriginSwapper implements Listener {
             if (origin.getTeam() == null) return;
             origin.getTeam().addPlayer(event.getPlayer());
         } else {
-            if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
-                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false);
-            } else {
+            try {
+                if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
+                    GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false);
+                } else {
+                    openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
+                }
+            } catch (NoClassDefFoundError e) {
                 openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
             }
         }
