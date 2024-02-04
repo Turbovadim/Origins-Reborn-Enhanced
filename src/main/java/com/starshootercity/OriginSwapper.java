@@ -37,7 +37,6 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.geysermc.api.Geyser;
-import org.geysermc.geyser.api.GeyserApi;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -472,13 +471,11 @@ public class OriginSwapper implements Listener {
             if (origin.getTeam() == null) return;
             origin.getTeam().addPlayer(event.getPlayer());
         } else {
-            try {
-                if (GeyserApi.api().isBedrockPlayer(event.getPlayer().getUniqueId())) {
-                    GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false);
-                } else {
-                    openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
-                }
-            } catch (NoClassDefFoundError e) {
+            if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
+                selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL);
+            } else if (isBedrockPlayer(event.getPlayer().getUniqueId())) {
+                GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false);
+            } else {
                 openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
             }
         }
@@ -499,12 +496,20 @@ public class OriginSwapper implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (getOrigin(player) == null) {
                 if (player.isDead()) continue;
-                if (player.getOpenInventory().getType() != InventoryType.CHEST && !Geyser.api().isBedrockPlayer(player.getUniqueId())) {
+                if (player.getOpenInventory().getType() != InventoryType.CHEST && !isBedrockPlayer(player.getUniqueId())) {
                     if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
                         selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
                     } else openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0);
                 }
             }
+        }
+    }
+
+    public boolean isBedrockPlayer(UUID uuid) {
+        try {
+            return Geyser.api().isBedrockPlayer(uuid);
+        } catch (NoClassDefFoundError e) {
+            return false;
         }
     }
 
@@ -518,11 +523,9 @@ public class OriginSwapper implements Listener {
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
             if (getOrigin(player) == null && player.getOpenInventory().getType() != InventoryType.CHEST) {
-                try {
-                    if (!GeyserApi.api().isBedrockPlayer(player.getUniqueId())) {
-                        openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0);
-                    }
-                } catch (NoClassDefFoundError e) {
+                if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
+                    selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
+                } else if (!isBedrockPlayer(player.getUniqueId())) {
                     openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0);
                 }
             }
