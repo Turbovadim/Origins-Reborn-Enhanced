@@ -37,7 +37,7 @@ public class GeyserSwapper {
         }
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
-        List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+        List<Origin> origins = new ArrayList<>(AddonLoader.origins);
         if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
         else {
             openOriginInfo(player, OriginSwapper.getOrigin(player), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false);
@@ -70,7 +70,7 @@ public class GeyserSwapper {
                         openOriginSwapper(player, reason, false, cost);
                     }
                 })
-                .validResultHandler(response -> openOriginInfo(player, OriginLoader.originNameMap.get(response.clickedButton().text().toLowerCase()), reason, false, cost)).build());
+                .validResultHandler(response -> openOriginInfo(player, AddonLoader.originNameMap.get(response.clickedButton().text().toLowerCase()), reason, false, cost)).build());
 
     }
 
@@ -124,7 +124,7 @@ public class GeyserSwapper {
         }
         boolean resetPlayer = OriginSwapper.shouldResetPlayer(reason);
         if (origin == null) {
-            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            List<Origin> origins = new ArrayList<>(AddonLoader.origins);
             origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             origins.removeIf(possibleOrigin -> excludedOrigins.contains(possibleOrigin.getName()));
@@ -150,7 +150,7 @@ public class GeyserSwapper {
             }
         } else {
             form.title("Random Origin");
-            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            List<Origin> origins = new ArrayList<>(AddonLoader.origins);
             origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             info.append("You'll be assigned one of the following:\n\n");

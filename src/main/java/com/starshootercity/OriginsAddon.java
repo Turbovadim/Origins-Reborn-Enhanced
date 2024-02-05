@@ -21,7 +21,7 @@ public abstract class OriginsAddon extends JavaPlugin {
     public final void onEnable() {
         instance = this;
         onRegister();
-        OriginLoader.register(this);
+        AddonLoader.register(this);
         for (Ability ability : getAbilities()) {
             AbilityRegister.registerAbility(ability, this);
         }

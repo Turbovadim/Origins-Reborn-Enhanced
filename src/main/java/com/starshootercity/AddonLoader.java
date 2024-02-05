@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class OriginLoader {
+public class AddonLoader {
     public static List<Origin> origins = new ArrayList<>();
     public static Map<String, Origin> originNameMap = new HashMap<>();
     private static final List<OriginsAddon> registeredAddons = new ArrayList<>();
@@ -24,14 +24,19 @@ public class OriginLoader {
         }
         registeredAddons.add(addon);
         loadOriginsFor(addon);
+        prepareLanguagesFor(addon);
         sortOrigins();
     }
 
-    public static void reloadOrigins() {
+    private static Map<String, String> languageData = new HashMap<>();
+
+    public static void reloadAddons() {
         origins = new ArrayList<>();
         originNameMap = new HashMap<>();
+        languageData = new HashMap<>();
         for (OriginsAddon addon : registeredAddons) {
             loadOriginsFor(addon);
+            prepareLanguagesFor(addon);
         }
         sortOrigins();
     }
@@ -59,10 +64,34 @@ public class OriginLoader {
         bos.close();
     }
 
+    private static void prepareLanguagesFor(OriginsAddon addon) {
+        File langFolder = new File(addon.getDataFolder(), "lang");
+        boolean ignored = langFolder.mkdirs();
+        try (ZipInputStream inputStream = new ZipInputStream(new FileInputStream(addon.getFile()))) {
+            ZipEntry entry = inputStream.getNextEntry();
+            while (entry != null) {
+                if (entry.getName().startsWith("lang/") && entry.getName().endsWith(".json")) {
+                    extractFile(inputStream, langFolder.getParentFile().getAbsolutePath() + "/" + entry.getName());
+                }
+                entry = inputStream.getNextEntry();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String lang = OriginsReborn.getInstance().getConfig().getString("display.language", "en_us");
+        File[] files = langFolder.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.getName().equals(lang + ".json")) {
+                System.out.println(file);
+            }
+        }
+    }
+
     private static void loadOriginsFor(OriginsAddon addon) {
         File originFolder = new File(addon.getDataFolder(), "origins");
         if (!originFolder.exists()) {
-            addon.saveResource("origins/", false);
+            boolean ignored = originFolder.mkdirs();
             try (ZipInputStream inputStream = new ZipInputStream(new FileInputStream(addon.getFile()))) {
                 ZipEntry entry = inputStream.getNextEntry();
                 while (entry != null) {

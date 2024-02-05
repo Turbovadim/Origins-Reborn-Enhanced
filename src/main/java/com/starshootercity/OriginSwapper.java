@@ -77,8 +77,8 @@ public class OriginSwapper implements Listener {
         lastSwapReasons.put(player, reason);
         boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
-            if (OriginLoader.origins.isEmpty()) return;
-            List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+            if (AddonLoader.origins.isEmpty()) return;
+            List<Origin> origins = new ArrayList<>(AddonLoader.origins);
             if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
             while (slot > origins.size() || slot == origins.size() && !enableRandom) {
                 slot -= origins.size() + (enableRandom ? 1 : 0);
@@ -290,16 +290,16 @@ public class OriginSwapper implements Listener {
                     Origin origin;
                     if (originName.equalsIgnoreCase("random")) {
                         List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
-                        List<Origin> origins = new ArrayList<>(OriginLoader.origins);
+                        List<Origin> origins = new ArrayList<>(AddonLoader.origins);
                         origins.removeIf(origin1 -> excludedOrigins.contains(origin1.getName()));
                         origins.removeIf(origin1 -> origin1.isUnchoosable(player));
                         if (origins.isEmpty()) {
-                            origin = OriginLoader.origins.get(0);
+                            origin = AddonLoader.origins.get(0);
                         } else {
                             origin = origins.get(random.nextInt(origins.size()));
                         }
                     } else {
-                        origin = OriginLoader.originNameMap.get(originName);
+                        origin = AddonLoader.originNameMap.get(originName);
                     }
                     PlayerSwapOriginEvent.SwapReason reason = getReason(item);
                     player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
@@ -406,7 +406,6 @@ public class OriginSwapper implements Listener {
         player.setFoodLevel(20);
         player.setFireTicks(0);
         player.setHealth(getMaxHealth(player));
-        ShulkerInventory.getInventoriesConfig().set(player.getUniqueId().toString(), null);
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
@@ -543,9 +542,9 @@ public class OriginSwapper implements Listener {
     }
 
     public void selectRandomOrigin(Player player, PlayerSwapOriginEvent.SwapReason reason) {
-        Origin origin = OriginLoader.origins.get(random.nextInt(OriginLoader.origins.size()));
+        Origin origin = AddonLoader.origins.get(random.nextInt(AddonLoader.origins.size()));
         setOrigin(player, origin, reason, shouldResetPlayer(reason));
-        openOriginSwapper(player, reason, OriginLoader.origins.indexOf(origin), 0, false, true);
+        openOriginSwapper(player, reason, AddonLoader.origins.indexOf(origin), 0, false, true);
     }
 
     private final Map<Player, PlayerRespawnEvent.RespawnReason> lastRespawnReasons = new HashMap<>();
@@ -577,11 +576,11 @@ public class OriginSwapper implements Listener {
 
     public static Origin getOrigin(Player player) {
         if (player.getPersistentDataContainer().has(originKey)) {
-            return OriginLoader.originNameMap.get(player.getPersistentDataContainer().get(originKey, PersistentDataType.STRING));
+            return AddonLoader.originNameMap.get(player.getPersistentDataContainer().get(originKey, PersistentDataType.STRING));
         } else {
             String name = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
             player.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, name);
-            return OriginLoader.originNameMap.get(name);
+            return AddonLoader.originNameMap.get(name);
         }
     }
 

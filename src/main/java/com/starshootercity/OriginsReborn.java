@@ -80,6 +80,14 @@ public class OriginsReborn extends OriginsAddon {
                 );
                 saveConfig();
             }
+            if (version.equals("2.1.7")) {
+                getConfig().set("config-version", "2.2.0");
+                getConfig().set("display.language", "en_us");
+                getConfig().setComments("display.language", List.of(
+                        "Language file to use - default is en_us"
+                ));
+                saveConfig();
+            }
         }
     }
 
@@ -97,7 +105,6 @@ public class OriginsReborn extends OriginsAddon {
         updateConfig();
         PluginCommand command = getCommand("origin");
         if (command != null) command.setExecutor(new OriginCommand());
-        OriginLoader.register(this);
         Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
         Bukkit.getPluginManager().registerEvents(new PackApplier(), this);

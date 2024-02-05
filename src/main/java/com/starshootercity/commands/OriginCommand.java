@@ -45,7 +45,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                 }
-                OriginLoader.reloadOrigins();
+                AddonLoader.reloadAddons();
                 OriginsReborn.getInstance().reloadConfig();
                 return true;
             }
@@ -59,7 +59,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 if (args.length < 3) return false;
                 Player player = Bukkit.getPlayer(args[1]);
                 if (player == null) return false;
-                Origin origin = OriginLoader.originNameMap.get(args[2]);
+                Origin origin = AddonLoader.originNameMap.get(args[2]);
                 if (origin == null) return false;
                 OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
                 return true;
@@ -78,7 +78,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             }
             case "check" -> {
                 if (sender instanceof Player player) {
-                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, OriginLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, false, true);
+                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, AddonLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, false, true);
                 } else {
                     sender.sendMessage(Component.text("This command can only be run by a player").color(NamedTextColor.RED));
                 }
@@ -119,7 +119,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case 3 -> {
                 if (args[0].equals("set")) {
                     yield new ArrayList<>() {{
-                        for (Origin origin : OriginLoader.origins) {
+                        for (Origin origin : AddonLoader.origins) {
                             add(origin.getName().toLowerCase());
                         }
                     }};

@@ -71,6 +71,8 @@ resource-pack:
 display:
   # Enable prefixes in tab and on display names with the names of origins
   enable-prefixes: false
+  # Language file to use - default is en_us
+  language: en_us
 
 # Restrictions placed on origin selection
 # These are designed for use with addon plugins that add many new origins
@@ -86,4 +88,4 @@ restrictions:
   prevent-same-origins: false
 
 # Config version - do not touch this!
-config-version: 2.1.7
+config-version: 2.2.0
