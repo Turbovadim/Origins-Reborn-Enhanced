@@ -41,7 +41,7 @@ origin-selection:
     enabled: true
     # Origins to exclude from random options
     exclude:
-      - Human
+      - human
 
 # Settings for the Orb of Origin
 orb-of-origin:

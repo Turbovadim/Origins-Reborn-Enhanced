@@ -103,6 +103,7 @@ public interface BreakSpeedModifierAbility extends Ability {
         Random random = new Random();
         @EventHandler
         public void onBlockDamage(BlockDamageEvent event) {
+            if (event.getBlock().getType().getHardness() < 0) return;
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
                 Origin origin = OriginSwapper.getOrigin(event.getPlayer());
                 if (origin == null) return;
@@ -120,10 +121,8 @@ public interface BreakSpeedModifierAbility extends Ability {
                 Entity marker = event.getPlayer().getWorld().spawnEntity(event.getPlayer().getLocation(), EntityType.MARKER);
                 BreakSpeedModifierAbility finalSpeedModifierAbility = speedModifierAbility;
                 int task = Bukkit.getScheduler().scheduleSyncRepeatingTask(OriginsReborn.getInstance(), () -> {
-
                     try {
                         BreakSpeedModifierAbility.BlockMiningContext context = finalSpeedModifierAbility.provideContextFor(event.getPlayer());
-
                         float damage = getBlockDamage(event.getBlock(), context, time.getAndIncrement());
                         if (damage >= 1) {
                             int taskNum = blockbreakingTasks.get(event.getPlayer());

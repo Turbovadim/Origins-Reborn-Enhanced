@@ -9,7 +9,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.Range;
@@ -24,13 +23,9 @@ public class Origin {
     private final String name;
     private final int priority;
     private final boolean unchoosable;
-    private final JavaPlugin plugin;
+    private final OriginsAddon addon;
     private final List<Key> abilities;
-    private final List<OriginSwapper.LineData.LineComponent> lineComponent;
-
-    public List<OriginSwapper.LineData.LineComponent> getLineData() {
-        return lineComponent;
-    }
+    private final String description;
 
     public boolean isUnchoosable(Player player) {
         if (unchoosable) return true;
@@ -65,8 +60,8 @@ public class Origin {
         return team;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, JavaPlugin plugin, boolean unchoosable, int priority) {
-        this.lineComponent = OriginSwapper.LineData.makeLineFor(description, OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority) {
+        this.description = description;
         this.name = name;
         if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
@@ -91,7 +86,7 @@ public class Origin {
             case 2 -> '\uE004';
             default -> '\uE005';
         };
-        this.plugin = plugin;
+        this.addon = addon;
         this.priority = priority;
     }
 
@@ -105,8 +100,8 @@ public class Origin {
         return result;
     }
 
-    public JavaPlugin getPlugin() {
-        return plugin;
+    public OriginsAddon getAddon() {
+        return addon;
     }
 
     public List<Ability> getAbilities() {
@@ -130,7 +125,25 @@ public class Origin {
     }
 
     public String getName() {
+        try {
+            return AddonLoader.getTextFor("origin." + addon.getNamespace() + "." + name.replace(" ", "_").toLowerCase() + ".name", name);
+        } catch (AbstractMethodError e) {
+            addon.getLogger().warning("This Origins-Reborn addon is outdated, check for an update or contact the addon developer.");
+            return name;
+        }
+    }
+
+    public String getActualName() {
         return name;
+    }
+
+    public String getDescription() {
+        try {
+            return AddonLoader.getTextFor("origin." + addon.getNamespace() + "." + name.replace(" ", "_").toLowerCase() + ".description", description);
+        } catch (AbstractMethodError e) {
+            addon.getLogger().warning("This Origins-Reborn addon is outdated, check for an update or contact the addon developer.");
+            return description;
+        }
     }
 
     public ItemStack getIcon() {

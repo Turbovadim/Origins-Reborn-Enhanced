@@ -114,6 +114,11 @@ public class OriginsReborn extends OriginsAddon {
     }
 
     @Override
+    public @NotNull String getNamespace() {
+        return "origins";
+    }
+
+    @Override
     public @NotNull List<Ability> getAbilities() {
         return List.of(
                 new PumpkinHate(),

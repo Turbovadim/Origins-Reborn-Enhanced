@@ -39,6 +39,8 @@ public abstract class OriginsAddon extends JavaPlugin {
 
     public void onRegister() {}
 
+    public abstract @NotNull String getNamespace();
+
     public @NotNull List<Ability> getAbilities() {
         return List.of();
     }

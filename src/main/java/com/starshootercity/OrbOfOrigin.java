@@ -29,7 +29,7 @@ public class OrbOfOrigin implements Listener {
         meta.getPersistentDataContainer().set(orbKey, PersistentDataType.BOOLEAN, true);
         meta.setCustomModelData(1);
         meta.displayName(
-                Component.text("Orb of Origin")
+                Component.translatable("item.origins.orb_of_origin", AddonLoader.getTextFor("item.origins.orb_of_origin", "Orb of Origin"))
                         .color(NamedTextColor.AQUA)
                         .decoration(TextDecoration.ITALIC, false)
         );

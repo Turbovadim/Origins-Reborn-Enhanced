@@ -1,5 +1,6 @@
 package com.starshootercity.abilities;
 
+import com.starshootercity.AddonLoader;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
@@ -72,7 +73,7 @@ public class ShulkerInventory implements VisibleAbility, Listener {
                 if (event.isRightClick()) {
                     if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
                         if (event.getSlot() == 38) {
-                            Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.text("Shulker Inventory"));
+                            Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.translatable("container.shulker_inventory_power", AddonLoader.getTextFor("container.shulker_inventory_power", "Shulker Inventory")));
                             player.openInventory(inventory);
                             for (int i = 0; i < 9; i++) {
                                 ItemStack item = getInventoriesConfig().getItemStack("%s.%s".formatted(player.getUniqueId().toString(), i));

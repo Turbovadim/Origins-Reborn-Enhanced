@@ -1,5 +1,6 @@
 package com.starshootercity.abilities;
 
+import com.starshootercity.AddonLoader;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
@@ -32,7 +33,7 @@ public class FreshAir implements VisibleAbility, Listener {
                     if (event.getClickedBlock().getWorld().isDayTime() && event.getClickedBlock().getWorld().isClearWeather()) return;
                     event.setCancelled(true);
                     event.getPlayer().swingMainHand();
-                    event.getPlayer().sendActionBar(Component.text("You need fresh air to sleep"));
+                    event.getPlayer().sendActionBar(Component.translatable("origins.avian_sleep_fail", AddonLoader.getTextFor("origins.avian_sleep_fail", "You need fresh air to sleep")));
                 }
             });
         }

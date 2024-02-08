@@ -3,24 +3,31 @@ package com.starshootercity;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.intellij.lang.annotations.Subst;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class AddonLoader {
     public static List<Origin> origins = new ArrayList<>();
     public static Map<String, Origin> originNameMap = new HashMap<>();
+    public static Map<String, Origin> originFileNameMap = new HashMap<>();
     private static final List<OriginsAddon> registeredAddons = new ArrayList<>();
 
     public static void register(OriginsAddon addon) {
         if (registeredAddons.contains(addon)) {
             registeredAddons.remove(addon);
-            origins.removeIf(origin -> origin.getPlugin().getName().equals(addon.getName()));
+            origins.removeIf(origin -> origin.getAddon().getName().equals(addon.getName()));
         }
         registeredAddons.add(addon);
         loadOriginsFor(addon);
@@ -29,6 +36,15 @@ public class AddonLoader {
     }
 
     private static Map<String, String> languageData = new HashMap<>();
+
+    public static @NotNull String getTextFor(String key, String def) {
+        String result = languageData.get(key);
+        return result == null ? def : result;
+    }
+
+    public static @Nullable String getTextFor(String key) {
+        return languageData.get(key);
+    }
 
     public static void reloadAddons() {
         origins = new ArrayList<>();
@@ -83,7 +99,10 @@ public class AddonLoader {
         if (files == null) return;
         for (File file : files) {
             if (file.getName().equals(lang + ".json")) {
-                System.out.println(file);
+                JSONObject object = ShortcutUtils.openJSONFile(file);
+                for (String s : object.keySet()) {
+                    languageData.put(s, object.getString(s));
+                }
             }
         }
     }
@@ -109,56 +128,58 @@ public class AddonLoader {
         if (files == null) return;
         for (File file : files) {
             if (!file.getName().endsWith(".json")) continue;
-            try (Scanner scanner = new Scanner(file)) {
-                StringBuilder data = new StringBuilder();
-                while (scanner.hasNext()) {
-                    data.append(scanner.next());
-                }
-                JSONObject object = new JSONObject(data.toString());
-                boolean unchoosable = false;
-                if (object.has("unchoosable")) {
-                    unchoosable = object.getBoolean("unchoosable");
-                }
-                String itemName;
-                if (object.get("icon") instanceof JSONObject jsonObject) {
-                    itemName = jsonObject.getString("item");
-                } else itemName = object.getString("icon");
-                Material material = Material.matchMaterial(itemName);
-                if (material == null) {
-                    material = Material.AIR;
-                }
-                ItemStack icon = new ItemStack(material);
-                String name = file.getName().split("\\.")[0];
-                StringBuilder formattedName = new StringBuilder();
-                String[] parts = name.split("_");
-                int num = 0;
-                for (String part : parts) {
-                    formattedName.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-                    num++;
-                    if (num < parts.length) formattedName.append(" ");
-                }
-                Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
-                    if (object.has("powers")) {
-                        JSONArray array = object.getJSONArray("powers");
-                        for (@Subst("origins:ability") Object o : array) {
-                            add(Key.key(((String) o)));
-                        }
-                    }
-                }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1);
-                Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
-                if (previouslyRegisteredOrigin != null) {
-                    if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
-                        continue;
-                    } else {
-                        origins.remove(previouslyRegisteredOrigin);
-                        originNameMap.remove(name.replace("_", " "));
-                    }
-                }
-                origins.add(origin);
-                originNameMap.put(name.replace("_", " "), origin);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            JSONObject object = ShortcutUtils.openJSONFile(file);
+            boolean unchoosable = false;
+            if (object.has("unchoosable")) {
+                unchoosable = object.getBoolean("unchoosable");
             }
+            String itemName;
+            int cmd = 0;
+            if (object.get("icon") instanceof JSONObject jsonObject) {
+                itemName = jsonObject.getString("item");
+                if (jsonObject.has("custom_model_data")) {
+                    cmd = jsonObject.getInt("custom_model_data");
+                }
+            } else itemName = object.getString("icon");
+            Material material = Material.matchMaterial(itemName);
+            if (material == null) {
+                material = Material.AIR;
+            }
+            ItemStack icon = new ItemStack(material);
+            ItemMeta meta = icon.getItemMeta();
+            meta.setCustomModelData(cmd);
+            icon.setItemMeta(meta);
+            String name = file.getName().split("\\.")[0];
+            StringBuilder formattedName = new StringBuilder();
+            String[] parts = name.split("_");
+            int num = 0;
+            for (String part : parts) {
+                formattedName.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+                num++;
+                if (num < parts.length) formattedName.append(" ");
+            }
+            Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
+                if (object.has("powers")) {
+                    JSONArray array = object.getJSONArray("powers");
+                    for (@Subst("origins:ability") Object o : array) {
+                        add(Key.key(((String) o)));
+                    }
+                }
+            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1);
+            String actualName = origin.getActualName().toLowerCase();
+            Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
+            if (previouslyRegisteredOrigin != null) {
+                if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
+                    continue;
+                } else {
+                    origins.remove(previouslyRegisteredOrigin);
+                    originNameMap.remove(name.replace("_", " "));
+                    originFileNameMap.remove(actualName);
+                }
+            }
+            origins.add(origin);
+            originNameMap.put(name.replace("_", " "), origin);
+            originFileNameMap.put(actualName, origin);
         }
     }
 }

@@ -59,7 +59,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 if (args.length < 3) return false;
                 Player player = Bukkit.getPlayer(args[1]);
                 if (player == null) return false;
-                Origin origin = AddonLoader.originNameMap.get(args[2]);
+                Origin origin = AddonLoader.originNameMap.get(args[2].replace("_", " "));
                 if (origin == null) return false;
                 OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
                 return true;
@@ -120,7 +120,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 if (args[0].equals("set")) {
                     yield new ArrayList<>() {{
                         for (Origin origin : AddonLoader.origins) {
-                            add(origin.getName().toLowerCase());
+                            add(origin.getName().toLowerCase().replace(" ", "_"));
                         }
                     }};
                 } else yield new ArrayList<>();

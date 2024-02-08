@@ -92,12 +92,17 @@ public class OriginSwapper implements Listener {
             LineData data;
             if (slot == origins.size()) {
                 List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+                List<String> excludedOriginNames = new ArrayList<>();
+                for (String s : excludedOrigins) {
+                    Origin origin = AddonLoader.originFileNameMap.get(s);
+                    excludedOriginNames.add(AddonLoader.getTextFor("origin." + origin.getAddon().getNamespace() + "." + s.replace(" ", "_").toLowerCase() + ".name", origin.getName()));
+                }
                 icon = OrbOfOrigin.orb;
-                name = "Random";
+                name = AddonLoader.getTextFor("origin.origins.random.name", "Random");
                 impact = '\uE002';
-                StringBuilder names = new StringBuilder("You'll be assigned one of the following:\n\n");
+                StringBuilder names = new StringBuilder("%s\n\n".formatted(AddonLoader.getTextFor("origin.origins.random.description", "You'll be assigned one of the following:")));
                 for (Origin origin : origins) {
-                    if (!excludedOrigins.contains(origin.getName())) {
+                    if (!excludedOriginNames.contains(origin.getName())) {
                         names.append(origin.getName()).append("\n");
                     }
                 }
@@ -759,15 +764,15 @@ public class OriginSwapper implements Listener {
 
         public LineData(Origin origin) {
             lines = new ArrayList<>();
-            lines.addAll(origin.getLineData());
+            lines.addAll(makeLineFor(origin.getDescription(), LineComponent.LineType.DESCRIPTION));
             List<VisibleAbility> visibleAbilities = origin.getVisibleAbilities();
             int size = visibleAbilities.size();
             int count = 0;
             if (size > 0) lines.add(new LineComponent());
             for (VisibleAbility visibleAbility : visibleAbilities) {
                 count++;
-                lines.addAll(visibleAbility.getTitle());
-                lines.addAll(visibleAbility.getDescription());
+                lines.addAll(visibleAbility.getUsedTitle());
+                lines.addAll(visibleAbility.getUsedDescription());
                 if (count < size) lines.add(new LineComponent());
             }
         }
