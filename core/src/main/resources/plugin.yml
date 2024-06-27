@@ -1,0 +1,37 @@
+name: Origins-Reborn
+version: 2.2.16
+main: com.starshootercity.OriginsReborn
+description: Paper plugin inspired by the Origins mod by Apace
+api-version: '1.19'
+author: cometcake575
+
+softdepend:
+  - Geyser-Spigot
+  - AuthMe
+  - PlaceholderAPI
+
+permissions:
+  originsreborn.default:
+    default: true
+    description: Default permissions for Origins-Reborn
+  originsreborn.costbypass:
+    default: false
+    description: Bypass cost of origin swapping
+  originsreborn.admin:
+    default: op
+    description: Use admin commands for Origins-Reborn
+    children:
+      - originsreborn.flight
+  originsreborn.flight:
+    default: op
+    description: Use /fly
+
+commands:
+  origin:
+    permission: originsreborn.default
+    description: Modify origins
+    usage: /<command>
+  fly:
+    permission: originsreborn.flight
+    description: Toggle flight
+    usage: /<command>
