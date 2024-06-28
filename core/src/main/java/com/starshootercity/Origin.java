@@ -27,6 +27,7 @@ public class Origin {
     private final OriginsAddon addon;
     private final List<Key> abilities;
     private final String description;
+    private final String permission;
 
     public boolean isUnchoosable(Player player) {
         if (unchoosable) return true;
@@ -61,9 +62,18 @@ public class Origin {
         return team;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority) {
+    public String getPermission() {
+        return permission;
+    }
+
+    public boolean hasPermission() {
+        return permission != null;
+    }
+
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission) {
         this.description = description;
         this.name = name;
+        this.permission = permission;
         if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
             Team oldTeam = scoreboard.getTeam(name);

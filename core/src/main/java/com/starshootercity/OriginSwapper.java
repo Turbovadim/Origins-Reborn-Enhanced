@@ -76,7 +76,7 @@ public class OriginSwapper implements Listener {
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
             if (AddonLoader.origins.isEmpty()) return;
             List<Origin> origins = new ArrayList<>(AddonLoader.origins);
-            if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
+            if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(origin.getPermission()));
             while (slot > origins.size() || slot == origins.size() && !enableRandom) {
                 slot -= origins.size() + (enableRandom ? 1 : 0);
             }
