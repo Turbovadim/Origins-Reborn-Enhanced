@@ -132,24 +132,22 @@ public class OriginSwapper implements Listener {
                 compressedName.append(c);
                 compressedName.append('\uF000');
             }
-            Component background = ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.background", "")).font(Key.key("minecraft:default"));
-            Component component = Component.text("\uF000\uE000\uF001\uE001\uF002" + impact)
-                    .font(Key.key("minecraft:origin_selector"))
+            Component background = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.background", "")), Key.key("minecraft:default"));
+            Component component = applyFont(Component.text("\uF000\uE000\uF001\uE001\uF002" + impact),
+                    Key.key("minecraft:origin_selector"))
                     .color(NamedTextColor.WHITE)
                     .append(background)
-                    .append(Component.text(compressedName.toString())
-                            .font(Key.key("minecraft:origin_title_text"))
-                            .color(NamedTextColor.WHITE)
-                    )
-                    .append(Component.text(getInverse(name) + "\uF000")
-                            .font(Key.key("minecraft:reverse_text"))
-                            .color(NamedTextColor.WHITE)
-                    );
+                    .append(applyFont(Component.text(compressedName.toString()),
+                            Key.key("minecraft:origin_title_text")
+                    ).color(NamedTextColor.WHITE))
+                    .append(applyFont(Component.text(getInverse(name) + "\uF000"),
+                            Key.key("minecraft:reverse_text")
+                    ).color(NamedTextColor.WHITE));
             for (Component c : data.getLines(scrollAmount)) {
                 component = component.append(c);
             }
-            Component prefix = ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.prefix", "")).font(Key.key("minecraft:default"));
-            Component suffix = ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.suffix", "")).font(Key.key("minecraft:default"));
+            Component prefix = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.prefix", "")), Key.key("minecraft:default"));
+            Component suffix = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.suffix", "")), Key.key("minecraft:default"));
             Inventory swapperInventory = Bukkit.createInventory(null, 54,
                     prefix.append(component).append(suffix)
             );
@@ -274,12 +272,16 @@ public class OriginSwapper implements Listener {
         }
     }
 
+    public static Component applyFont(Component component, Key font) {
+        return OriginsReborn.getNMSInvoker().applyFont(component, font);
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         ItemStack item = event.getWhoClicked().getOpenInventory().getItem(1);
         if (item != null) {
             if (item.getItemMeta() == null) return;
-            if (item.getItemMeta().getPersistentDataContainer().has(displayKey)) {
+            if (item.getItemMeta().getPersistentDataContainer().has(displayKey, BooleanPDT.BOOLEAN)) {
                 event.setCancelled(true);
             }
             if (event.getWhoClicked() instanceof Player player) {
@@ -291,10 +293,10 @@ public class OriginSwapper implements Listener {
                     boolean allowUnchoosable = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(displayOnlyKey, BooleanPDT.BOOLEAN, false);
                     Integer scroll = currentItem.getItemMeta().getPersistentDataContainer().get(pageScrollKey, PersistentDataType.INTEGER);
                     if (scroll == null) return;
-                    player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
                     openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable);
                 }
-                if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey)) {
+                if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey, BooleanPDT.BOOLEAN)) {
                     int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
                     if (!player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass")) && Boolean.TRUE.equals(currentItem.getItemMeta().getPersistentDataContainer().get(costsCurrencyKey, BooleanPDT.BOOLEAN))) {
                         if (!OriginsReborn.getInstance().getEconomy().has(player, amount)) {
@@ -320,7 +322,7 @@ public class OriginSwapper implements Listener {
                         origin = AddonLoader.originNameMap.get(originName);
                     }
                     PlayerSwapOriginEvent.SwapReason reason = getReason(item);
-                    player.playSound(player, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
                     player.closeInventory();
 
                     ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
@@ -328,14 +330,14 @@ public class OriginSwapper implements Listener {
                     if (reason == PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN) {
                         EquipmentSlot hand = null;
                         if (meta != null) {
-                            if (meta.getPersistentDataContainer().has(OrbOfOrigin.orbKey)) {
+                            if (meta.getPersistentDataContainer().has(OrbOfOrigin.orbKey, BooleanPDT.BOOLEAN)) {
                                 hand = EquipmentSlot.HAND;
                             }
                         }
                         if (hand == null) {
                             ItemMeta offhandMeta = player.getInventory().getItemInOffHand().getItemMeta();
                             if (offhandMeta != null) {
-                                if (offhandMeta.getPersistentDataContainer().has(OrbOfOrigin.orbKey)) {
+                                if (offhandMeta.getPersistentDataContainer().has(OrbOfOrigin.orbKey, BooleanPDT.BOOLEAN)) {
                                     hand = EquipmentSlot.OFF_HAND;
                                 }
                             }
@@ -345,7 +347,8 @@ public class OriginSwapper implements Listener {
                         if (hand == EquipmentSlot.HAND) player.swingMainHand();
                         else player.swingOffHand();
                         if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.consume")) {
-                            player.getInventory().getItem(hand).setAmount(player.getInventory().getItem(hand).getAmount() - 1);
+                            ItemStack handItem = player.getInventory().getItem(hand);
+                            if (handItem != null) handItem.setAmount(handItem.getAmount() - 1);
                         }
                     }
                     boolean resetPlayer = shouldResetPlayer(reason);
@@ -354,7 +357,7 @@ public class OriginSwapper implements Listener {
                         return;
                     }
                     setOrigin(player, origin, reason, resetPlayer);
-                } else if (currentItem.getItemMeta().getPersistentDataContainer().has(closeKey)) event.getWhoClicked().closeInventory();
+                } else if (currentItem.getItemMeta().getPersistentDataContainer().has(closeKey, BooleanPDT.BOOLEAN)) event.getWhoClicked().closeInventory();
             }
         }
     }
@@ -415,7 +418,7 @@ public class OriginSwapper implements Listener {
     public static void resetPlayer(Player player, boolean full) {
         resetAttributes(player);
         player.closeInventory();
-        player.setWorldBorder(null);
+        OriginsReborn.getNMSInvoker().setWorldBorderOverlay(player, false);
         player.setCooldown(Material.SHIELD, 0);
         player.setAllowFlight(false);
         player.setFlying(false);
@@ -492,6 +495,7 @@ public class OriginSwapper implements Listener {
     }
 
     @EventHandler
+    @SuppressWarnings("deprecation")
     public void onPlayerJoin(PlayerJoinEvent event) {
         resetAttributes(event.getPlayer());
         Origin origin = getOrigin(event.getPlayer());
@@ -554,7 +558,7 @@ public class OriginSwapper implements Listener {
             else if (invulnerableMode.equalsIgnoreCase("ON")) {
                 ItemStack item = player.getOpenInventory().getTopInventory().getItem(1);
                 if (item != null && item.getItemMeta() != null) {
-                    if (item.getItemMeta().getPersistentDataContainer().has(originKey)) event.setCancelled(true);
+                    if (item.getItemMeta().getPersistentDataContainer().has(originKey, PersistentDataType.STRING)) event.setCancelled(true);
                 }
             }
         }
@@ -605,7 +609,7 @@ public class OriginSwapper implements Listener {
     }
 
     public static Origin getOrigin(Player player) {
-        if (player.getPersistentDataContainer().has(originKey)) {
+        if (player.getPersistentDataContainer().has(originKey, PersistentDataType.STRING)) {
             return AddonLoader.originNameMap.get(player.getPersistentDataContainer().get(originKey, PersistentDataType.STRING));
         } else {
             String name = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
@@ -618,6 +622,7 @@ public class OriginSwapper implements Listener {
         return usedOriginFileConfiguration;
     }
 
+    @SuppressWarnings("deprecation")
     public static void setOrigin(Player player, @Nullable Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean resetPlayer) {
         PlayerSwapOriginEvent swapOriginEvent = new PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player), origin);
         if (!swapOriginEvent.callEvent()) return;
@@ -784,9 +789,7 @@ public class OriginSwapper implements Listener {
 
             public Component getComponent(int lineNumber) {
                 @Subst("minecraft:text_line_0") String formatted = "minecraft:%stext_line_%s".formatted(type == LineType.DESCRIPTION ? "" : "title_", lineNumber);
-                return component.font(
-                        Key.key(formatted)
-                );
+                return applyFont(component, Key.key(formatted));
             }
         }
         private final List<LineComponent> lines;

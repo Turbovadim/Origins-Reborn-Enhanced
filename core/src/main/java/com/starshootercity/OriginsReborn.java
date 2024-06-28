@@ -53,19 +53,19 @@ public class OriginsReborn extends OriginsAddon {
 
     private static void initializeNMSInvoker(OriginsReborn instance) {
         nmsInvoker = switch (Bukkit.getMinecraftVersion()) {
-            case "1.19" -> new NMSInvokerV1_19();
-            case "1.19.1" -> new NMSInvokerV1_19_1();
-            case "1.19.2" -> new NMSInvokerV1_19_2();
-            case "1.19.3" -> new NMSInvokerV1_19_3();
-            case "1.19.4" -> new NMSInvokerV1_19_4();
-            case "1.20" -> new NMSInvokerV1_20();
-            case "1.20.1" -> new NMSInvokerV1_20_1();
-            case "1.20.2" -> new NMSInvokerV1_20_2();
-            case "1.20.3" -> new NMSInvokerV1_20_3();
-            case "1.20.4" -> new NMSInvokerV1_20_4();
-            case "1.20.5" -> new NMSInvokerV1_20_5();
-            case "1.20.6" -> new NMSInvokerV1_20_6();
-            case "1.21" -> new NMSInvokerV1_21();
+            case "1.19" -> new NMSInvokerV1_19(getInstance().getConfig());
+            case "1.19.1" -> new NMSInvokerV1_19_1(getInstance().getConfig());
+            case "1.19.2" -> new NMSInvokerV1_19_2(getInstance().getConfig());
+            case "1.19.3" -> new NMSInvokerV1_19_3(getInstance().getConfig());
+            case "1.19.4" -> new NMSInvokerV1_19_4(getInstance().getConfig());
+            case "1.20" -> new NMSInvokerV1_20(getInstance().getConfig());
+            case "1.20.1" -> new NMSInvokerV1_20_1(getInstance().getConfig());
+            case "1.20.2" -> new NMSInvokerV1_20_2(getInstance().getConfig());
+            case "1.20.3" -> new NMSInvokerV1_20_3(getInstance().getConfig());
+            case "1.20.4" -> new NMSInvokerV1_20_4(getInstance().getConfig());
+            case "1.20.5" -> new NMSInvokerV1_20_5(getInstance().getConfig());
+            case "1.20.6" -> new NMSInvokerV1_20_6(getInstance().getConfig());
+            case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
             default -> throw new IllegalStateException("Unexpected version: " + Bukkit.getMinecraftVersion() + " only versions 1.20 - 1.20.6 are supported");
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
@@ -84,22 +84,22 @@ public class OriginsReborn extends OriginsAddon {
             if (version.equals("2.0.0")) {
                 getConfig().set("config-version", "2.0.3");
                 getConfig().set("display.enable-prefixes", false);
-                getConfig().setComments("display", List.of("Miscellaneous display options"));
-                getConfig().setComments("display.enable-prefixes", List.of("Enable prefixes in tab and on display names with the names of origins"));
+                getNMSInvoker().setComments("display", List.of("Miscellaneous display options"));
+                getNMSInvoker().setComments("display.enable-prefixes", List.of("Enable prefixes in tab and on display names with the names of origins"));
                 saveConfig();
             }
             if (version.equals("2.0.3")) {
                 getConfig().set("config-version", "2.1.7");
                 getConfig().set("restrictions.reusing-origins", "NONE");
                 getConfig().set("restrictions.prevent-same-origins", false);
-                getConfig().setComments("restrictions",
+                getNMSInvoker().setComments("restrictions",
                         List.of(
                                 "Restrictions placed on origin selection",
                                 "These are designed for use with addon plugins that add many new origins",
                                 "If you run out of origins that fit the restrictions you may experience issues"
                                 )
                 );
-                getConfig().setComments("restrictions.reusing-origins",
+                getNMSInvoker().setComments("restrictions.reusing-origins",
                         List.of(
                                 "Rule for reusing origins",
                                 "\"NONE\" allows origins to be reused",
@@ -107,7 +107,7 @@ public class OriginsReborn extends OriginsAddon {
                                 "\"ALL\" means no players can use an origin again after one has selected it"
                                 )
                 );
-                getConfig().setComments("restrictions.prevent-same-origins",
+                getNMSInvoker().setComments("restrictions.prevent-same-origins",
                         List.of(
                                 "Prevent players from having the same origins as other players",
                                 "This is locked on if reusing-origins is set to ALL"
@@ -118,25 +118,25 @@ public class OriginsReborn extends OriginsAddon {
             if ((version.equals("2.1.7") || version.equals("2.1.10"))) {
                 getConfig().set("config-version", "2.1.11");
                 getConfig().set("worlds.disabled-worlds", List.of("example_world"));
-                getConfig().setComments("worlds.disabled-worlds", List.of("Worlds to disable origins in"));
+                getNMSInvoker().setComments("worlds.disabled-worlds", List.of("Worlds to disable origins in"));
                 saveConfig();
             }
             if (version.equals("2.1.14")) {
                 getConfig().set("config-version", "2.1.11");
-                getConfig().setComments("origin-selection.show-initial-gui", null);
+                getNMSInvoker().setComments("origin-selection.show-initial-gui", null);
                 getConfig().set("origin-selection.show-initial-gui", null);
                 saveConfig();
             }
             if (version.equals("2.1.11")) {
                 getConfig().set("config-version", "2.1.16");
                 getConfig().set("origin-selection.auto-spawn-teleport", true);
-                getConfig().setComments("origin-selection.auto-spawn-teleport", List.of("Automatically teleport players to the world spawn when first selecting an origin"));
+                getNMSInvoker().setComments("origin-selection.auto-spawn-teleport", List.of("Automatically teleport players to the world spawn when first selecting an origin"));
                 saveConfig();
             }
             if (version.equals("2.1.16")) {
                 getConfig().set("config-version", "2.1.17");
                 getConfig().set("origin-selection.invulnerable-mode", "OFF");
-                getConfig().setComments("origin-selection.invulnerable-mode", List.of(
+                getNMSInvoker().setComments("origin-selection.invulnerable-mode", List.of(
                         "OFF - you can take damage with the origin selection GUI open",
                         "ON - you cannot take damage with the origin selection GUI open",
                         "INITIAL - you cannot take damage if you do not have an origin (and therefore cannot close the screen)"
@@ -147,57 +147,57 @@ public class OriginsReborn extends OriginsAddon {
                 getConfig().set("config-version", "2.1.18");
                 getConfig().set("origin-selection.screen-title.prefix", "");
                 getConfig().set("origin-selection.screen-title.suffix", "");
-                getConfig().setComments("origin-selection.screen-title.prefix", List.of("Prefix of GUI title"));
-                getConfig().setComments("origin-selection.screen-title.suffix", List.of("Suffix of GUI title"));
-                getConfig().setComments("origin-selection.screen-title", List.of("Prefixes and suffixes for the selection screen title", "This is an advanced setting - only use it if you know how"));
+                getNMSInvoker().setComments("origin-selection.screen-title.prefix", List.of("Prefix of GUI title"));
+                getNMSInvoker().setComments("origin-selection.screen-title.suffix", List.of("Suffix of GUI title"));
+                getNMSInvoker().setComments("origin-selection.screen-title", List.of("Prefixes and suffixes for the selection screen title", "This is an advanced setting - only use it if you know how"));
                 saveConfig();
             }
             if (version.equals("2.1.18")) {
                 getConfig().set("config-version", "2.1.19");
                 getConfig().set("origin-selection.screen-title.background", "");
-                getConfig().setComments("origin-selection.screen-title.background", List.of("Background, between Origins-Reborn background and things like text"));
+                getNMSInvoker().setComments("origin-selection.screen-title.background", List.of("Background, between Origins-Reborn background and things like text"));
                 saveConfig();
             }
             if (version.equals("2.1.19")) {
                 getConfig().set("config-version", "2.1.20");
                 getConfig().set("messages.no-swap-command-permissions", "§cYou don't have permission to do this!");
-                getConfig().setComments("messages.no-swap-command-permissions", List.of("Player used /origin swap and does not have permission"));
-                getConfig().setComments("messages", List.of("Configure plugin messages", "Create an issue on the Origins-Reborn Github if you'd like to add a configuration option for a message"));
+                getNMSInvoker().setComments("messages.no-swap-command-permissions", List.of("Player used /origin swap and does not have permission"));
+                getNMSInvoker().setComments("messages", List.of("Configure plugin messages", "Create an issue on the Origins-Reborn Github if you'd like to add a configuration option for a message"));
                 saveConfig();
             }
             if (version.equals("2.1.20")) {
                 getConfig().set("config-version", "2.2.3");
                 getConfig().set("misc-settings.disable-flight-stuff", false);
-                getConfig().setComments("misc-settings", List.of("Miscellaneous settings"));
-                getConfig().setComments("misc-settings.disable-flight-stuff", List.of("Disable all flight-related features. This does not hide the abilities themselves, they must be removed from the .yml files in the ~/plugins/Origins-Reborn/origins/ folder"));
+                getNMSInvoker().setComments("misc-settings", List.of("Miscellaneous settings"));
+                getNMSInvoker().setComments("misc-settings.disable-flight-stuff", List.of("Disable all flight-related features. This does not hide the abilities themselves, they must be removed from the .yml files in the ~/plugins/Origins-Reborn/origins/ folder"));
                 saveConfig();
             }
             if (version.equals("2.2.3")) {
                 getConfig().set("config-version", "2.2.5");
                 getConfig().set("geyser.join-form-delay", 20);
-                getConfig().setComments("geyser", List.of("Settings for using GeyserMC"));
-                getConfig().setComments("geyser.join-form-delay", List.of("The delay in ticks to wait before showing a new Bedrock player the selection GUI"));
+                getNMSInvoker().setComments("geyser", List.of("Settings for using GeyserMC"));
+                getNMSInvoker().setComments("geyser.join-form-delay", List.of("The delay in ticks to wait before showing a new Bedrock player the selection GUI"));
                 saveConfig();
             }
             if (version.equals("2.2.5")) {
                 getConfig().set("config-version", "2.2.18");
                 getConfig().set("swap-command.vault.default-cost", getConfig().getInt("swap-command.vault.cost", 1000));
-                getConfig().setComments("swap-command.vault.cost", null);
+                getNMSInvoker().setComments("swap-command.vault.cost", null);
                 getConfig().set("swap-command.vault.cost", null);
-                getConfig().setComments("swap-command.vault.default-cost", List.of("Default cost of switching origin, if it hasn't been overriden in the origin file"));
+                getNMSInvoker().setComments("swap-command.vault.default-cost", List.of("Default cost of switching origin, if it hasn't been overriden in the origin file"));
                 getConfig().set("origin-selection.default-origin", "NONE");
-                getConfig().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
+                getNMSInvoker().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
                 saveConfig();
             }
             /*
             if (version.equals("2.1.11") || version.equals("2.1.10")) {
                 getConfig().set("config-version", "2.2.0");
                 getConfig().set("display.language", "en_us");
-                getConfig().setComments("display.language", List.of(
+                getNMSInvoker().setComments("display.language", List.of(
                         "Language file to use - default is en_us"
                 ));
                 getConfig().set("display.force-unicode-font", "false");
-                getConfig().setComments("display.force-unicode-font", List.of(
+                getNMSInvoker().setComments("display.force-unicode-font", List.of(
                         "Force unicode font for all characters"
                 ));
                 saveConfig();
@@ -222,6 +222,7 @@ public class OriginsReborn extends OriginsAddon {
             }
         } else vaultEnabled = false;
         saveDefaultConfig();
+        initializeNMSInvoker(this);
         updateConfig();
         PluginCommand command = getCommand("origin");
         if (command != null) command.setExecutor(new OriginCommand());
@@ -235,7 +236,6 @@ public class OriginsReborn extends OriginsAddon {
         PluginCommand flightCommand = getCommand("fly");
         if (flightCommand != null) flightCommand.setExecutor(new FlightToggleCommand());
 
-        initializeNMSInvoker(this);
         cooldowns = new Cooldowns();
     }
 

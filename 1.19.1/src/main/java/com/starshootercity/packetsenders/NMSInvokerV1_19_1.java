@@ -1,6 +1,8 @@
 package com.starshootercity.packetsenders;
 
 import com.destroystokyo.paper.entity.ai.Goal;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
@@ -16,13 +18,11 @@ import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_19_R1.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftLivingEntity;
@@ -34,6 +34,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -45,6 +46,35 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_19_1 extends NMSInvoker {
+    public NMSInvokerV1_19_1(FileConfiguration config) {
+        super(config);
+    }
+
+    @Override
+    public Component applyFont(Component component, Key font) {
+        return component.font(font);
+    }
+
+    @EventHandler
+    public void onBlockDamageAbort(BlockDamageAbortEvent event) {
+        new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();
+    }
+
+    @Override
+    public void setWorldBorderOverlay(Player player, boolean show) {
+        if (show) {
+            WorldBorder border = Bukkit.createWorldBorder();
+            border.setCenter(player.getWorld().getWorldBorder().getCenter());
+            border.setSize(player.getWorld().getWorldBorder().getSize());
+            border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
+        } else player.setWorldBorder(null);
+    }
+
+    @Override
+    public void setComments(String path, List<String> comments) {
+        config.setComments(path, comments);
+    }
+
     @Override
     public void sendEntityData(Player player, Entity entity, byte bytes) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
@@ -110,7 +140,12 @@ public class NMSInvokerV1_19_1 extends NMSInvoker {
         );
         ProfilePublicKey profilePublicKey = serverPlayer.getProfilePublicKey();
         ProfilePublicKey.Data data = profilePublicKey != null ? profilePublicKey.data() : null;
-        new ClientboundPlayerInfoPacket.PlayerUpdate(serverPlayer.getGameProfile(), serverPlayer.latency, gameType, serverPlayer.getTabListDisplayName(), data);
+        ClientboundPlayerInfoPacket.PlayerUpdate playerUpdate = new ClientboundPlayerInfoPacket.PlayerUpdate(serverPlayer.getGameProfile(), serverPlayer.latency, gameType, serverPlayer.getTabListDisplayName(), data);
+        for (ClientboundPlayerInfoPacket.PlayerUpdate update : packet.getEntries()) {
+            if (update.getProfile().getId().equals(player.getUniqueId())) {
+                packet.getEntries().set(packet.getEntries().indexOf(update), playerUpdate);
+            }
+        }
         serverPlayer.connection.send(packet);
     }
 

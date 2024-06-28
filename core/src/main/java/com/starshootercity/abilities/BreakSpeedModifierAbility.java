@@ -3,6 +3,7 @@ package com.starshootercity.abilities;
 import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.*;
+import com.starshootercity.packetsenders.OriginsRebornBlockDamageAbortEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Material;
@@ -17,7 +18,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -241,14 +241,14 @@ public interface BreakSpeedModifierAbility extends Ability {
                 f /= 5.0F;
             }
 
-            //float d = block.destroySpeed;
             float d = OriginsReborn.getNMSInvoker().getDestroySpeed(blockType);
 
             return f / d;
         }
 
+        // ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK
         @EventHandler
-        public void onBlockDamage(BlockDamageAbortEvent event) {
+        public void onBlockDamage(OriginsRebornBlockDamageAbortEvent event) {
             if (blockbreakingTasks.containsKey(event.getPlayer())) {
                 int taskNum = blockbreakingTasks.get(event.getPlayer());
                 cancelTask(taskNum);

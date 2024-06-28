@@ -1,6 +1,8 @@
 package com.starshootercity.packetsenders;
 
 import com.destroystokyo.paper.entity.ai.Goal;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -9,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
@@ -22,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -93,4 +97,16 @@ public abstract class NMSInvoker implements Listener {
     public abstract Attribute getBlockBreakSpeedAttribute();
 
     public abstract void addAttributeModifier(AttributeInstance instance, NamespacedKey key, String name, double amount, AttributeModifier.Operation operation);
+
+    public abstract void setWorldBorderOverlay(Player player, boolean show);
+
+    public abstract void setComments(String path, List<String> comments);
+
+    public NMSInvoker(FileConfiguration config) {
+        this.config = config;
+    }
+
+    protected final FileConfiguration config;
+
+    public abstract Component applyFont(Component component, Key font);
 }

@@ -1,8 +1,10 @@
 package com.starshootercity.packetsenders;
 
 import com.destroystokyo.paper.entity.ai.Goal;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
@@ -15,13 +17,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.level.GameType;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_20_R3.block.CraftBlockState;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftLivingEntity;
@@ -32,6 +32,8 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
@@ -44,6 +46,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_20_4 extends NMSInvoker {
+    public NMSInvokerV1_20_4(FileConfiguration config) {
+        super(config);
+    }
+
+    @Override
+    public Component applyFont(Component component, Key font) {
+        return component.font(font);
+    }
+
+    @EventHandler
+    public void onBlockDamageAbort(BlockDamageAbortEvent event) {
+        new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();
+    }
+
     @Override
     public void sendEntityData(Player player, Entity entity, byte bytes) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
@@ -257,5 +273,20 @@ public class NMSInvokerV1_20_4 extends NMSInvoker {
     @Override
     public Attribute getBlockBreakSpeedAttribute() {
         return null;
+    }
+
+    @Override
+    public void setWorldBorderOverlay(Player player, boolean show) {
+        if (show) {
+            WorldBorder border = Bukkit.createWorldBorder();
+            border.setCenter(player.getWorld().getWorldBorder().getCenter());
+            border.setSize(player.getWorld().getWorldBorder().getSize());
+            border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
+        } else player.setWorldBorder(null);
+    }
+
+    @Override
+    public void setComments(String path, List<String> comments) {
+        config.setComments(path, comments);
     }
 }

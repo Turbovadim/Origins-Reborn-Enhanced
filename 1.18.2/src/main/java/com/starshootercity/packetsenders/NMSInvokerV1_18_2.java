@@ -4,14 +4,15 @@ import com.destroystokyo.paper.entity.ai.Goal;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
-import net.minecraft.Optionull;
-import net.minecraft.network.chat.RemoteChatSession;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.level.GameType;
@@ -21,11 +22,11 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_20_R1.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_20_R1.entity.CraftLivingEntity;
-import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_18_R2.block.data.CraftBlockData;
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftLivingEntity;
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_18_R2.inventory.CraftItemStack;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
@@ -33,6 +34,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockDamageAbortEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
@@ -42,14 +44,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class NMSInvokerV1_20 extends NMSInvoker {
-    public NMSInvokerV1_20(FileConfiguration config) {
+public class NMSInvokerV1_18_2 extends NMSInvoker {
+    public NMSInvokerV1_18_2(FileConfiguration config) {
         super(config);
-    }
-
-    @Override
-    public Component applyFont(Component component, Key font) {
-        return component.font(font);
     }
 
     @EventHandler
@@ -58,14 +55,17 @@ public class NMSInvokerV1_20 extends NMSInvoker {
     }
 
     @Override
+    public Component applyFont(Component component, Key font) {
+        return component.font(font);
+    }
+
+    @Override
     public void sendEntityData(Player player, Entity entity, byte bytes) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        net.minecraft.world.entity.Entity target = ((CraftEntity) entity).getHandle();
-
-        List<SynchedEntityData.DataValue<?>> eData = new ArrayList<>();
-        eData.add(SynchedEntityData.DataValue.create(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE), bytes));
-        ClientboundSetEntityDataPacket metadata = new ClientboundSetEntityDataPacket(target.getId(), eData);
-        serverPlayer.connection.send(metadata);
+        SynchedEntityData data = ((CraftEntity) entity).getHandle().getEntityData();
+        data.set(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE), bytes);
+        ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(entity.getEntityId(), data, false);
+        serverPlayer.connection.send(packet);
     }
 
     @Override
@@ -119,8 +119,15 @@ public class NMSInvokerV1_20 extends NMSInvoker {
             case ADVENTURE -> GameType.ADVENTURE;
             case SPECTATOR -> GameType.SPECTATOR;
         };
-        ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(serverPlayer.getUUID(), serverPlayer.getGameProfile(), true, 1, gameType, serverPlayer.getTabListDisplayName(), Optionull.map(serverPlayer.getChatSession(), RemoteChatSession::asData));
-        ClientboundPlayerInfoUpdatePacket packet = new OriginsRebornClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE), entry);
+        ClientboundPlayerInfoPacket packet = new ClientboundPlayerInfoPacket(
+                ClientboundPlayerInfoPacket.Action.UPDATE_GAME_MODE
+        );
+        ClientboundPlayerInfoPacket.PlayerUpdate playerUpdate = new ClientboundPlayerInfoPacket.PlayerUpdate(serverPlayer.getGameProfile(), serverPlayer.latency, gameType, serverPlayer.getTabListDisplayName());
+        for (ClientboundPlayerInfoPacket.PlayerUpdate update : packet.getEntries()) {
+            if (update.getProfile().getId().equals(player.getUniqueId())) {
+                packet.getEntries().set(packet.getEntries().indexOf(update), playerUpdate);
+            }
+        }
         serverPlayer.connection.send(packet);
     }
 
@@ -180,13 +187,6 @@ public class NMSInvokerV1_20 extends NMSInvoker {
         return Enchantment.DIG_SPEED;
     }
 
-    public static class OriginsRebornClientboundPlayerInfoUpdatePacket extends ClientboundPlayerInfoUpdatePacket {
-        public OriginsRebornClientboundPlayerInfoUpdatePacket(EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions, ClientboundPlayerInfoUpdatePacket.Entry entry) {
-            super(actions, List.of());
-            entries().add(entry);
-        }
-    }
-
     @Override
     public @Nullable Location getRespawnLocation(Player player) {
         return player.getBedSpawnLocation();
@@ -212,19 +212,40 @@ public class NMSInvokerV1_20 extends NMSInvoker {
     }
 
     @Override
-    public boolean isUnderWater(LivingEntity entity) {
-        return entity.isUnderWater();
+    public void setWorldBorderOverlay(Player player, boolean show) {
+        if (show) {
+            WorldBorder border = Bukkit.createWorldBorder();
+            border.setCenter(player.getWorld().getWorldBorder().getCenter());
+            border.setSize(player.getWorld().getWorldBorder().getSize());
+            border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
+        } else player.setWorldBorder(null);
     }
 
     @Override
-    public void knockback(LivingEntity entity, double strength, double x, double z) {
-        entity.knockback(strength, x, z);
+    public void setComments(String path, List<String> comments) {
+        config.setComments(path, comments);
     }
 
     @Override
     public void dealDryOutDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
-        livingEntity.hurt(livingEntity.damageSources().dryOut(), amount);
+        livingEntity.hurt(DamageSource.DRY_OUT, amount);
+    }
+
+    @Override
+    public void dealFreezeDamage(LivingEntity entity, int amount) {
+        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
+        livingEntity.hurt(DamageSource.FREEZE, amount);
+    }
+
+    @Override
+    public boolean supportsInfiniteDuration() {
+        return false;
+    }
+
+    @Override
+    public boolean isUnderWater(LivingEntity entity) {
+        return ((CraftLivingEntity) entity).getHandle().isUnderWater();
     }
 
     @Override
@@ -238,43 +259,47 @@ public class NMSInvokerV1_20 extends NMSInvoker {
     }
 
     @Override
-    public void dealFreezeDamage(LivingEntity entity , int amount) {
-        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
-        livingEntity.hurt(livingEntity.damageSources().freeze(), amount);
-    }
-
-    @Override
-    public void setFlyingFallDamage(Player player, TriState state) {
-        player.setFlyingFallDamage(state);
+    public void knockback(LivingEntity entity, double strength, double x, double z) {
+        ((CraftLivingEntity) entity).getHandle().knockback(strength, x, z);
     }
 
     @Override
     public void broadcastSlotBreak(Player player, EquipmentSlot slot, Collection<Player> players) {
-        player.broadcastSlotBreak(slot, players);
+        net.minecraft.world.entity.EquipmentSlot NMSSlot = switch (slot) {
+            case HAND -> net.minecraft.world.entity.EquipmentSlot.MAINHAND;
+            case OFF_HAND -> net.minecraft.world.entity.EquipmentSlot.OFFHAND;
+            case FEET -> net.minecraft.world.entity.EquipmentSlot.FEET;
+            case LEGS -> net.minecraft.world.entity.EquipmentSlot.LEGS;
+            case CHEST -> net.minecraft.world.entity.EquipmentSlot.CHEST;
+            case HEAD -> net.minecraft.world.entity.EquipmentSlot.HEAD;
+        };
+        ((CraftPlayer) player).getHandle().broadcastBreakEvent(NMSSlot);
     }
 
     @Override
     public void sendBlockDamage(Player player, Location location, float damage, Entity entity) {
-        player.sendBlockDamage(location, damage, entity);
+        ClientboundBlockDestructionPacket packet = new ClientboundBlockDestructionPacket(entity.getEntityId(), new BlockPos(location.getX(), location.getY(), location.getZ()), (int) (damage*10));
+        ((CraftPlayer) player).getHandle().connection.send(packet);
+    }
+
+    @Override
+    public void setFlyingFallDamage(Player player, TriState state) {
+        flyingFallDamage.put(player, state);
+    }
+
+    public Map<Player, TriState> flyingFallDamage = new HashMap<>();
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            if (player.getAllowFlight()) {
+                if (flyingFallDamage.get(player) == TriState.FALSE) event.setCancelled(true);
+            }
+        }
     }
 
     @Override
     public Attribute getBlockBreakSpeedAttribute() {
         return null;
-    }
-
-    @Override
-    public void setWorldBorderOverlay(Player player, boolean show) {
-        if (show) {
-            WorldBorder border = Bukkit.createWorldBorder();
-            border.setCenter(player.getWorld().getWorldBorder().getCenter());
-            border.setSize(player.getWorld().getWorldBorder().getSize());
-            border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
-        } else player.setWorldBorder(null);
-    }
-
-    @Override
-    public void setComments(String path, List<String> comments) {
-        config.setComments(path, comments);
     }
 }
