@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.starshootercity"
-version = "2.2.18"
+version = "2.2.19"
 
 repositories {
     mavenCentral()
