@@ -39,7 +39,7 @@ public class GeyserSwapper {
 
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
         List<Origin> origins = new ArrayList<>(AddonLoader.origins);
-        if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player));
+        if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(origin.getPermission()));
         else {
             openOriginInfo(player, OriginSwapper.getOrigin(player), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false);
             return;
