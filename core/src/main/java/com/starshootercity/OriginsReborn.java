@@ -179,6 +179,16 @@ public class OriginsReborn extends OriginsAddon {
                 getConfig().setComments("geyser.join-form-delay", List.of("The delay in ticks to wait before showing a new Bedrock player the selection GUI"));
                 saveConfig();
             }
+            if (version.equals("2.2.5")) {
+                getConfig().set("config-version", "2.2.18");
+                getConfig().set("swap-command.vault.default-cost", getConfig().getInt("swap-command.vault.cost", 1000));
+                getConfig().setComments("swap-command.vault.cost", null);
+                getConfig().set("swap-command.vault.cost", null);
+                getConfig().setComments("swap-command.vault.default-cost", List.of("Default cost of switching origin, if it hasn't been overriden in the origin file"));
+                getConfig().set("origin-selection.default-origin", "NONE");
+                getConfig().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
+                saveConfig();
+            }
             /*
             if (version.equals("2.1.11") || version.equals("2.1.10")) {
                 getConfig().set("config-version", "2.2.0");

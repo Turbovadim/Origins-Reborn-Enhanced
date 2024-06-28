@@ -29,13 +29,17 @@ swap-command:
     enabled: false
     # Permission to bypass the cost of the swap command
     bypass-permission: originsreborn.costbypass
-    # Cost of switching origin
-    cost: 1000
+    # Default cost of switching origin, if it hasn't been overriden in the origin file
+    default-cost: 1000
     # Currency symbol for the economy
     currency-symbol: "$"
 
 # Settings for origin selection
 origin-selection:
+  # Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin
+  # Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'
+  # Disabled if set to an invalid name such as "NONE"
+  default-origin: "NONE"
   # OFF - you can take damage with the origin selection GUI open
   # ON - you cannot take damage with the origin selection GUI open
   # INITIAL - you cannot take damage if you do not have an origin (and therefore cannot close the screen)
@@ -120,4 +124,4 @@ geyser:
   join-form-delay: 20
 
 # Config version - do not touch this!
-config-version: 2.2.5
+config-version: 2.2.18

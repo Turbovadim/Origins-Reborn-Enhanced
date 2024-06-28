@@ -186,7 +186,9 @@ public class AddonLoader {
                 if (num < parts.length) formattedName.append(" ");
             }
             String permission = null;
+            Integer cost = null;
             if (object.has("permission")) permission = object.getString("permission");
+            if (object.has("cost")) cost = object.getInt("cost");
             Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
                 if (object.has("powers")) {
                     JSONArray array = object.getJSONArray("powers");
@@ -194,7 +196,7 @@ public class AddonLoader {
                         add(Key.key(((String) o)));
                     }
                 }
-            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission);
+            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost);
             String actualName = origin.getActualName().toLowerCase();
             Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
             if (previouslyRegisteredOrigin != null) {

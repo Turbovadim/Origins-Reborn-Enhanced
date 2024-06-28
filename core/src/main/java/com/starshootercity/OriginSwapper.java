@@ -71,6 +71,14 @@ public class OriginSwapper implements Listener {
     }
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean cost, boolean displayOnly) {
         if (shouldDisallowSelection(player, reason)) return;
+        if (reason == PlayerSwapOriginEvent.SwapReason.INITIAL) {
+            String def = OriginsReborn.getInstance().getConfig().getString("origin-selection.default_origin", "NONE");
+            Origin defaultOrigin = AddonLoader.originFileNameMap.get(def);
+            if (defaultOrigin != null) {
+                setOrigin(player, defaultOrigin, reason, false);
+                return;
+            }
+        }
         lastSwapReasons.put(player, reason);
         boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly)) {
@@ -86,6 +94,7 @@ public class OriginSwapper implements Listener {
             ItemStack icon;
             String name;
             char impact;
+            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.default-cost", 1000);
             LineData data;
             if (slot == origins.size()) {
                 List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
@@ -114,6 +123,9 @@ public class OriginSwapper implements Listener {
                 name = origin.getName();
                 impact = origin.getImpact();
                 data = new LineData(origin);
+                if (origin.getCost() != null) {
+                    amount = origin.getCost();
+                }
             }
             StringBuilder compressedName = new StringBuilder("\uF001");
             for (char c : name.toCharArray()) {
@@ -171,7 +183,6 @@ public class OriginSwapper implements Listener {
 
             if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
                 String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
-                int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
                 List<Component> costsCurrency = List.of(
                         Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
                 );
