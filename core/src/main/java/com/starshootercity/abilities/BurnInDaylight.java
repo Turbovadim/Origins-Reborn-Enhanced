@@ -3,9 +3,9 @@ package com.starshootercity.abilities;
 import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -31,13 +31,7 @@ public class BurnInDaylight implements VisibleAbility, DependantAbility, Listene
                             block = block.getRelative(BlockFace.DOWN);
                         }
                         boolean height = block.getY() < player.getLocation().getY();
-                        String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
-                        if (overworld == null) {
-                            overworld = "world";
-                            OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
-                            OriginsReborn.getInstance().saveConfig();
-                        }
-                        boolean isInOverworld = player.getWorld() == Bukkit.getWorld(overworld);
+                        boolean isInOverworld = player.getWorld().getEnvironment() == World.Environment.NORMAL;
                         boolean day = player.getWorld().isDayTime();
                         if (height && isInOverworld && day && !player.isInWaterOrRainOrBubbleColumn()) {
                             player.setFireTicks(Math.max(player.getFireTicks(), 60));
