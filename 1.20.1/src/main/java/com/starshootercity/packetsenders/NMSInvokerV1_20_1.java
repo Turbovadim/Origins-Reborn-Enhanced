@@ -263,7 +263,7 @@ public class NMSInvokerV1_20_1 extends NMSInvoker {
             WorldBorder border = Bukkit.createWorldBorder();
             border.setCenter(player.getWorld().getWorldBorder().getCenter());
             border.setSize(player.getWorld().getWorldBorder().getSize());
-            border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
+            border.setWarningDistance((int) (player.getWorld().getWorldBorder().getSize()*2));
             player.setWorldBorder(border);
         } else player.setWorldBorder(null);
     }

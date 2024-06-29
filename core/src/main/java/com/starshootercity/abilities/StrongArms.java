@@ -99,6 +99,7 @@ public class StrongArms implements MultiAbility, VisibleAbility, Listener {
         public @NotNull Key getKey() {
             return Key.key("origins:strong_arms_break_speed");
         }
+
         @Override
         @SuppressWarnings("deprecation")
         public BlockMiningContext provideContextFor(Player player) {
