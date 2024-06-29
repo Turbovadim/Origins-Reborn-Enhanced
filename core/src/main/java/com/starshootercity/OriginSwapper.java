@@ -179,15 +179,21 @@ public class OriginSwapper implements Listener {
             if (!displayOnly) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, BooleanPDT.BOOLEAN, true);
             else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, BooleanPDT.BOOLEAN, true);
 
-            if (cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
-                String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
-                List<Component> costsCurrency = List.of(
-                        Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
-                );
-                confirmMeta.lore(costsCurrency);
-                invisibleConfirmMeta.lore(costsCurrency);
-                confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
-                invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
+            if (amount != 0 && cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
+                boolean go = true;
+                if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.vault.permanent-purchases")) {
+                    go = !getUsedOriginFileConfiguration().getStringList(player.getUniqueId().toString()).contains(name);
+                }
+                if (go) {
+                    String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+                    List<Component> costsCurrency = List.of(
+                            Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
+                    );
+                    confirmMeta.lore(costsCurrency);
+                    invisibleConfirmMeta.lore(costsCurrency);
+                    confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
+                    invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
+                }
             }
 
             ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);

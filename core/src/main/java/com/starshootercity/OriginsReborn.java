@@ -53,6 +53,7 @@ public class OriginsReborn extends OriginsAddon {
 
     private static void initializeNMSInvoker(OriginsReborn instance) {
         nmsInvoker = switch (Bukkit.getMinecraftVersion()) {
+            case "1.18.2" -> new NMSInvokerV1_18_2(getInstance().getConfig());
             case "1.19" -> new NMSInvokerV1_19(getInstance().getConfig());
             case "1.19.1" -> new NMSInvokerV1_19_1(getInstance().getConfig());
             case "1.19.2" -> new NMSInvokerV1_19_2(getInstance().getConfig());
@@ -187,6 +188,12 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("swap-command.vault.default-cost", List.of("Default cost of switching origin, if it hasn't been overriden in the origin file"));
                 getConfig().set("origin-selection.default-origin", "NONE");
                 getNMSInvoker().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
+                saveConfig();
+            }
+            if (version.equals("2.2.18")) {
+                getConfig().set("config-version", "2.2.20");
+                getConfig().set("swap-command.vault.permanent-purchases", false);
+                getNMSInvoker().setComments("swap-command.vault.permanent-purchases", List.of("Allows the player to switch back to origins for free if they already had the origin before"));
                 saveConfig();
             }
             /*

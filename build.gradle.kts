@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.starshootercity"
-version = "2.2.19"
+version = "2.2.20"
 
 repositories {
     mavenCentral()
@@ -16,6 +16,7 @@ dependencies {
     implementation("com.github.stleary:JSON-java:20231013")
     implementation(project(":core"))
     implementation(project(":version"))
+    implementation(project(":1.18.2", "reobf"))
     implementation(project(":1.19", "reobf"))
     implementation(project(":1.19.1", "reobf"))
     implementation(project(":1.19.2", "reobf"))

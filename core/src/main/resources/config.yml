@@ -31,6 +31,8 @@ swap-command:
     bypass-permission: originsreborn.costbypass
     # Default cost of switching origin, if it hasn't been overriden in the origin file
     default-cost: 1000
+    # Allows the player to switch back to origins for free if they already had the origin before
+    permanent-purchases: false
     # Currency symbol for the economy
     currency-symbol: "$"
 
@@ -124,4 +126,4 @@ geyser:
   join-form-delay: 20
 
 # Config version - do not touch this!
-config-version: 2.2.18
+config-version: 2.2.20

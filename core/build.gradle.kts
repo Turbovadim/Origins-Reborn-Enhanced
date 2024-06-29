@@ -22,6 +22,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.5")
     compileOnly("com.github.stleary:JSON-java:20231013")
     compileOnly(project(":version"))
+    compileOnly(project(":1.18.2"))
     compileOnly(project(":1.19"))
     compileOnly(project(":1.19.1"))
     compileOnly(project(":1.19.2"))
