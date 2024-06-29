@@ -122,11 +122,13 @@ public class Origin {
     }
 
     public List<Ability> getAbilities() {
-        return new ArrayList<>() {{
-            for (Key key : abilities) {
-                add(AbilityRegister.abilityMap.get(key));
-            }
-        }};
+        List<Ability> originAbilities = new ArrayList<>();
+        for (Key key : abilities) {
+            Ability a = AbilityRegister.abilityMap.get(key);
+            originAbilities.add(a);
+            if (a instanceof MultiAbility multiAbility) originAbilities.addAll(multiAbility.getAbilities());
+        }
+        return originAbilities;
     }
 
     public boolean hasAbility(Key key) {

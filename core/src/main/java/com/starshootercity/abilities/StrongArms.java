@@ -130,5 +130,4 @@ public class StrongArms implements MultiAbility, VisibleAbility, Listener {
             }
         }
     }
-
 }

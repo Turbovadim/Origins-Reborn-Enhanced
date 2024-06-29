@@ -279,6 +279,7 @@ public class NMSInvokerV1_21 extends NMSInvoker {
             border.setCenter(player.getWorld().getWorldBorder().getCenter());
             border.setSize(player.getWorld().getWorldBorder().getSize());
             border.setWarningDistance(player.getWorld().getWorldBorder().getWarningDistance()*2);
+            player.setWorldBorder(border);
         } else player.setWorldBorder(null);
     }
 
