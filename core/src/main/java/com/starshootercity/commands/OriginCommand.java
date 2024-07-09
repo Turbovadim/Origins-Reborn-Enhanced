@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OriginCommand implements CommandExecutor, TabCompleter {
-    public static NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(new NamespacedKey(OriginsReborn.getInstance(), "swap-command-cooldown"), new Cooldowns.CooldownInfo(0));
+    public static NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(OriginsReborn.getInstance(), new NamespacedKey(OriginsReborn.getInstance(), "swap-command-cooldown"), new Cooldowns.CooldownInfo(0));
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {

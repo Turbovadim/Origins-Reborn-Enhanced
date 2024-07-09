@@ -20,6 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,14 +157,14 @@ public class Cooldowns implements Listener {
 
     public final Map<String, CooldownIconData> iconDataMap = new HashMap<>();
 
-    public NamespacedKey registerCooldown(NamespacedKey key, CooldownInfo info) {
+    public NamespacedKey registerCooldown(JavaPlugin instance, NamespacedKey key, CooldownInfo info) {
         if (OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return key;
 
         if (info.getIcon() != null && OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
-            File icon = new File(OriginsReborn.getInstance().getDataFolder(), "icons/%s.png".formatted(info.getIcon()));
+            File icon = new File(instance.getDataFolder(), "icons/%s.png".formatted(info.getIcon()));
             if (!icon.exists()) {
                 boolean ignored = icon.getParentFile().mkdirs();
-                OriginsReborn.getInstance().saveResource("icons/%s.png".formatted(info.getIcon()), false);
+                instance.saveResource("icons/%s.png".formatted(info.getIcon()), false);
             }
             CooldownIconData iconData = makeCID(icon);
             iconDataMap.put(info.getIcon(), iconData);

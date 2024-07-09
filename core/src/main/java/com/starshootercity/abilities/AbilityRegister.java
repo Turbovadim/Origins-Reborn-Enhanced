@@ -25,6 +25,7 @@ public class AbilityRegister {
     public static Map<Key, Ability> abilityMap = new HashMap<>();
     public static Map<Key, DependencyAbility> dependencyAbilityMap = new HashMap<>();
     public static Map<Key, List<MultiAbility>> multiAbilityMap = new HashMap<>();
+
     public static void registerAbility(Ability ability, JavaPlugin instance) {
         if (ability instanceof DependencyAbility dependencyAbility) {
             dependencyAbilityMap.put(ability.getKey(), dependencyAbility);
@@ -37,7 +38,7 @@ public class AbilityRegister {
             }
         }
         if (ability instanceof CooldownAbility cooldownAbility) {
-            OriginsReborn.getCooldowns().registerCooldown(cooldownAbility.getCooldownKey(), cooldownAbility.getCooldownInfo());
+            OriginsReborn.getCooldowns().registerCooldown(instance, cooldownAbility.getCooldownKey(), cooldownAbility.getCooldownInfo());
         }
         if (ability instanceof Listener listener) {
             Bukkit.getPluginManager().registerEvents(listener, instance);
