@@ -10,12 +10,14 @@ repositories {
     maven { url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/") }
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://repo.opencollab.dev/main/") }
+    maven { url = uri("https://repo.viaversion.com") }
 }
 
 dependencies {
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    compileOnly("com.viaversion:viaversion-api:5.0.0")
     compileOnly("io.papermc.paper:paper-api:1.18-R0.1-SNAPSHOT") // Paper
     //compileOnly("org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT") // Spigot
     //implementation("net.kyori:adventure-platform-bukkit:4.3.3") // Spigot

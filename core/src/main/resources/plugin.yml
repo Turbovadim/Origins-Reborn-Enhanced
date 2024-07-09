@@ -9,6 +9,7 @@ softdepend:
   - Geyser-Spigot
   - AuthMe
   - PlaceholderAPI
+  - ViaVersion
 
 permissions:
   originsreborn.default:
