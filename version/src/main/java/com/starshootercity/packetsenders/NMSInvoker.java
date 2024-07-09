@@ -109,4 +109,8 @@ public abstract class NMSInvoker implements Listener {
     protected final FileConfiguration config;
 
     public abstract Component applyFont(Component component, Key font);
+
+    public String getPackURL() {
+        return "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip";
+    }
 }

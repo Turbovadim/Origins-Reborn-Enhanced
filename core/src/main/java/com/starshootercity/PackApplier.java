@@ -17,7 +17,7 @@ public class PackApplier implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (OriginsReborn.getInstance().getConfig().getBoolean("resource-pack.enabled")) {
             if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) return;
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginsReborn.getNMSInvoker().sendResourcePacks(event.getPlayer(), OriginsReborn.getInstance().getConfig().getString("resource-pack.link", "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip"), addonPacks), 120);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginsReborn.getNMSInvoker().sendResourcePacks(event.getPlayer(), OriginsReborn.getNMSInvoker().getPackURL(), addonPacks), 120);
         }
     }
 

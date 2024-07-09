@@ -100,10 +100,8 @@ orb-of-origin:
 resource-pack:
   # Whether to enable the resource pack
   # If this is set to false you should send the pack to players either in server.properties or in another plugin
+  # You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
   enabled: true
-  # Link to the pack
-  # This can be changed, but it should always contain the files in the original pack for the GUI
-  link: "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip"
 
 # Miscellaneous display options
 display:

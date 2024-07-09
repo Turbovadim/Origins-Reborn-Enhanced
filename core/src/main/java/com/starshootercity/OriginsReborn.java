@@ -206,6 +206,8 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("cooldowns", List.of("Configuration for cooldowns"));
                 getNMSInvoker().setComments("cooldowns.disable-all-cooldowns", List.of("Disables every cooldown", " To modify specific cooldowns, edit the cooldown-config.yml file"));
                 getNMSInvoker().setComments("cooldowns.show-cooldown-icons", List.of("Use the actionbar to show cooldown icons", "You may want to disable this if using another plugin that requires the actionbar"));
+                getNMSInvoker().setComments("resource-pack.enabled", List.of("Whether to enable the resource pack", "If this is set to false you should send the pack to players either in server.properties or in another plugin", "You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/"));
+                getConfig().set("resource-pack.link", null);
                 getCooldowns().resetFile();
                 saveConfig();
             }
