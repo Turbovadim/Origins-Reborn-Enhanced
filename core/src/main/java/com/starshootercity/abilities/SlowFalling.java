@@ -21,6 +21,7 @@ public class SlowFalling implements VisibleAbility, Listener {
             } else event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, ShortcutUtils.infiniteDuration(), 0, false, false));
         });
     }
+
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:slow_falling");

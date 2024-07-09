@@ -1,10 +1,13 @@
 package com.starshootercity.commands;
 
 import com.starshootercity.*;
+import com.starshootercity.cooldowns.Cooldowns;
 import com.starshootercity.events.PlayerSwapOriginEvent;
+import com.starshootercity.util.CompressionUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,16 +17,26 @@ import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OriginCommand implements CommandExecutor, TabCompleter {
+    public static NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(new NamespacedKey(OriginsReborn.getInstance(), "swap-command-cooldown"), new Cooldowns.CooldownInfo(0));
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length < 1) return false;
         switch (args[0].toLowerCase()) {
             case "swap" -> {
                 if (sender instanceof Player player) {
+                    if (OriginsReborn.getCooldowns().hasCooldown(player, key)) {
+                        long cooldown = OriginsReborn.getCooldowns().getCooldown(player, key);
+                        //player.sendMessage(Component.text("You are on cooldown for %s".formatted(ShortcutUtils.getFormattedTime(cooldown))).color(NamedTextColor.RED));
+                        player.sendMessage(Component.text("You are on cooldown.").color(NamedTextColor.RED));
+                        return true;
+                    }
                     if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.enabled")) {
                         if (AddonLoader.allowOriginSwapCommand(player)) {
                             OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, OriginsReborn.getInstance().isVaultEnabled());
@@ -87,6 +100,31 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 }
                 return true;
             }
+            case "export" -> {
+                if (args.length != 3) return false;
+                File output = new File(OriginsReborn.getInstance().getDataFolder(), "export/" + args[2] + ".orbarch");
+                List<File> files = AddonLoader.originFiles.get(args[1]);
+                if (files == null) return false;
+                try {
+                    CompressionUtils.compressFiles(files, output);
+                    sender.sendMessage(Component.text("Exported origins to '~/plugins/Origins-Reborn/export/%s.orbarch'".formatted(args[2])).color(NamedTextColor.AQUA));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
+            case "import" -> {
+                if (args.length != 2) return false;
+                File input = new File(OriginsReborn.getInstance().getDataFolder(), "import/" + args[1]);
+                File output = new File(OriginsReborn.getInstance().getDataFolder(), "origins");
+                if (!input.exists() || !output.exists()) return false;
+                try {
+                    CompressionUtils.decompressFiles(input, output);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
             default -> {
                 return false;
             }
@@ -108,16 +146,37 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 r.add("reload");
                 r.add("set");
                 r.add("orb");
+                r.add("export");
+                r.add("import");
                 yield r;
             }
             case 2 -> {
-                if (args[0].equals("set") || args[0].equals("orb")) {
-                    yield new ArrayList<>() {{
-                        for (Player player : Bukkit.getOnlinePlayers()) {
-                            add(player.getName());
+                switch (args[0]) {
+                    case "set", "orb" -> {
+                        yield new ArrayList<>() {{
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                add(player.getName());
+                            }
+                        }};
+                    }
+                    case "export" -> {
+                        yield new ArrayList<>(AddonLoader.originFiles.keySet());
+                    }
+                    case "import" -> {
+                        File input = new File(OriginsReborn.getInstance().getDataFolder(), "import");
+                        File[] files = input.listFiles();
+
+                        if (files == null) yield List.of();
+                        List<String> fileNames = new ArrayList<>();
+                        for (File file : files) {
+                            fileNames.add(file.getName());
                         }
-                    }};
-                } else yield new ArrayList<>();
+                        yield fileNames;
+                    }
+                    default -> {
+                        yield new ArrayList<>();
+                    }
+                }
             }
             case 3 -> {
                 if (args[0].equals("set")) {

@@ -15,7 +15,7 @@ public class Hotblooded implements VisibleAbility, Listener {
     public void onEntityPotionEffect(EntityPotionEffectEvent event) {
         AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
             if (event.getNewEffect() != null) {
-                if (event.getNewEffect().getType() == PotionEffectType.POISON || event.getNewEffect().getType() == PotionEffectType.HUNGER) {
+                if (event.getNewEffect().getType().equals(PotionEffectType.POISON) || event.getNewEffect().getType().equals(PotionEffectType.HUNGER)) {
                     event.setCancelled(true);
                 }
             }

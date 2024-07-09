@@ -1,6 +1,7 @@
 package com.starshootercity.geysermc;
 
 import com.starshootercity.*;
+import com.starshootercity.commands.OriginCommand;
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.text.Component;
 import net.milkbowl.vault.economy.Economy;
@@ -63,7 +64,8 @@ public class GeyserSwapper {
 
         }
 
-        form.button("Random", FormImage.Type.URL, "https://static.wikia.nocookie.net/origins-smp/images/1/13/Origin_Orb.png/revision/latest?cb=20210411202749");
+        boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
+        if (enableRandom) form.button("Random", FormImage.Type.URL, "https://static.wikia.nocookie.net/origins-smp/images/1/13/Origin_Orb.png/revision/latest?cb=20210411202749");
 
         sendForm(player.getUniqueId(), form
                 .closedOrInvalidResultHandler(() -> {
@@ -88,6 +90,7 @@ public class GeyserSwapper {
     public static void setOrigin(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean cost) {
         if (OriginsReborn.getInstance().isVaultEnabled() && cost) {
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+            if (origin.getCost() != null) amount = origin.getCost();
             Economy economy = OriginsReborn.getInstance().getEconomy();
             if (economy.has(player, amount)) {
                 economy.withdrawPlayer(player, amount);
@@ -133,6 +136,7 @@ public class GeyserSwapper {
             origins.removeIf(possibleOrigin -> excludedOrigins.contains(possibleOrigin.getName()));
             origin = origins.get(random.nextInt(origins.size()));
         }
+        OriginsReborn.getCooldowns().setCooldown(player, OriginCommand.key);
         OriginSwapper.setOrigin(player, origin, reason, resetPlayer);
     }
 
@@ -164,6 +168,9 @@ public class GeyserSwapper {
         if (cost) {
             String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
+            if (origin != null) {
+                if (origin.getCost() != null) amount = origin.getCost();
+            }
             info.append("\n\n\n§eThis will cost you %s%s!".formatted(symbol, amount));
         }
         form.content(info.toString());

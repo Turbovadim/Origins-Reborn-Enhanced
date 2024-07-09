@@ -3,6 +3,8 @@ package com.starshootercity.abilities;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
+import com.starshootercity.cooldowns.CooldownAbility;
+import com.starshootercity.cooldowns.Cooldowns;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -25,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MasterOfWebs implements FlightAllowingAbility, Listener, VisibleAbility {
+public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Listener, VisibleAbility {
     private final Map<Player, List<Entity>> glowingEntities = new HashMap<>();
 
     private final List<Location> temporaryCobwebs = new ArrayList<>();
@@ -38,15 +40,13 @@ public class MasterOfWebs implements FlightAllowingAbility, Listener, VisibleAbi
         }
     }
 
-    private final NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(new NamespacedKey(OriginsReborn.getInstance(), "web-master"), 120);
-
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player) {
             AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (OriginsReborn.getCooldowns().hasCooldown(player, key)) return;
+                if (hasCooldown(player)) return;
                 if (!event.getEntity().getLocation().getBlock().isSolid()) {
-                    OriginsReborn.getCooldowns().setCooldown(player, key);
+                    setCooldown(player);
                     Location location = event.getEntity().getLocation().getBlock().getLocation();
                     temporaryCobwebs.add(location);
                     location.getBlock().setType(Material.COBWEB);
@@ -198,5 +198,10 @@ public class MasterOfWebs implements FlightAllowingAbility, Listener, VisibleAbi
     @Override
     public float getFlightSpeed(Player player) {
         return 0.04f;
+    }
+
+    @Override
+    public Cooldowns.CooldownInfo getCooldownInfo() {
+        return new Cooldowns.CooldownInfo(120, "web");
     }
 }

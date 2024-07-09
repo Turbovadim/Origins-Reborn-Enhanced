@@ -29,6 +29,7 @@ public class Origin {
     private final String description;
     private final String permission;
     private final Integer cost;
+    private final int max;
 
     public Integer getCost() {
         return cost;
@@ -38,6 +39,15 @@ public class Origin {
         if (unchoosable) return true;
         String mode = OriginsReborn.getInstance().getConfig().getString("restrictions.reusing-origins", "NONE");
         boolean same = OriginsReborn.getInstance().getConfig().getBoolean("restrictions.prevent-same-origins");
+        if (max != -1) {
+            int num = 0;
+            for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
+                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) {
+                    num++;
+                }
+            }
+            if (num >= max) return true;
+        }
         if (same) {
             for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
                 if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) {
@@ -75,11 +85,12 @@ public class Origin {
         return permission != null;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost) {
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max) {
         this.description = description;
         this.name = name;
         this.permission = permission;
         this.cost = cost;
+        this.max = max;
         if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
             Team oldTeam = scoreboard.getTeam(name);

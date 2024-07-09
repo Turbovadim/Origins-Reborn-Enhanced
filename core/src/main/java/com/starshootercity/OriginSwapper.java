@@ -3,6 +3,7 @@ package com.starshootercity;
 import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.abilities.*;
+import com.starshootercity.commands.OriginCommand;
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import com.starshootercity.geysermc.GeyserSwapper;
 import fr.xephi.authme.api.v3.AuthMeApi;
@@ -191,8 +192,8 @@ public class OriginSwapper implements Listener {
                     );
                     confirmMeta.lore(costsCurrency);
                     invisibleConfirmMeta.lore(costsCurrency);
-                    confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
-                    invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, BooleanPDT.BOOLEAN, true);
+                    confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
+                    invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
                 }
             }
 
@@ -304,7 +305,8 @@ public class OriginSwapper implements Listener {
                 }
                 if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey, BooleanPDT.BOOLEAN)) {
                     int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
-                    if (!player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass")) && Boolean.TRUE.equals(currentItem.getItemMeta().getPersistentDataContainer().get(costsCurrencyKey, BooleanPDT.BOOLEAN))) {
+                    if (!player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass")) && currentItem.getItemMeta().getPersistentDataContainer().has(costsCurrencyKey, PersistentDataType.INTEGER)) {
+                        amount = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(costsCurrencyKey, PersistentDataType.INTEGER, amount);
                         if (!OriginsReborn.getInstance().getEconomy().has(player, amount)) {
                             return;
                         } else {
@@ -362,6 +364,7 @@ public class OriginSwapper implements Listener {
                         openOriginSwapper(player, reason, 0, 0);
                         return;
                     }
+                    OriginsReborn.getCooldowns().setCooldown(player, OriginCommand.key);
                     setOrigin(player, origin, reason, resetPlayer);
                 } else if (currentItem.getItemMeta().getPersistentDataContainer().has(closeKey, BooleanPDT.BOOLEAN)) event.getWhoClicked().closeInventory();
             }
@@ -642,6 +645,7 @@ public class OriginSwapper implements Listener {
         if (swapOriginEvent.getNewOrigin().getTeam() != null) {
             swapOriginEvent.getNewOrigin().getTeam().addPlayer(player);
         }
+        OriginsReborn.getCooldowns().resetCooldowns(player);
         originFileConfiguration.set(player.getUniqueId().toString(), swapOriginEvent.getNewOrigin().getName().toLowerCase());
         player.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, swapOriginEvent.getNewOrigin().getName().toLowerCase());
         saveOrigins();

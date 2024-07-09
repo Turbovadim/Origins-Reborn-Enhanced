@@ -10,6 +10,15 @@ worlds:
   disabled-worlds:
     - "example_world"
 
+# Configuration for cooldowns
+cooldowns:
+  # Disables every cooldown
+  # To modify specific cooldowns, edit the cooldown-config.yml file
+  disable-all-cooldowns: false
+  # Use the actionbar to show cooldown icons
+  # You may want to disable this if using another plugin that requires the actionbar
+  show-cooldown-icons: true
+
 # Miscellaneous settings
 misc-settings:
   # Disable all flight-related features. This does not hide the abilities themselves, they must be removed from the .yml files in the ~/plugins/Origins-Reborn/origins/ folder
@@ -126,4 +135,4 @@ geyser:
   join-form-delay: 20
 
 # Config version - do not touch this!
-config-version: 2.2.20
+config-version: 2.3.0

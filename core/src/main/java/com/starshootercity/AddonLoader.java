@@ -13,10 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -24,7 +21,8 @@ public class AddonLoader {
     public static List<Origin> origins = new ArrayList<>();
     public static Map<String, Origin> originNameMap = new HashMap<>();
     public static Map<String, Origin> originFileNameMap = new HashMap<>();
-    private static final List<OriginsAddon> registeredAddons = new ArrayList<>();
+    public static final List<OriginsAddon> registeredAddons = new ArrayList<>();
+    public static Map<String, List<File>> originFiles = new HashMap<>();
 
     public static void register(OriginsAddon addon) {
         if (registeredAddons.contains(addon)) {
@@ -62,7 +60,7 @@ public class AddonLoader {
     public static final List<OriginsAddon.SwapStateGetter> openSwapMenuChecks = new ArrayList<>();
     public static final List<OriginsAddon.KeyStateGetter> hasAbilityOverrideChecks = new ArrayList<>();
 
-    private static Map<String, String> languageData = new HashMap<>();
+    private static final Map<String, String> languageData = new HashMap<>();
 
     public static @NotNull String getTextFor(String key, String fallback) {
         String result = languageData.get(key);
@@ -74,12 +72,13 @@ public class AddonLoader {
     }
 
     public static void reloadAddons() {
-        origins = new ArrayList<>();
-        originNameMap = new HashMap<>();
-        languageData = new HashMap<>();
+        origins.clear();
+        originNameMap.clear();
+        languageData.clear();
+        originFiles.clear();
         for (OriginsAddon addon : registeredAddons) {
             loadOriginsFor(addon);
-            prepareLanguagesFor(addon);
+            //prepareLanguagesFor(addon);
         }
         sortOrigins();
     }
@@ -135,6 +134,8 @@ public class AddonLoader {
     }
 
     private static void loadOriginsFor(OriginsAddon addon) {
+        List<File> addonFiles = new ArrayList<>();
+        originFiles.put(addon.getNamespace(), addonFiles);
         File originFolder = new File(addon.getDataFolder(), "origins");
         if (!originFolder.exists()) {
             boolean ignored = originFolder.mkdirs();
@@ -155,6 +156,7 @@ public class AddonLoader {
         if (files == null) return;
         for (File file : files) {
             if (!file.getName().endsWith(".json")) continue;
+            addonFiles.add(file);
             JSONObject object = ShortcutUtils.openJSONFile(file);
             boolean unchoosable = false;
             if (object.has("unchoosable")) {
@@ -187,6 +189,10 @@ public class AddonLoader {
             }
             String permission = null;
             Integer cost = null;
+            int max;
+            if (object.has("max")) {
+                max = object.getInt("max");
+            } else max = -1;
             if (object.has("permission")) permission = object.getString("permission");
             if (object.has("cost")) cost = object.getInt("cost");
             Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
@@ -196,7 +202,7 @@ public class AddonLoader {
                         add(Key.key(((String) o)));
                     }
                 }
-            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost);
+            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost, max);
             String actualName = origin.getActualName().toLowerCase();
             Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
             if (previouslyRegisteredOrigin != null) {

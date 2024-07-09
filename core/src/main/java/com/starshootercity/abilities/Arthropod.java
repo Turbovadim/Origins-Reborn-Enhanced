@@ -23,9 +23,10 @@ public class Arthropod implements Ability, Listener {
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (event.getEntity() instanceof Player player && event.getDamager() instanceof LivingEntity entity) {
-            if (entity.getActiveItem().containsEnchantment(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment())) {
+            if (entity.getEquipment() == null) return;
+            if (entity.getEquipment().getItemInMainHand().containsEnchantment(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment())) {
                 AbilityRegister.runForAbility(player, getKey(), () -> {
-                    int level = entity.getActiveItem().getEnchantmentLevel(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment());
+                    int level = entity.getEquipment().getItemInMainHand().getEnchantmentLevel(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment());
                     event.setDamage(event.getDamage() + 1.25 * level);
                     player.addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getSlownessEffect(), (int) (20 * random.nextDouble(1, 1 + (0.5 * level))), 3, false, true));
                 });

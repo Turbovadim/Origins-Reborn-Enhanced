@@ -23,6 +23,8 @@ public class OriginsRebornPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String params) {
-        return OriginSwapper.getOrigin(player).getName();
+        Origin origin = OriginSwapper.getOrigin(player);
+        if (origin == null) return "";
+        return origin.getName();
     }
 }

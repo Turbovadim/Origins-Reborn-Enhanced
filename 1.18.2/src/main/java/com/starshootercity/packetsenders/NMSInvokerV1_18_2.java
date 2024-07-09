@@ -1,10 +1,12 @@
 package com.starshootercity.packetsenders;
 
 import com.destroystokyo.paper.entity.ai.Goal;
+import io.netty.buffer.Unpooled;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
@@ -113,21 +115,23 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
     @Override
     public void sendPhasingGamemodeUpdate(Player player, GameMode gameMode) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+
         GameType gameType = switch (gameMode) {
             case CREATIVE -> GameType.CREATIVE;
             case SURVIVAL -> GameType.SURVIVAL;
             case ADVENTURE -> GameType.ADVENTURE;
             case SPECTATOR -> GameType.SPECTATOR;
         };
-        ClientboundPlayerInfoPacket packet = new ClientboundPlayerInfoPacket(
-                ClientboundPlayerInfoPacket.Action.UPDATE_GAME_MODE
-        );
-        ClientboundPlayerInfoPacket.PlayerUpdate playerUpdate = new ClientboundPlayerInfoPacket.PlayerUpdate(serverPlayer.getGameProfile(), serverPlayer.latency, gameType, serverPlayer.getTabListDisplayName());
-        for (ClientboundPlayerInfoPacket.PlayerUpdate update : packet.getEntries()) {
-            if (update.getProfile().getId().equals(player.getUniqueId())) {
-                packet.getEntries().set(packet.getEntries().indexOf(update), playerUpdate);
-            }
-        }
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeEnum(ClientboundPlayerInfoPacket.Action.UPDATE_GAME_MODE);
+        buf.writeCollection(List.of("null"), (buf2, e) -> {
+            buf2.writeUUID(serverPlayer.getUUID());
+            buf2.writeVarInt(gameType.getId());
+        });
+
+        ClientboundPlayerInfoPacket packet = new ClientboundPlayerInfoPacket(buf);
+
         serverPlayer.connection.send(packet);
     }
 

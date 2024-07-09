@@ -1,10 +1,11 @@
 package com.starshootercity.packetsenders;
 
 import com.destroystokyo.paper.entity.ai.Goal;
+import io.netty.buffer.Unpooled;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
-import net.minecraft.network.chat.RemoteChatSession;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -122,31 +123,24 @@ public class NMSInvokerV1_19_4 extends NMSInvoker {
     @Override
     public void sendPhasingGamemodeUpdate(Player player, GameMode gameMode) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+
         GameType gameType = switch (gameMode) {
             case CREATIVE -> GameType.CREATIVE;
             case SURVIVAL -> GameType.SURVIVAL;
             case ADVENTURE -> GameType.ADVENTURE;
             case SPECTATOR -> GameType.SPECTATOR;
         };
-        RemoteChatSession data = serverPlayer.getChatSession();
-        ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(
-                serverPlayer.getUUID(),
-                serverPlayer.getGameProfile(),
-                true,
-                1,
-                gameType,
-                serverPlayer.getTabListDisplayName(),
-                data == null ? null : data.asData()
-        );
-        ClientboundPlayerInfoUpdatePacket packet = new OriginsRebornClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE), entry);
-        serverPlayer.connection.send(packet);
-    }
 
-    public static class OriginsRebornClientboundPlayerInfoUpdatePacket extends ClientboundPlayerInfoUpdatePacket {
-        public OriginsRebornClientboundPlayerInfoUpdatePacket(EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions, ClientboundPlayerInfoUpdatePacket.Entry entry) {
-            super(actions, List.of());
-            entries().add(entry);
-        }
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeEnumSet(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE), ClientboundPlayerInfoUpdatePacket.Action.class);
+        buf.writeCollection(List.of("null"), (buf2, e) -> {
+            buf2.writeUUID(serverPlayer.getUUID());
+            buf2.writeVarInt(gameType.getId());
+        });
+
+        ClientboundPlayerInfoUpdatePacket packet = new ClientboundPlayerInfoUpdatePacket(buf);
+
+        serverPlayer.connection.send(packet);
     }
 
     @Override

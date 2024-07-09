@@ -1,9 +1,9 @@
 package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
+import com.starshootercity.cooldowns.CooldownAbility;
+import com.starshootercity.cooldowns.Cooldowns;
 import net.kyori.adventure.key.Key;
-import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class LaunchIntoAir implements VisibleAbility, Listener {
+public class LaunchIntoAir implements VisibleAbility, Listener, CooldownAbility {
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:launch_into_air");
@@ -33,12 +33,15 @@ public class LaunchIntoAir implements VisibleAbility, Listener {
         if (!event.isSneaking()) return;
         AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
             if (event.getPlayer().isGliding()) {
-                if (OriginsReborn.getCooldowns().hasCooldown(event.getPlayer(), key)) return;
-                OriginsReborn.getCooldowns().setCooldown(event.getPlayer(), key);
+                if (hasCooldown(event.getPlayer())) return;
+                setCooldown(event.getPlayer());
                 event.getPlayer().setVelocity(event.getPlayer().getVelocity().add(new Vector(0, 2, 0)));
             }
         });
     }
 
-    private final NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(new NamespacedKey(OriginsReborn.getInstance(), "launch-into-air"), 600);
+    @Override
+    public Cooldowns.CooldownInfo getCooldownInfo() {
+        return new Cooldowns.CooldownInfo(600, "launch");
+    }
 }

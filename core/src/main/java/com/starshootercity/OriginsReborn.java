@@ -3,6 +3,7 @@ package com.starshootercity;
 import com.starshootercity.abilities.*;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.commands.OriginCommand;
+import com.starshootercity.cooldowns.Cooldowns;
 import com.starshootercity.events.PlayerLeftClickEvent;
 import com.starshootercity.packetsenders.*;
 import net.milkbowl.vault.economy.Economy;
@@ -11,6 +12,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +54,8 @@ public class OriginsReborn extends OriginsAddon {
     }
 
     private static void initializeNMSInvoker(OriginsReborn instance) {
-        nmsInvoker = switch (Bukkit.getMinecraftVersion()) {
+        String version = Bukkit.getBukkitVersion().split("-")[0];
+        nmsInvoker = switch (version) {
             case "1.18.2" -> new NMSInvokerV1_18_2(getInstance().getConfig());
             case "1.19" -> new NMSInvokerV1_19(getInstance().getConfig());
             case "1.19.1" -> new NMSInvokerV1_19_1(getInstance().getConfig());
@@ -67,7 +70,7 @@ public class OriginsReborn extends OriginsAddon {
             case "1.20.5" -> new NMSInvokerV1_20_5(getInstance().getConfig());
             case "1.20.6" -> new NMSInvokerV1_20_6(getInstance().getConfig());
             case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
-            default -> throw new IllegalStateException("Unexpected version: " + Bukkit.getMinecraftVersion() + " only versions 1.20 - 1.20.6 are supported");
+            default -> throw new IllegalStateException("Unexpected version: " + version + " only versions 1.20 - 1.20.6 are supported");
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
     }
@@ -196,6 +199,16 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("swap-command.vault.permanent-purchases", List.of("Allows the player to switch back to origins for free if they already had the origin before"));
                 saveConfig();
             }
+            if (version.equals("2.2.20")) {
+                getConfig().set("config-version", "2.3.0");
+                getConfig().set("cooldowns.disable-all-cooldowns", false);
+                getConfig().set("cooldowns.show-cooldown-icons", true);
+                getNMSInvoker().setComments("cooldowns", List.of("Configuration for cooldowns"));
+                getNMSInvoker().setComments("cooldowns.disable-all-cooldowns", List.of("Disables every cooldown", " To modify specific cooldowns, edit the cooldown-config.yml file"));
+                getNMSInvoker().setComments("cooldowns.show-cooldown-icons", List.of("Use the actionbar to show cooldown icons", "You may want to disable this if using another plugin that requires the actionbar"));
+                getCooldowns().resetFile();
+                saveConfig();
+            }
             /*
             if (version.equals("2.1.11") || version.equals("2.1.10")) {
                 getConfig().set("config-version", "2.2.0");
@@ -209,7 +222,6 @@ public class OriginsReborn extends OriginsAddon {
                 ));
                 saveConfig();
             }
-
              */
         }
     }
@@ -228,11 +240,13 @@ public class OriginsReborn extends OriginsAddon {
                 getLogger().warning("Vault is missing, origin swaps will not cost currency");
             }
         } else vaultEnabled = false;
+        cooldowns = new Cooldowns();
+        if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") || !getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
+            Bukkit.getPluginManager().registerEvents(cooldowns, this);
+        }
         saveDefaultConfig();
         initializeNMSInvoker(this);
         updateConfig();
-        PluginCommand command = getCommand("origin");
-        if (command != null) command.setExecutor(new OriginCommand());
         Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
         Bukkit.getPluginManager().registerEvents(new PackApplier(), this);
@@ -243,7 +257,17 @@ public class OriginsReborn extends OriginsAddon {
         PluginCommand flightCommand = getCommand("fly");
         if (flightCommand != null) flightCommand.setExecutor(new FlightToggleCommand());
 
-        cooldowns = new Cooldowns();
+        File export = new File(getDataFolder(), "export");
+        if (!export.exists()) {
+            boolean ignored = export.mkdir();
+        }
+        File imports = new File(getDataFolder(), "import");
+        if (!imports.exists()) {
+            boolean ignored = imports.mkdir();
+        }
+
+        PluginCommand command = getCommand("origin");
+        if (command != null) command.setExecutor(new OriginCommand());
     }
 
     @Override

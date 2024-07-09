@@ -1,7 +1,9 @@
 package com.starshootercity.abilities;
 
+import com.starshootercity.cooldowns.CooldownAbility;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
+import com.starshootercity.cooldowns.Cooldowns;
 import com.starshootercity.events.PlayerLeftClickEvent;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
@@ -15,11 +17,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ThrowEnderPearl implements VisibleAbility, Listener {
+public class ThrowEnderPearl implements VisibleAbility, Listener, CooldownAbility {
     @Override
     public @NotNull Key getKey() {
         return Key.key("origins:throw_ender_pearl");
@@ -42,15 +45,13 @@ public class ThrowEnderPearl implements VisibleAbility, Listener {
         if (event.hasBlock()) return;
         if (event.getPlayer().getTargetBlock(6) != null) return;
         AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (OriginsReborn.getCooldowns().hasCooldown(event.getPlayer(), key)) return;
-            OriginsReborn.getCooldowns().setCooldown(event.getPlayer(), key);
+            if (hasCooldown(event.getPlayer())) return;
+            setCooldown(event.getPlayer());
             if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) return;
             Projectile projectile = event.getPlayer().launchProjectile(EnderPearl.class);
             projectile.getPersistentDataContainer().set(falseEnderPearlKey, PersistentDataType.STRING, event.getPlayer().getName());
         });
     }
-
-    private final NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(new NamespacedKey(OriginsReborn.getInstance(), "throw-ender-pearl"), 600);
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
@@ -63,8 +64,15 @@ public class ThrowEnderPearl implements VisibleAbility, Listener {
             Location loc = event.getEntity().getLocation();
             loc.setPitch(player.getLocation().getPitch());
             loc.setYaw(player.getLocation().getYaw());
+            player.setFallDistance(0);
+            player.setVelocity(new Vector());
             player.teleport(loc);
             event.getEntity().remove();
         }
+    }
+
+    @Override
+    public Cooldowns.CooldownInfo getCooldownInfo() {
+        return new Cooldowns.CooldownInfo(30, "ender_pearl");
     }
 }

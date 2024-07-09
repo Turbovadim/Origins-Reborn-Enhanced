@@ -2,6 +2,7 @@ package com.starshootercity.abilities;
 
 import com.starshootercity.*;
 import com.starshootercity.commands.FlightToggleCommand;
+import com.starshootercity.cooldowns.CooldownAbility;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
@@ -11,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 
@@ -33,6 +35,9 @@ public class AbilityRegister {
                 abilities.add(multiAbility);
                 multiAbilityMap.put(a.getKey(), abilities);
             }
+        }
+        if (ability instanceof CooldownAbility cooldownAbility) {
+            OriginsReborn.getCooldowns().registerCooldown(cooldownAbility.getCooldownKey(), cooldownAbility.getCooldownInfo());
         }
         if (ability instanceof Listener listener) {
             Bukkit.getPluginManager().registerEvents(listener, instance);
@@ -153,7 +158,10 @@ public class AbilityRegister {
             }
             for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                 try {
-                    player.sendEquipmentChange(targetPlayer, equipmentSlot, targetPlayer.getInventory().getItem(equipmentSlot));
+                    ItemStack item = targetPlayer.getInventory().getItem(equipmentSlot);
+                    if (item != null) {
+                        player.sendEquipmentChange(targetPlayer, equipmentSlot, item);
+                    }
                 } catch (IllegalArgumentException ignored) {}
             }
         }
