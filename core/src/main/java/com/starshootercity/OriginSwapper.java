@@ -512,7 +512,9 @@ public class OriginSwapper implements Listener {
             if (origin.getTeam() == null) return;
             origin.getTeam().addPlayer(event.getPlayer());
         } else {
-            if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
+            if (AddonLoader.getDefaultOrigin() != null) {
+                setOrigin(event.getPlayer(), AddonLoader.getDefaultOrigin(), PlayerSwapOriginEvent.SwapReason.INITIAL, false);
+            } else if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
                 selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL);
             } else if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false), OriginsReborn.getInstance().getConfig().getInt("geyser.join-form-delay", 20));
@@ -545,6 +547,9 @@ public class OriginSwapper implements Listener {
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
             if (getOrigin(player) == null && player.getOpenInventory().getType() != InventoryType.CHEST) {
+                if (AddonLoader.getDefaultOrigin() != null) {
+                    setOrigin(player, AddonLoader.getDefaultOrigin(), PlayerSwapOriginEvent.SwapReason.INITIAL, false);
+                }
                 if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise") && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
                     openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0);
                 }

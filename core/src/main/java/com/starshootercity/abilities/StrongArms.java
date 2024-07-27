@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
@@ -58,7 +59,7 @@ public class StrongArms implements MultiAbility, VisibleAbility, Listener {
             add(Material.NETHERRACK);
         }};
 
-        @EventHandler
+        @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         public void onBlockBreak(BlockBreakEvent event) {
             AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
                 if (naturalStones.contains(event.getBlock().getType())) {

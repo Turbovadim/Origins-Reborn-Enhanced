@@ -157,66 +157,75 @@ public class AddonLoader {
         for (File file : files) {
             if (!file.getName().endsWith(".json")) continue;
             addonFiles.add(file);
-            JSONObject object = ShortcutUtils.openJSONFile(file);
-            boolean unchoosable = false;
-            if (object.has("unchoosable")) {
-                unchoosable = object.getBoolean("unchoosable");
-            }
-            String itemName;
-            int cmd = 0;
-            if (object.get("icon") instanceof JSONObject jsonObject) {
-                itemName = jsonObject.getString("item");
-                if (jsonObject.has("custom_model_data")) {
-                    cmd = jsonObject.getInt("custom_model_data");
-                }
-            } else itemName = object.getString("icon");
-            Material material = Material.matchMaterial(itemName);
-            if (material == null) {
-                material = Material.AIR;
-            }
-            ItemStack icon = new ItemStack(material);
-            ItemMeta meta = icon.getItemMeta();
-            meta.setCustomModelData(cmd);
-            icon.setItemMeta(meta);
-            String name = file.getName().split("\\.")[0];
-            StringBuilder formattedName = new StringBuilder();
-            String[] parts = name.split("_");
-            int num = 0;
-            for (String part : parts) {
-                formattedName.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-                num++;
-                if (num < parts.length) formattedName.append(" ");
-            }
-            String permission = null;
-            Integer cost = null;
-            int max;
-            if (object.has("max")) {
-                max = object.getInt("max");
-            } else max = -1;
-            if (object.has("permission")) permission = object.getString("permission");
-            if (object.has("cost")) cost = object.getInt("cost");
-            Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
-                if (object.has("powers")) {
-                    JSONArray array = object.getJSONArray("powers");
-                    for (@Subst("origins:ability") Object o : array) {
-                        add(Key.key(((String) o)));
-                    }
-                }
-            }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost, max);
-            String actualName = origin.getActualName().toLowerCase();
-            Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
-            if (previouslyRegisteredOrigin != null) {
-                if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
-                    continue;
-                } else {
-                    origins.remove(previouslyRegisteredOrigin);
-                    originNameMap.remove(name.replace("_", " "));
-                    originFileNameMap.remove(actualName);
-                }
-            }
-            origins.add(origin);
-            originNameMap.put(name.replace("_", " "), origin);
-            originFileNameMap.put(actualName, origin);
+            loadOrigin(file, addon);
         }
+    }
+
+    public static void loadOrigin(File file, OriginsAddon addon) {
+        JSONObject object = ShortcutUtils.openJSONFile(file);
+        boolean unchoosable = false;
+        if (object.has("unchoosable")) {
+            unchoosable = object.getBoolean("unchoosable");
+        }
+        String itemName;
+        int cmd = 0;
+        if (object.get("icon") instanceof JSONObject jsonObject) {
+            itemName = jsonObject.getString("item");
+            if (jsonObject.has("custom_model_data")) {
+                cmd = jsonObject.getInt("custom_model_data");
+            }
+        } else itemName = object.getString("icon");
+        Material material = Material.matchMaterial(itemName);
+        if (material == null) {
+            material = Material.AIR;
+        }
+        ItemStack icon = new ItemStack(material);
+        ItemMeta meta = icon.getItemMeta();
+        meta.setCustomModelData(cmd);
+        icon.setItemMeta(meta);
+        String name = file.getName().split("\\.")[0];
+        StringBuilder formattedName = new StringBuilder();
+        String[] parts = name.split("_");
+        int num = 0;
+        for (String part : parts) {
+            formattedName.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+            num++;
+            if (num < parts.length) formattedName.append(" ");
+        }
+        String permission = null;
+        Integer cost = null;
+        int max;
+        if (object.has("max")) {
+            max = object.getInt("max");
+        } else max = -1;
+        if (object.has("permission")) permission = object.getString("permission");
+        if (object.has("cost")) cost = object.getInt("cost");
+        Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
+            if (object.has("powers")) {
+                JSONArray array = object.getJSONArray("powers");
+                for (@Subst("origins:ability") Object o : array) {
+                    add(Key.key(((String) o)));
+                }
+            }
+        }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost, max);
+        String actualName = origin.getActualName().toLowerCase();
+        Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
+        if (previouslyRegisteredOrigin != null) {
+            if (previouslyRegisteredOrigin.getPriority() > origin.getPriority()) {
+                return;
+            } else {
+                origins.remove(previouslyRegisteredOrigin);
+                originNameMap.remove(name.replace("_", " "));
+                originFileNameMap.remove(actualName);
+            }
+        }
+        origins.add(origin);
+        originNameMap.put(name.replace("_", " "), origin);
+        originFileNameMap.put(actualName, origin);
+    }
+
+    public static @Nullable Origin getDefaultOrigin() {
+        String originName = OriginsReborn.getInstance().getConfig().getString("origin-selection.default-origin", "NONE");
+        return originFileNameMap.getOrDefault(originName, null);
     }
 }

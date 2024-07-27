@@ -2,7 +2,6 @@ package com.starshootercity;
 
 import com.starshootercity.packetsenders.OriginsRebornResourcePackInfo;
 import com.viaversion.viaversion.api.Via;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,7 +17,6 @@ public class PackApplier implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Bukkit.broadcast(Component.text(getVersion(event.getPlayer())));
         if (OriginsReborn.getInstance().getConfig().getBoolean("resource-pack.enabled")) {
             if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) return;
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginsReborn.getNMSInvoker().sendResourcePacks(event.getPlayer(), getPackURL(event.getPlayer()), addonPacks), 120);

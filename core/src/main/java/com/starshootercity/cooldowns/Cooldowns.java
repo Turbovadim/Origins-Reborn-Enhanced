@@ -46,7 +46,7 @@ public class Cooldowns implements Listener {
                 if (vehicle instanceof LivingEntity entity) {
                     AttributeInstance instance = entity.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                     if (instance != null) {
-                        num += Math.floorDiv((int) instance.getValue() - 1, 10) - 1;
+                        num += (int) (Math.floor((instance.getValue() - 1) / 10) - 1);
                     }
                 }
             }

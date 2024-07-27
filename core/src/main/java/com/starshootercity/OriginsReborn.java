@@ -243,7 +243,7 @@ public class OriginsReborn extends OriginsAddon {
             }
         } else vaultEnabled = false;
         cooldowns = new Cooldowns();
-        if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") || !getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
+        if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") && getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
             Bukkit.getPluginManager().registerEvents(cooldowns, this);
         }
         saveDefaultConfig();

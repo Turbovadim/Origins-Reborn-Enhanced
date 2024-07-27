@@ -18,6 +18,7 @@ public class FreshAir implements VisibleAbility, Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
+        if (!event.getAction().isRightClick()) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
             AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
                 if (event.getClickedBlock().getY() < 86) {
