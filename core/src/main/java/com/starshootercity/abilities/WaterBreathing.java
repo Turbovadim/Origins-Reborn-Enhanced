@@ -12,7 +12,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +51,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
 
     NamespacedKey airKey = new NamespacedKey(OriginsReborn.getInstance(), "fullair");
     NamespacedKey dehydrationKey = new NamespacedKey(OriginsReborn.getInstance(), "dehydrating");
+    NamespacedKey damageKey = new NamespacedKey(OriginsReborn.getInstance(), "ignore-item-damage");
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
@@ -79,6 +83,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
                         player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
                         player.setRemainingAir(-5);
                         player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
+                        player.getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, Bukkit.getCurrentTick());
                         OriginsReborn.getNMSInvoker().dealDryOutDamage(player, 2);
                     }
                 }
@@ -89,6 +94,17 @@ public class WaterBreathing implements Listener, VisibleAbility {
                 }
             });
         }
+    }
+
+    @EventHandler
+    public void onPlayerItemDamage(PlayerItemDamageEvent event) {
+        int i = event.getPlayer().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, -1);
+        if (i >= Bukkit.getCurrentTick()) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        event.getPlayer().getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, -1);
     }
 
     @Override

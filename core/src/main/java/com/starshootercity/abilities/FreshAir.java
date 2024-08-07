@@ -6,6 +6,7 @@ import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,6 +20,11 @@ public class FreshAir implements VisibleAbility, Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
         if (!event.getAction().isRightClick()) return;
+        if (
+                event.getPlayer().isSneaking() &&
+                        event.getPlayer().getInventory().getItemInOffHand().getType() == Material.AIR &&
+                        event.getPlayer().getInventory().getItemInMainHand().getType() == Material.AIR
+        ) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
             AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
                 if (event.getClickedBlock().getY() < 86) {
