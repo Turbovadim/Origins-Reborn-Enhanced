@@ -31,7 +31,9 @@ public class Vegetarian implements VisibleAbility, Listener {
         add(Material.TROPICAL_FISH);
         add(Material.SALMON);
         add(Material.COOKED_SALMON);
+        add(Material.PUFFERFISH);
     }};
+
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
         if (event.getItem().getType() == Material.POTION) return;

@@ -494,7 +494,7 @@ public class OriginSwapper implements Listener {
                             continue;
                         } else instance.removeModifier(modifier);
                     }
-                    OriginsReborn.getNMSInvoker().addAttributeModifier(instance, key, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getTotalAmount(player), attributeModifierAbility.getOperation());
+                    OriginsReborn.getNMSInvoker().addAttributeModifier(instance, key, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getTotalAmount(player), attributeModifierAbility.getActualOperation());
                 } else {
                     AttributeModifier am = OriginsReborn.getNMSInvoker().getAttributeModifier(instance, key);
                     if (am != null) instance.removeModifier(am);
@@ -581,6 +581,21 @@ public class OriginSwapper implements Listener {
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
         if (event.getNewOrigin() == null) return;
+
+        String name = "default";
+        if (OriginsReborn.getInstance().getConfig().contains("commands-on-origin.%s".formatted(name))) {
+            for (String s : OriginsReborn.getInstance().getConfig().getStringList("commands-on-origin.%s".formatted(name))) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), s.replace("%player%", event.getPlayer().getName()).replace("%uuid%", event.getPlayer().getUniqueId().toString()));
+            }
+        }
+
+        name = event.getNewOrigin().getActualName().replace(" ", "_").toLowerCase();
+        if (OriginsReborn.getInstance().getConfig().contains("commands-on-origin.%s".formatted(name))) {
+            for (String s : OriginsReborn.getInstance().getConfig().getStringList("commands-on-origin.%s".formatted(name))) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), s.replace("%player%", event.getPlayer().getName()).replace("%uuid%", event.getPlayer().getUniqueId().toString()));
+            }
+        }
+
         if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.auto-spawn-teleport")) return;
         if (event.getReason() == PlayerSwapOriginEvent.SwapReason.INITIAL || event.getReason() == PlayerSwapOriginEvent.SwapReason.DIED) {
             Location loc = OriginsReborn.getNMSInvoker().getRespawnLocation(event.getPlayer());

@@ -1,6 +1,7 @@
 package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
+import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
@@ -31,7 +32,10 @@ public class Carnivore implements VisibleAbility, Listener {
         add(Material.TROPICAL_FISH);
         add(Material.SALMON);
         add(Material.COOKED_SALMON);
+        add(Material.PUFFERFISH);
+        if (OriginsReborn.getNMSInvoker().getOminousBottle() != null) add(OriginsReborn.getNMSInvoker().getOminousBottle());
     }};
+
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
         if (event.getItem().getType() == Material.POTION) return;

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.starshootercity"
-version = "2.3.6"
+version = "2.3.17"
 
 repositories {
     mavenCentral()
@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation("com.github.stleary:JSON-java:20231013")
+    implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
     implementation(project(":1.18.2", "reobf"))
@@ -27,9 +28,9 @@ dependencies {
     implementation(project(":1.20.2", "reobf"))
     implementation(project(":1.20.3", "reobf"))
     implementation(project(":1.20.4", "reobf"))
-    implementation(project(":1.20.5", "reobf"))
     implementation(project(":1.20.6", "reobf"))
     implementation(project(":1.21", "reobf"))
+    implementation(project(":1.21.1", "reobf"))
 }
 
 tasks {

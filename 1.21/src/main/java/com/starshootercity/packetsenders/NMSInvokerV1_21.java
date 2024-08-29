@@ -289,4 +289,20 @@ public class NMSInvokerV1_21 extends NMSInvoker {
     public void onBlockDamageAbort(BlockDamageAbortEvent event) {
         new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();
     }
+
+    @Override
+    public @Nullable Material getOminousBottle() {
+        return Material.OMINOUS_BOTTLE;
+    }
+
+    @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        entity.damage(amount, DamageSource.builder(DamageType.DROWN).build());
+    }
+
+    @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.RESPIRATION;
+    }
 }

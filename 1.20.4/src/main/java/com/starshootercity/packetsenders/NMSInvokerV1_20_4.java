@@ -27,6 +27,8 @@ import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
@@ -48,6 +50,17 @@ import java.util.function.Predicate;
 public class NMSInvokerV1_20_4 extends NMSInvoker {
     public NMSInvokerV1_20_4(FileConfiguration config) {
         super(config);
+    }
+
+    @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        entity.damage(amount, DamageSource.builder(DamageType.DROWN).build());
+    }
+
+    @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.OXYGEN;
     }
 
     @Override

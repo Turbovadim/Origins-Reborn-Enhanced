@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -92,6 +93,17 @@ public class ShulkerInventory implements VisibleAbility, Listener {
                 });
             });
         }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
+            if (Boolean.TRUE.equals(event.getWhoClicked().getPersistentDataContainer().get(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN))) {
+                for (int i = 0; i < 9; i++) {
+                    getInventoriesConfig().set("%s.%s".formatted(event.getWhoClicked().getUniqueId().toString(), i), event.getWhoClicked().getOpenInventory().getItem(i));
+                }
+            }
+        });
     }
 
     public static FileConfiguration getInventoriesConfig() {

@@ -238,6 +238,17 @@ public class NMSInvokerV1_19_1 extends NMSInvoker {
     }
 
     @Override
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
+        livingEntity.hurt(DamageSource.DROWN, amount);
+    }
+
+    @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.OXYGEN;
+    }
+
+    @Override
     public void dealFreezeDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
         livingEntity.hurt(DamageSource.FREEZE, amount);

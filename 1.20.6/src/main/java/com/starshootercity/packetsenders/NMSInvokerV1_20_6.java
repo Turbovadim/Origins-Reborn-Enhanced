@@ -57,6 +57,11 @@ public class NMSInvokerV1_20_6 extends NMSInvoker {
     }
 
     @Override
+    public @Nullable Material getOminousBottle() {
+        return Material.OMINOUS_BOTTLE;
+    }
+
+    @Override
     public void sendEntityData(Player player, Entity entity, byte bytes) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
         net.minecraft.world.entity.Entity target = ((CraftEntity) entity).getHandle();
@@ -223,6 +228,17 @@ public class NMSInvokerV1_20_6 extends NMSInvoker {
     @SuppressWarnings("UnstableApiUsage")
     public void dealDryOutDamage(LivingEntity entity, int amount) {
         entity.damage(amount, DamageSource.builder(DamageType.DRY_OUT).build());
+    }
+
+    @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        entity.damage(amount, DamageSource.builder(DamageType.DROWN).build());
+    }
+
+    @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.RESPIRATION;
     }
 
     @Override

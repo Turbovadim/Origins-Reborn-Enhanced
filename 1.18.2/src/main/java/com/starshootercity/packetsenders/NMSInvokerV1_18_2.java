@@ -192,6 +192,11 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
     }
 
     @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.OXYGEN;
+    }
+
+    @Override
     public @Nullable Location getRespawnLocation(Player player) {
         return player.getBedSpawnLocation();
     }
@@ -235,6 +240,12 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
     public void dealDryOutDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
         livingEntity.hurt(DamageSource.DRY_OUT, amount);
+    }
+
+    @Override
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
+        livingEntity.hurt(DamageSource.DROWN, amount);
     }
 
     @Override

@@ -1,5 +1,5 @@
 name: Origins-Reborn
-version: 2.3.6
+version: 2.3.17
 main: com.starshootercity.OriginsReborn
 description: Paper plugin inspired by the Origins mod by Apace
 api-version: '1.18'
@@ -10,6 +10,7 @@ softdepend:
   - AuthMe
   - PlaceholderAPI
   - ViaVersion
+  - Skript
 
 permissions:
   originsreborn.default:

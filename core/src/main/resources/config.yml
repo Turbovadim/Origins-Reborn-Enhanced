@@ -10,6 +10,16 @@ worlds:
   disabled-worlds:
     - "example_world"
 
+# Runs commands when the player switches to an origin
+# Origins should be formatted as they are in the file names, but without the extension, e.g. "human"
+# %player% is replaced with the player's username and %uuid% is replaced with their UUID
+# Use "default" for commands that should be run regardless of origin
+commands-on-origin:
+  # Example configuration for a command on origin switch
+  example:
+    - "example %player%"
+    - "example %uuid%"
+
 # Configuration for cooldowns
 cooldowns:
   # Disables every cooldown
@@ -132,5 +142,10 @@ geyser:
   # The delay in ticks to wait before showing a new Bedrock player the selection GUI
   join-form-delay: 20
 
+# Extra settings for abilities
+extra-settings:
+  # Required sleep height for origins with the Fresh Air ability
+  fresh-air-required-sleep-height: 86
+
 # Config version - do not touch this!
-config-version: 2.3.0
+config-version: 2.3.17

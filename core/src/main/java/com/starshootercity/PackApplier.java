@@ -33,7 +33,7 @@ public class PackApplier implements Listener {
             case "1.20.2" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.2.zip";
             case "1.20.3", "1.20.4", "1.20.3-1.20.4" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.3-1.20.4.zip";
             case "1.20.5", "1.20.6", "1.20.5-1.20.6" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.5-1.20.6.zip";
-            case "1.21" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.zip";
+            case "1.21", "1.21.1", "1.21-1.21.1" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.zip";
             default -> "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip";
         };
     }

@@ -51,6 +51,12 @@ public class NMSInvokerV1_19 extends NMSInvoker {
         super(config);
     }
 
+    @Override
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
+        livingEntity.hurt(DamageSource.DROWN, amount);
+    }
+
     @EventHandler
     public void onBlockDamageAbort(BlockDamageAbortEvent event) {
         new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();
@@ -235,6 +241,11 @@ public class NMSInvokerV1_19 extends NMSInvoker {
     public void dealDryOutDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
         livingEntity.hurt(DamageSource.DRY_OUT, amount);
+    }
+
+    @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.OXYGEN;
     }
 
     @Override

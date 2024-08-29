@@ -48,6 +48,17 @@ public class NMSInvokerV1_19_4 extends NMSInvoker {
     }
 
     @Override
+    public @NotNull Enchantment getRespirationEnchantment() {
+        return Enchantment.OXYGEN;
+    }
+
+    @Override
+    public void dealDrowningDamage(LivingEntity entity, int amount) {
+        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
+        livingEntity.hurt(livingEntity.damageSources().drown(), amount);
+    }
+
+    @Override
     public Component applyFont(Component component, Key font) {
         return component.font(font);
     }

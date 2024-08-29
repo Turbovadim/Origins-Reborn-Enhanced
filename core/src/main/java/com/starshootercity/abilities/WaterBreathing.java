@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,7 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
-import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -21,6 +22,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Random;
 
 public class WaterBreathing implements Listener, VisibleAbility {
     @EventHandler
@@ -78,13 +80,13 @@ public class WaterBreathing implements Listener, VisibleAbility {
                         player.setRemainingAir(player.getMaximumAir());
                         player.getPersistentDataContainer().set(airKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
                     }
-                    player.setRemainingAir(player.getRemainingAir() - 1);
+                    decreaseAir(player);
                     if (player.getRemainingAir() < -25) {
                         player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
                         player.setRemainingAir(-5);
                         player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
                         player.getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, Bukkit.getCurrentTick());
-                        OriginsReborn.getNMSInvoker().dealDryOutDamage(player, 2);
+                        OriginsReborn.getNMSInvoker().dealDrowningDamage(player, 2);
                     }
                 }
             }, () -> {
@@ -97,9 +99,23 @@ public class WaterBreathing implements Listener, VisibleAbility {
     }
 
     @EventHandler
-    public void onPlayerItemDamage(PlayerItemDamageEvent event) {
-        int i = event.getPlayer().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, -1);
-        if (i >= Bukkit.getCurrentTick()) event.setCancelled(true);
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (event.getPlayer().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, 0) >= Bukkit.getCurrentTick()) {
+            event.deathMessage(event.getPlayer().displayName().append(Component.text(" didn't manage to keep wet")));
+        }
+    }
+
+    private final Random random = new Random();
+
+    public void decreaseAir(Player player) {
+        ItemStack helmet = player.getInventory().getHelmet();
+        if (helmet != null && helmet.getItemMeta() != null) {
+            int respirationLevel = helmet.getItemMeta().getEnchantLevel(OriginsReborn.getNMSInvoker().getRespirationEnchantment());
+            if (respirationLevel > 0) {
+                if (random.nextInt(respirationLevel + 1) > 0) return;
+            }
+        }
+        player.setRemainingAir(player.getRemainingAir() - 1);
     }
 
     @EventHandler

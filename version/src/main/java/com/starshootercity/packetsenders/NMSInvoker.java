@@ -62,6 +62,8 @@ public abstract class NMSInvoker implements Listener {
 
     public abstract @NotNull Enchantment getEfficiencyEnchantment();
 
+    public abstract @NotNull Enchantment getRespirationEnchantment();
+
     public abstract @NotNull Enchantment getAquaAffinityEnchantment();
 
     public abstract @NotNull Enchantment getBaneOfArthropodsEnchantment();
@@ -73,6 +75,8 @@ public abstract class NMSInvoker implements Listener {
     public abstract @Nullable AttributeModifier getAttributeModifier(AttributeInstance instance, NamespacedKey key);
 
     public abstract void dealDryOutDamage(LivingEntity entity, int amount);
+
+    public abstract void dealDrowningDamage(LivingEntity entity, int amount);
 
     public abstract void dealFreezeDamage(LivingEntity entity, int amount);
 
@@ -109,4 +113,8 @@ public abstract class NMSInvoker implements Listener {
     protected final FileConfiguration config;
 
     public abstract Component applyFont(Component component, Key font);
+
+    public @Nullable Material getOminousBottle() {
+        return null;
+    }
 }

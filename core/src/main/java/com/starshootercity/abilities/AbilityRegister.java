@@ -7,6 +7,9 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -16,6 +19,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +47,25 @@ public class AbilityRegister {
         }
         if (ability instanceof Listener listener) {
             Bukkit.getPluginManager().registerEvents(listener, instance);
+        }
+        if (ability instanceof AttributeModifierAbility ama) {
+            if (!attributeModifierAbilityFileConfig.contains(ama.getKey().toString())) {
+                attributeModifierAbilityFileConfig.set("%s.value".formatted(ama.getKey()), "x");
+                attributeModifierAbilityFileConfig.set("%s.operation".formatted(ama.getKey()), "default");
+                try {
+                    attributeModifierAbilityFileConfig.save(attributeModifierAbilityFile);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            if (attributeModifierAbilityFileConfig.get("%s.value".formatted(ama.getKey()), "default").equals("default")) {
+                attributeModifierAbilityFileConfig.set("%s.value".formatted(ama.getKey()), "x");
+                try {
+                    attributeModifierAbilityFileConfig.save(attributeModifierAbilityFile);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
         abilityMap.put(ability.getKey(), ability);
     }
@@ -91,7 +115,7 @@ public class AbilityRegister {
 
 
     public static boolean canFly(Player player) {
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly.contains(player)) return true;
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) return true;
         for (Ability ability : AbilityRegister.abilityMap.values()) {
             if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
                 if (hasAbility(player, ability.getKey()) && flightAllowingAbility.canFly(player)) return true;
@@ -112,7 +136,7 @@ public class AbilityRegister {
     }
 
     public static void updateFlight(Player player) {
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly.contains(player)) {
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) {
             player.setFlySpeed(0.1f);
             return;
         }
@@ -168,5 +192,25 @@ public class AbilityRegister {
         }
 
         OriginsReborn.getNMSInvoker().sendEntityData(player, target, data);
+    }
+
+    public static FileConfiguration attributeModifierAbilityFileConfig;
+
+    private static File attributeModifierAbilityFile;
+
+    public static void setupAMAF() {
+        attributeModifierAbilityFile = new File(OriginsReborn.getInstance().getDataFolder(), "attribute-modifier-ability-config.yml");
+        if (!attributeModifierAbilityFile.exists()) {
+            boolean ignored = attributeModifierAbilityFile.getParentFile().mkdirs();
+            OriginsReborn.getInstance().saveResource("attribute-modifier-ability-config.yml", false);
+        }
+
+        attributeModifierAbilityFileConfig = new YamlConfiguration();
+
+        try {
+            attributeModifierAbilityFileConfig.load(attributeModifierAbilityFile);
+        } catch (IOException | InvalidConfigurationException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

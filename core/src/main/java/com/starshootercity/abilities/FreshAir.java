@@ -52,7 +52,7 @@ public class FreshAir implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("When sleeping, your bed needs to be at an altitude of at least 86 blocks, so you can breathe fresh air.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("When sleeping, your bed needs to be at an altitude of at least %s blocks, so you can breathe fresh air.".formatted(OriginsReborn.getInstance().getConfig().getInt("extra-settings.fresh-air-required-sleep-height", 86)), OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override

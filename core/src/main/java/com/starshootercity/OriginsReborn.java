@@ -6,6 +6,7 @@ import com.starshootercity.commands.OriginCommand;
 import com.starshootercity.cooldowns.Cooldowns;
 import com.starshootercity.events.PlayerLeftClickEvent;
 import com.starshootercity.packetsenders.*;
+import com.starshootercity.skript.SkriptInitializer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -67,9 +68,9 @@ public class OriginsReborn extends OriginsAddon {
             case "1.20.2" -> new NMSInvokerV1_20_2(getInstance().getConfig());
             case "1.20.3" -> new NMSInvokerV1_20_3(getInstance().getConfig());
             case "1.20.4" -> new NMSInvokerV1_20_4(getInstance().getConfig());
-            case "1.20.5" -> new NMSInvokerV1_20_5(getInstance().getConfig());
-            case "1.20.6" -> new NMSInvokerV1_20_6(getInstance().getConfig());
+            case "1.20.5", "1.20.6" -> new NMSInvokerV1_20_6(getInstance().getConfig());
             case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
+            case "1.21.1" -> new NMSInvokerV1_21_1(getInstance().getConfig());
             default -> throw new IllegalStateException("Unexpected version: " + version + " only versions 1.20 - 1.20.6 are supported");
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
@@ -211,6 +212,26 @@ public class OriginsReborn extends OriginsAddon {
                 getCooldowns().resetFile();
                 saveConfig();
             }
+            if (version.equals("2.3.0")) {
+                getConfig().set("config-version", "2.3.14");
+                getConfig().set("commands-on-origin.example", List.of("example %player%", "example %uuid%"));
+                getNMSInvoker().setComments("commands-on-origin.example", List.of("Example configuration for a command on origin switch"));
+                getNMSInvoker().setComments("commands-on-origin", List.of("Runs commands when the player switches to an origin", "Origins should be formatted as they are in the file names, but without the extension, e.g. \"human\"", "%player% is replaced with the player's username and %uuid% is replaced with their UUID"));
+                saveConfig();
+            }
+            if (version.equals("2.3.14")) {
+                getConfig().set("config-version", "2.3.15");
+                getNMSInvoker().setComments("commands-on-origin", List.of("Runs commands when the player switches to an origin", "Origins should be formatted as they are in the file names, but without the extension, e.g. \"human\"", "%player% is replaced with the player's username and %uuid% is replaced with their UUID", "Use \"default\" for commands that should be run regardless of origin"));
+                saveConfig();
+            }
+
+            if (version.equals("2.3.15")) {
+                getConfig().set("config-version", "2.3.17");
+                getConfig().set("extra-settings.fresh-air-required-sleep-height", 86);
+                getNMSInvoker().setComments("extra-settings.fresh-air-required-sleep-height", List.of("Required sleep height for origins with the Fresh Air ability"));
+                getNMSInvoker().setComments("extra-settings", List.of("Extra settings for abilities"));
+                saveConfig();
+            }
             /*
             if (version.equals("2.1.11") || version.equals("2.1.10")) {
                 getConfig().set("config-version", "2.2.0");
@@ -232,6 +253,8 @@ public class OriginsReborn extends OriginsAddon {
     public void onRegister() {
         instance = this;
 
+        AbilityRegister.setupAMAF();
+
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new OriginsRebornPlaceholderExpansion().register();
         }
@@ -248,6 +271,7 @@ public class OriginsReborn extends OriginsAddon {
         }
         saveDefaultConfig();
         initializeNMSInvoker(this);
+        SkriptInitializer.initialize(this);
         updateConfig();
         Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
