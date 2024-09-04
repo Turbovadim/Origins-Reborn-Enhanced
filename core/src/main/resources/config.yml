@@ -20,6 +20,15 @@ commands-on-origin:
     - "example %player%"
     - "example %uuid%"
 
+# A list of WorldGuard regions in which to prevent the use of certain abilities, use 'all' for all abilities
+prevent-abilities-in:
+  # Example region in which the water breathing ability is disabled
+  no_water_breathing:
+    - origins:water_breathing
+  # Example region where all abilities are disabled
+  no_abilities:
+    - all
+
 # Configuration for cooldowns
 cooldowns:
   # Disables every cooldown
@@ -148,4 +157,4 @@ extra-settings:
   fresh-air-required-sleep-height: 86
 
 # Config version - do not touch this!
-config-version: 2.3.17
+config-version: 2.3.18

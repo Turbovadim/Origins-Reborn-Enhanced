@@ -44,6 +44,8 @@ dependencies {
     compileOnly(project(":1.20.6"))
     compileOnly(project(":1.21"))
     compileOnly(project(":1.21.1"))
+    compileOnly(files("libs/worldguard.jar"))
+    compileOnly(files("libs/worldedit.jar"))
 }
 
 tasks {

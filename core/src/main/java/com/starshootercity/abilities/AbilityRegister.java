@@ -1,5 +1,12 @@
 package com.starshootercity.abilities;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
 import com.starshootercity.*;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.cooldowns.CooldownAbility;
@@ -7,6 +14,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -86,6 +94,26 @@ public class AbilityRegister {
                 else if (state == OriginsAddon.State.ALLOW) return true;
             }
         }
+
+        ConfigurationSection section = OriginsReborn.getInstance().getConfig().getConfigurationSection("prevent-abilities-in");
+        if (section != null) {
+            try {
+                Location loc = BukkitAdapter.adapt(player.getLocation());
+                RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+                RegionQuery query = container.createQuery();
+                ApplicableRegionSet set = query.getApplicableRegions(loc);
+                for (ProtectedRegion region : set) {
+                    for (String sectionKey : section.getKeys(false)) {
+                        if (!section.getStringList(sectionKey).contains(key.toString()) && !section.getStringList(sectionKey).contains("all"))
+                            continue;
+                        if (region.getId().equalsIgnoreCase(sectionKey)) {
+                            return false;
+                        }
+                    }
+                }
+            } catch (NoClassDefFoundError ignored) {}
+        }
+
         Origin origin = OriginSwapper.getOrigin(player);
         if (origin == null) {
             return false;

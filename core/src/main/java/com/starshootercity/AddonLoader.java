@@ -31,7 +31,7 @@ public class AddonLoader {
         }
         registeredAddons.add(addon);
         loadOriginsFor(addon);
-        prepareLanguagesFor(addon);
+        //prepareLanguagesFor(addon);
         if (addon.shouldAllowOriginSwapCommand() != null) allowOriginSwapChecks.add(addon.shouldAllowOriginSwapCommand());
         if (addon.shouldOpenSwapMenu() != null) openSwapMenuChecks.add(addon.shouldOpenSwapMenu());
         if (addon.hasAbilityOverride() != null) hasAbilityOverrideChecks.add(addon.hasAbilityOverride());

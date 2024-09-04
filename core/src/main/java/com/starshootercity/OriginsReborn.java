@@ -232,6 +232,15 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("extra-settings", List.of("Extra settings for abilities"));
                 saveConfig();
             }
+            if (version.equals("2.3.17")) {
+                getConfig().set("config-version", "2.3.18");
+                getConfig().set("prevent-abilities-in.no_water_breathing", List.of("origins:water_breathing"));
+                getConfig().set("prevent-abilities-in.no_abilities", List.of("all"));
+                getNMSInvoker().setComments("prevent-abilities-in.no_water_breathing", List.of("Example region in which the water breathing ability is disabled"));
+                getNMSInvoker().setComments("prevent-abilities-in.no_abilities", List.of("Example region where all abilities are disabled"));
+                getNMSInvoker().setComments("prevent-abilities-in", List.of("A list of WorldGuard regions in which to prevent the use of certain abilities, use 'all' for all abilities"));
+                saveConfig();
+            }
             /*
             if (version.equals("2.1.11") || version.equals("2.1.10")) {
                 getConfig().set("config-version", "2.2.0");

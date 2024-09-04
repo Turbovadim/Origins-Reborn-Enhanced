@@ -19,11 +19,15 @@ public class PackApplier implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (OriginsReborn.getInstance().getConfig().getBoolean("resource-pack.enabled")) {
             if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) return;
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginsReborn.getNMSInvoker().sendResourcePacks(event.getPlayer(), getPackURL(event.getPlayer()), addonPacks), 120);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> sendPacks(event.getPlayer()), 120);
         }
     }
 
-    public String getPackURL(Player player) {
+    public static void sendPacks(Player player) {
+        OriginsReborn.getNMSInvoker().sendResourcePacks(player, getPackURL(player), addonPacks);
+    }
+
+    public static String getPackURL(Player player) {
         String ver = getVersion(player);
         return switch (ver) {
             case "1.19.1-1.19.2", "1.19.1", "1.19.2" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.19.1-1.19.2.zip";
@@ -38,7 +42,7 @@ public class PackApplier implements Listener {
         };
     }
 
-    public String getVersion(Player player) {
+    public static String getVersion(Player player) {
         try {
             return Via.getAPI().getPlayerProtocolVersion(player.getUniqueId()).getName();
         } catch (NoClassDefFoundError e) {

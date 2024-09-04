@@ -20,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class OriginCommand implements CommandExecutor, TabCompleter {
     public static NamespacedKey key = OriginsReborn.getCooldowns().registerCooldown(OriginsReborn.getInstance(), new NamespacedKey(OriginsReborn.getInstance(), "swap-command-cooldown"), new Cooldowns.CooldownInfo(0));
@@ -32,8 +34,10 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case "swap" -> {
                 if (sender instanceof Player player) {
                     if (OriginsReborn.getCooldowns().hasCooldown(player, key)) {
+                        /*
                         long cooldown = OriginsReborn.getCooldowns().getCooldown(player, key);
-                        //player.sendMessage(Component.text("You are on cooldown for %s".formatted(ShortcutUtils.getFormattedTime(cooldown))).color(NamedTextColor.RED));
+                        player.sendMessage(Component.text("You are on cooldown for %s".formatted(ShortcutUtils.getFormattedTime(cooldown))).color(NamedTextColor.RED));
+                         */
                         player.sendMessage(Component.text("You are on cooldown.").color(NamedTextColor.RED));
                         return true;
                     }
@@ -60,6 +64,47 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 }
                 AddonLoader.reloadAddons();
                 OriginsReborn.getInstance().reloadConfig();
+                return true;
+            }
+            case "exchange" -> {
+                if (sender instanceof Player player) {
+                    if (sender.hasPermission("originsreborn.exchange")) {
+                        if (args.length != 2) {
+                            sender.sendMessage(Component.text("You need to specify a player!").color(NamedTextColor.RED));
+                            return true;
+                        }
+                        Player target = Bukkit.getPlayer(args[1]);
+                        if (target == null) {
+                            sender.sendMessage(Component.text("You need to specify a player!").color(NamedTextColor.RED));
+                            return true;
+                        }
+                        for (ExchangeRequest request : exchangeRequests.getOrDefault(player, List.of())) {
+                            if (request.expireTime > Bukkit.getCurrentTick()) continue;
+                            if (request.p2.equals(player) && request.p1.equals(target)) {
+                                target.sendMessage(Component.text("Origin swapped with %s.".formatted(player.getName())).color(NamedTextColor.AQUA));
+                                player.sendMessage(Component.text("Origin swapped with %s.".formatted(target.getName())).color(NamedTextColor.AQUA));
+
+                                Origin pOrigin = OriginSwapper.getOrigin(player);
+                                Origin tOrigin = OriginSwapper.getOrigin(target);
+
+                                OriginSwapper.setOrigin(player, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
+                                OriginSwapper.setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
+                                return true;
+                            }
+                        }
+                        if (!exchangeRequests.containsKey(target)) {
+                            exchangeRequests.put(target, new ArrayList<>());
+                        }
+                        exchangeRequests.get(target).removeIf(request -> request.p1.equals(player) && request.p2.equals(player));
+                        exchangeRequests.get(target).add(new ExchangeRequest(player, target, Bukkit.getCurrentTick() + 6000));
+                        target.sendMessage(Component.text("%s is requesting to swap origins with you, type /origin exchange %s to accept. The request will expire in 5 minutes.".formatted(player.getName(), player.getName())).color(NamedTextColor.AQUA));
+                        player.sendMessage(Component.text("Requesting to swap origins with %s. The request will expire in 5 minutes.".formatted(target.getName())).color(NamedTextColor.AQUA));
+                    } else {
+                        sender.sendMessage(Component.text("You don't have permission to do this!").color(NamedTextColor.RED));
+                    }
+                } else {
+                    sender.sendMessage(Component.text("Only players can switch origins with others!").color(NamedTextColor.RED));
+                }
                 return true;
             }
             case "set" -> {
@@ -100,6 +145,14 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 }
                 return true;
             }
+            case "pack" -> {
+                if (sender instanceof Player player) {
+                    PackApplier.sendPacks(player);
+                } else {
+                    sender.sendMessage(Component.text("This command can only be run by a player").color(NamedTextColor.RED));
+                }
+                return true;
+            }
             case "export" -> {
                 if (args.length != 3) return false;
                 File output = new File(OriginsReborn.getInstance().getDataFolder(), "export/" + args[2] + ".orbarch");
@@ -131,6 +184,12 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    private final Map<Player, List<ExchangeRequest>> exchangeRequests = new HashMap<>();
+
+    public record ExchangeRequest(Player p1, Player p2, int expireTime) {
+
+    }
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
@@ -142,12 +201,16 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 if (sender instanceof Player player && AddonLoader.allowOriginSwapCommand(player)) {
                     r.add("swap");
                 }
+                if (sender.hasPermission("originsreborn.exchange")) {
+                    r.add("exchange");
+                }
                 if (!sender.hasPermission("originsreborn.admin")) yield r;
                 r.add("reload");
                 r.add("set");
                 r.add("orb");
                 r.add("export");
                 r.add("import");
+                r.add("pack");
                 yield r;
             }
             case 2 -> {
