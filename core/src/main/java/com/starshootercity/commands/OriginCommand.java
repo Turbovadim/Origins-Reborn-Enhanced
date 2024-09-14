@@ -29,7 +29,10 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length < 1) return false;
+        if (args.length < 1) {
+            sender.sendMessage(Component.text("Invalid command. Usage: /origin <command>").color(NamedTextColor.RED));
+            return true;
+        }
         switch (args[0].toLowerCase()) {
             case "swap" -> {
                 if (sender instanceof Player player) {
@@ -114,11 +117,20 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                 }
-                if (args.length < 3) return false;
+                if (args.length < 3) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                    return true;
+                }
                 Player player = Bukkit.getPlayer(args[1]);
-                if (player == null) return false;
+                if (player == null) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                    return true;
+                }
                 Origin origin = AddonLoader.originNameMap.get(args[2].replace("_", " "));
-                if (origin == null) return false;
+                if (origin == null) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                    return true;
+                }
                 OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
                 return true;
             }
@@ -154,10 +166,16 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             case "export" -> {
-                if (args.length != 3) return false;
+                if (args.length != 3) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin export <addon id> <path>").color(NamedTextColor.RED));
+                    return true;
+                }
                 File output = new File(OriginsReborn.getInstance().getDataFolder(), "export/" + args[2] + ".orbarch");
                 List<File> files = AddonLoader.originFiles.get(args[1]);
-                if (files == null) return false;
+                if (files == null) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin export <addon id> <path>").color(NamedTextColor.RED));
+                    return true;
+                }
                 try {
                     CompressionUtils.compressFiles(files, output);
                     sender.sendMessage(Component.text("Exported origins to '~/plugins/Origins-Reborn/export/%s.orbarch'".formatted(args[2])).color(NamedTextColor.AQUA));
@@ -167,10 +185,16 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             case "import" -> {
-                if (args.length != 2) return false;
+                if (args.length != 2) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin import <path>").color(NamedTextColor.RED));
+                    return true;
+                }
                 File input = new File(OriginsReborn.getInstance().getDataFolder(), "import/" + args[1]);
                 File output = new File(OriginsReborn.getInstance().getDataFolder(), "origins");
-                if (!input.exists() || !output.exists()) return false;
+                if (!input.exists() || !output.exists()) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin import <path>").color(NamedTextColor.RED));
+                    return true;
+                }
                 try {
                     CompressionUtils.decompressFiles(input, output);
                 } catch (IOException e) {
@@ -179,7 +203,8 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             default -> {
-                return false;
+                sender.sendMessage(Component.text("Invalid command. Usage: /origin <command>").color(NamedTextColor.RED));
+                return true;
             }
         }
     }
