@@ -66,7 +66,7 @@ public class StrongArms implements MultiAbility, VisibleAbility, Listener {
                     if (!MaterialTags.PICKAXES.isTagged(event.getPlayer().getInventory().getItemInMainHand().getType())) {
                         event.setCancelled(true);
                         ItemStack item = new ItemStack(Material.IRON_PICKAXE);
-                        item.addEnchantments(event.getPlayer().getInventory().getItemInMainHand().getEnchantments());
+                        item.addUnsafeEnchantments(event.getPlayer().getInventory().getItemInMainHand().getEnchantments());
                         event.getBlock().breakNaturally(item, event instanceof StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent);
                     }
                 }

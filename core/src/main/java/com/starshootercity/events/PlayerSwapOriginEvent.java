@@ -69,7 +69,7 @@ public class PlayerSwapOriginEvent extends PlayerEvent implements Cancellable {
 
     public enum SwapReason {
         /**
-         * Swapped origin with the /oswap command
+         * Swapped origin with the /origin swap command
          */
         COMMAND("command"),
         /**

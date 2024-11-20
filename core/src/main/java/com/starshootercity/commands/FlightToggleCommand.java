@@ -13,6 +13,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlightToggleCommand implements CommandExecutor {
     public static boolean canFly(Player player) {
+        /*
+        World w = BukkitAdapter.adapt(player.getWorld());
+        RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(w);
+        if (manager != null) {
+            for (ProtectedRegion r : manager.getApplicableRegions(new BlockVector3(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ()))) {
+                r.getFlags()
+            }
+        }
+
+         */
         return player.getPersistentDataContainer().has(key, OriginSwapper.BooleanPDT.BOOLEAN);
     }
 

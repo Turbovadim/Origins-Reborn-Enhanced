@@ -1,8 +1,10 @@
 package com.starshootercity.cooldowns;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
 import com.starshootercity.ShortcutUtils;
+import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -34,6 +36,12 @@ import java.util.*;
 public class Cooldowns implements Listener {
     private final Map<NamespacedKey, CooldownInfo> registeredCooldowns = new HashMap<>();
     private final NamespacedKey cooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "cooldowns");
+    private final NamespacedKey hasCooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "has_cooldown");
+
+    @EventHandler
+    public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
+        event.getPlayer().getPersistentDataContainer().remove(cooldownKey);
+    }
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
@@ -50,14 +58,22 @@ public class Cooldowns implements Listener {
                     }
                 }
             }
+            if (player.getRemainingAir() < player.getMaximumAir()) num++;
+            int i = 0;
             for (NamespacedKey key : getCooldowns(player)) {
                 CooldownInfo info = registeredCooldowns.get(key);
                 if (info.getIcon() == null) continue;
-                float d = getCooldown(player, key) / (info.getCooldownTime() * 50f);
-                if (!info.isReversed()) d = 1 - d;
-                message = message.append(Component.text("\uF004")).append(formCooldownBar(d, info, num));
+                i++;
+                float amount = getCooldown(player, key) / (info.getCooldownTime() * 50f);
+                if (!info.isReversed()) amount = 1 - amount;
+                message = message.append(Component.text("\uF004")).append(formCooldownBar(amount, info, num));
                 num++;
             }
+            if (i == 0) {
+                if (!player.getPersistentDataContainer().has(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) continue;
+                player.getPersistentDataContainer().remove(hasCooldownKey);
+            }
+            player.getPersistentDataContainer().set(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
             player.sendActionBar(OriginsReborn.getNMSInvoker().applyFont(Component.text("\uF003"), Key.key("minecraft:cooldown_bar/height_0")).append(message));
         }
     }
@@ -68,13 +84,15 @@ public class Cooldowns implements Listener {
 
     public long getCooldown(Player player, NamespacedKey key) {
         PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
-        return Math.max(0, pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - Instant.now().toEpochMilli());
+        CooldownInfo info = registeredCooldowns.get(key);
+        if (info == null) return 0;
+        return Math.max(0, pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : Instant.now().toEpochMilli()));
     }
 
     public List<NamespacedKey> getCooldowns(Player player) {
         PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
         List<NamespacedKey> keys = new ArrayList<>(pdc.getKeys());
-        keys.removeIf(key -> !hasCooldown(player, key));
+        keys.removeIf(key -> !registeredCooldowns.containsKey(key) || (!hasCooldown(player, key) && !registeredCooldowns.get(key).isStatic()));
         return keys;
     }
 
@@ -86,14 +104,15 @@ public class Cooldowns implements Listener {
         return getCooldown(player, key) > 0;
     }
 
-    private void setCooldown(Player player, NamespacedKey key, int cooldown) {
+    public void setCooldown(Player player, NamespacedKey key, int cooldown, boolean isStatic) {
         PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
-        pdc.set(key, PersistentDataType.LONG, Instant.now().toEpochMilli() + (cooldown * 50L));
+        pdc.set(key, PersistentDataType.LONG, isStatic ? cooldown * 50L : Instant.now().toEpochMilli() + (cooldown * 50L));
         player.getPersistentDataContainer().set(cooldownKey, PersistentDataType.TAG_CONTAINER, pdc);
     }
 
     public void setCooldown(Player player, NamespacedKey key) {
-        setCooldown(player, key, registeredCooldowns.get(key).getCooldownTime());
+        CooldownInfo info = registeredCooldowns.get(key);
+        setCooldown(player, key, info.getCooldownTime(), info.isStatic());
     }
 
     public record CooldownIconData(List<Component> barPieces, Component icon) {
@@ -224,27 +243,37 @@ public class Cooldowns implements Listener {
         private int cooldownTime;
         private final boolean reversed;
         private final @Nullable String icon;
+        private final boolean isStatic;
 
-        public CooldownInfo(int cooldownTime, @Nullable String icon, boolean reversed) {
+        public CooldownInfo(int cooldownTime, @Nullable String icon, boolean reversed, boolean isStatic) {
             this.cooldownTime = cooldownTime;
             this.icon = icon;
             this.reversed = reversed;
+            this.isStatic = isStatic;
+        }
+
+        public boolean isStatic() {
+            return isStatic;
         }
 
         public boolean isReversed() {
             return reversed;
         }
 
+        public CooldownInfo(int cooldownTime, @Nullable String icon, boolean reversed) {
+            this(cooldownTime, icon, reversed, false);
+        }
+
         public CooldownInfo(int cooldownTime, @Nullable String icon) {
-            this(cooldownTime, icon, false);
+            this(cooldownTime, icon, false, false);
         }
 
         public CooldownInfo(int cooldownTime, boolean reversed) {
-            this(cooldownTime, null, reversed);
+            this(cooldownTime, null, reversed, false);
         }
 
         public CooldownInfo(int cooldownTime) {
-            this(cooldownTime, null, false);
+            this(cooldownTime, null, false, false);
         }
 
         public @Nullable String getIcon() {

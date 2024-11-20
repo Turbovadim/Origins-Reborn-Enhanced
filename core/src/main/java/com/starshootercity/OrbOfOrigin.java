@@ -36,6 +36,7 @@ public class OrbOfOrigin implements Listener {
     }};
 
     @EventHandler
+    @SuppressWarnings("ConstantConditions") // itemStack is null on some versions
     public void onPrepareItemCraft(PrepareItemCraftEvent event) {
         Recipe recipe = event.getRecipe();
         if (recipe != null) {
@@ -95,7 +96,16 @@ public class OrbOfOrigin implements Listener {
                 if (heldMeta != null && heldMeta.getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) hand = EquipmentSlot.HAND;
                 if (hand == EquipmentSlot.HAND) event.getPlayer().swingMainHand();
                 else event.getPlayer().swingOffHand();
-                OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, 0, 0);
+                if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.random")) {
+                    OriginSwapper.selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN);
+                    OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, AddonLoader.origins.indexOf(OriginSwapper.getOrigin(event.getPlayer())), 0, false, true);
+                    if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.consume")) {
+                        item.setAmount(item.getAmount() - 1);
+                        event.getPlayer().getInventory().setItemInMainHand(item);
+                    }
+                } else {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, 0, 0));
+                }
             }
         }
     }

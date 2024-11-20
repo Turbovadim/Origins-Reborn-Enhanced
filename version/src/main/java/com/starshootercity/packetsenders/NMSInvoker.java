@@ -94,12 +94,6 @@ public abstract class NMSInvoker implements Listener {
 
     public abstract void sendBlockDamage(Player player, Location location, float damage, Entity entity);
 
-    public abstract Attribute getBlockInteractionRangeAttribute();
-
-    public abstract Attribute getEntityInteractionRangeAttribute();
-
-    public abstract Attribute getBlockBreakSpeedAttribute();
-
     public abstract void addAttributeModifier(AttributeInstance instance, NamespacedKey key, String name, double amount, AttributeModifier.Operation operation);
 
     public abstract void setWorldBorderOverlay(Player player, boolean show);
@@ -117,4 +111,70 @@ public abstract class NMSInvoker implements Listener {
     public @Nullable Material getOminousBottle() {
         return null;
     }
+
+    public abstract @NotNull Attribute getArmorAttribute();
+
+    public abstract @NotNull Attribute getMaxHealthAttribute();
+
+    public abstract @NotNull Attribute getMovementSpeedAttribute();
+
+    public abstract @NotNull Attribute getFlyingSpeedAttribute();
+
+    public abstract @NotNull Attribute getAttackDamageAttribute();
+
+    public abstract @NotNull Attribute getAttackKnockbackAttribute();
+
+    public abstract @NotNull Attribute getAttackSpeedAttribute();
+
+    public abstract @NotNull Attribute getArmorToughnessAttribute();
+
+    public abstract @NotNull Attribute getLuckAttribute();
+
+    public abstract @NotNull Attribute getHorseJumpStrengthAttribute();
+
+    public abstract @NotNull Attribute getSpawnReinforcementsAttribute();
+
+    public abstract @NotNull Attribute getFollowRangeAttribute();
+
+    public abstract @NotNull Attribute getKnockbackResistanceAttribute();
+
+    public abstract @Nullable Attribute getFallDamageMultiplierAttribute();
+
+    public abstract @Nullable Attribute getMaxAbsorptionAttribute();
+
+    public abstract @Nullable Attribute getSafeFallDistanceAttribute();
+
+    public abstract @Nullable Attribute getScaleAttribute();
+
+    public abstract @Nullable Attribute getStepHeightAttribute();
+
+    public abstract @Nullable Attribute getGravityAttribute();
+
+    public abstract @Nullable Attribute getJumpStrengthAttribute();
+
+    public abstract @Nullable Attribute getBurningTimeAttribute();
+
+    public abstract @Nullable Attribute getExplosionKnockbackResistanceAttribute();
+
+    public abstract @Nullable Attribute getMovementEfficiencyAttribute();
+
+    public abstract @Nullable Attribute getOxygenBonusAttribute();
+
+    public abstract @Nullable Attribute getWaterMovementEfficiencyAttribute();
+
+    public abstract @Nullable Attribute getTemptRangeAttribute();
+
+    public abstract @Nullable Attribute getBlockInteractionRangeAttribute();
+
+    public abstract @Nullable Attribute getEntityInteractionRangeAttribute();
+
+    public abstract @Nullable Attribute getBlockBreakSpeedAttribute();
+
+    public abstract @Nullable Attribute getMiningEfficiencyAttribute();
+
+    public abstract @Nullable Attribute getSneakingSpeedAttribute();
+
+    public abstract @Nullable Attribute getSubmergedMiningSpeedAttribute();
+
+    public abstract @Nullable Attribute getSweepingDamageRatioAttribute();
 }

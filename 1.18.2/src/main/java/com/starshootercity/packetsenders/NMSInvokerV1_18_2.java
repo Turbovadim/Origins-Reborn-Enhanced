@@ -47,6 +47,137 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_18_2 extends NMSInvoker {
+
+    @Override
+    public @Nullable Attribute getMiningEfficiencyAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getSneakingSpeedAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getSubmergedMiningSpeedAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getSweepingDamageRatioAttribute() {
+        return null;
+    }
+
+    @Override
+    public @NotNull Attribute getFlyingSpeedAttribute() {
+        return Attribute.GENERIC_FLYING_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackKnockbackAttribute() {
+        return Attribute.GENERIC_ATTACK_KNOCKBACK;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackSpeedAttribute() {
+        return Attribute.GENERIC_ATTACK_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getArmorToughnessAttribute() {
+        return Attribute.GENERIC_ARMOR_TOUGHNESS;
+    }
+
+    @Override
+    public @NotNull Attribute getLuckAttribute() {
+        return Attribute.GENERIC_LUCK;
+    }
+
+    @Override
+    public @NotNull Attribute getHorseJumpStrengthAttribute() {
+        return Attribute.HORSE_JUMP_STRENGTH;
+    }
+
+    @Override
+    public @NotNull Attribute getSpawnReinforcementsAttribute() {
+        return Attribute.ZOMBIE_SPAWN_REINFORCEMENTS;
+    }
+
+    @Override
+    public @NotNull Attribute getFollowRangeAttribute() {
+        return Attribute.GENERIC_FOLLOW_RANGE;
+    }
+
+    @Override
+    public @NotNull Attribute getKnockbackResistanceAttribute() {
+        return Attribute.GENERIC_KNOCKBACK_RESISTANCE;
+    }
+
+    @Override
+    public @Nullable Attribute getFallDamageMultiplierAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getMaxAbsorptionAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getSafeFallDistanceAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getScaleAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getStepHeightAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getGravityAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getJumpStrengthAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getBurningTimeAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getExplosionKnockbackResistanceAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getMovementEfficiencyAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getOxygenBonusAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getWaterMovementEfficiencyAttribute() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Attribute getTemptRangeAttribute() {
+        return null;
+    }
+
     public NMSInvokerV1_18_2(FileConfiguration config) {
         super(config);
     }
@@ -59,6 +190,26 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
     @Override
     public Component applyFont(Component component, Key font) {
         return component.font(font);
+    }
+
+    @Override
+    public @NotNull Attribute getArmorAttribute() {
+        return Attribute.GENERIC_ARMOR;
+    }
+
+    @Override
+    public @NotNull Attribute getMaxHealthAttribute() {
+        return Attribute.GENERIC_MAX_HEALTH;
+    }
+
+    @Override
+    public @NotNull Attribute getMovementSpeedAttribute() {
+        return Attribute.GENERIC_MOVEMENT_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackDamageAttribute() {
+        return Attribute.GENERIC_ATTACK_DAMAGE;
     }
 
     @Override

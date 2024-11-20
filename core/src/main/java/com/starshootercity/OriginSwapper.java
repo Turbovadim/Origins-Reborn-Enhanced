@@ -379,29 +379,17 @@ public class OriginSwapper implements Listener {
         };
     }
 
-    public static int getWidth(char c) {
-        return switch (c) {
-            case ' ', '"', '(', ')', '*', 'I', '[', ']', 't', '{', '}' -> 4;
-            case '!', '\'', ',', '.', ':', ';', 'i', '|', '\uf00a' -> 2;
-            case '#', '$', '%', '&', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\\', '^', '_', 'a', 'b', 'c', 'd', 'e', 'g', 'h', 'j', 'm', 'n', 'o', 'p', 'q', 'r', 's', 'u', 'v', 'w', 'x', 'y', 'z' ->
-                    6;
-            case '<', '>', 'f', 'k' -> 5;
-            case '@', '~' -> 7;
-            case '`', 'l' -> 3;
-            default -> throw new IllegalStateException("Unexpected value: " + c);
-        };
-    }
-
     public static int getWidth(String s) {
         int result = 0;
         for (char c : s.toCharArray()) {
-            result += getWidth(c);
+            result += WidthGetter.getWidth(c);
         }
         return result;
     }
 
     public static String getInverse(char c) {
-        return switch (getWidth(c)) {
+        return switch (WidthGetter.getWidth(c)) {
+            case 0 -> "";
             case 2 -> "\uF001";
             case 3 -> "\uF002";
             case 4 -> "\uF003";
@@ -603,7 +591,7 @@ public class OriginSwapper implements Listener {
         }
     }
 
-    public void selectRandomOrigin(Player player, PlayerSwapOriginEvent.SwapReason reason) {
+    public static void selectRandomOrigin(Player player, PlayerSwapOriginEvent.SwapReason reason) {
         Origin origin = AddonLoader.origins.get(random.nextInt(AddonLoader.origins.size()));
         setOrigin(player, origin, reason, shouldResetPlayer(reason));
         openOriginSwapper(player, reason, AddonLoader.origins.indexOf(origin), 0, false, true);

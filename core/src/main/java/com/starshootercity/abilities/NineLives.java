@@ -1,6 +1,7 @@
 package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
+import com.starshootercity.OriginsReborn;
 import net.kyori.adventure.key.Key;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
@@ -26,7 +27,7 @@ public class NineLives implements AttributeModifierAbility, VisibleAbility {
 
     @Override
     public @NotNull Attribute getAttribute() {
-        return Attribute.GENERIC_MAX_HEALTH;
+        return OriginsReborn.getNMSInvoker().getMaxHealthAttribute();
     }
 
     @Override

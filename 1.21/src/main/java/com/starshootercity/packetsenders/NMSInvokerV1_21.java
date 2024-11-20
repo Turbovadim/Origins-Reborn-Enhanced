@@ -45,6 +45,136 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_21 extends NMSInvoker {
+
+    @Override
+    public @Nullable Attribute getMiningEfficiencyAttribute() {
+        return Attribute.PLAYER_MINING_EFFICIENCY;
+    }
+
+    @Override
+    public @Nullable Attribute getSneakingSpeedAttribute() {
+        return Attribute.PLAYER_SNEAKING_SPEED;
+    }
+
+    @Override
+    public @Nullable Attribute getSubmergedMiningSpeedAttribute() {
+        return Attribute.PLAYER_SUBMERGED_MINING_SPEED;
+    }
+
+    @Override
+    public @Nullable Attribute getSweepingDamageRatioAttribute() {
+        return Attribute.PLAYER_SWEEPING_DAMAGE_RATIO;
+    }
+
+    @Override
+    public @NotNull Attribute getFlyingSpeedAttribute() {
+        return Attribute.GENERIC_FLYING_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackKnockbackAttribute() {
+        return Attribute.GENERIC_ATTACK_KNOCKBACK;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackSpeedAttribute() {
+        return Attribute.GENERIC_ATTACK_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getArmorToughnessAttribute() {
+        return Attribute.GENERIC_ARMOR_TOUGHNESS;
+    }
+
+    @Override
+    public @NotNull Attribute getLuckAttribute() {
+        return Attribute.GENERIC_LUCK;
+    }
+
+    @Override
+    public @NotNull Attribute getHorseJumpStrengthAttribute() {
+        return Attribute.GENERIC_JUMP_STRENGTH;
+    }
+
+    @Override
+    public @NotNull Attribute getSpawnReinforcementsAttribute() {
+        return Attribute.ZOMBIE_SPAWN_REINFORCEMENTS;
+    }
+
+    @Override
+    public @NotNull Attribute getFollowRangeAttribute() {
+        return Attribute.GENERIC_FOLLOW_RANGE;
+    }
+
+    @Override
+    public @NotNull Attribute getKnockbackResistanceAttribute() {
+        return Attribute.GENERIC_KNOCKBACK_RESISTANCE;
+    }
+
+    @Override
+    public @Nullable Attribute getFallDamageMultiplierAttribute() {
+        return Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER;
+    }
+
+    @Override
+    public @Nullable Attribute getMaxAbsorptionAttribute() {
+        return Attribute.GENERIC_MAX_ABSORPTION;
+    }
+
+    @Override
+    public @Nullable Attribute getSafeFallDistanceAttribute() {
+        return Attribute.GENERIC_SAFE_FALL_DISTANCE;
+    }
+
+    @Override
+    public @Nullable Attribute getScaleAttribute() {
+        return Attribute.GENERIC_SCALE;
+    }
+
+    @Override
+    public @Nullable Attribute getStepHeightAttribute() {
+        return Attribute.GENERIC_STEP_HEIGHT;
+    }
+
+    @Override
+    public @Nullable Attribute getGravityAttribute() {
+        return Attribute.GENERIC_GRAVITY;
+    }
+
+    @Override
+    public @Nullable Attribute getJumpStrengthAttribute() {
+        return Attribute.GENERIC_JUMP_STRENGTH;
+    }
+
+    @Override
+    public @Nullable Attribute getBurningTimeAttribute() {
+        return Attribute.GENERIC_BURNING_TIME;
+    }
+
+    @Override
+    public @Nullable Attribute getExplosionKnockbackResistanceAttribute() {
+        return Attribute.GENERIC_EXPLOSION_KNOCKBACK_RESISTANCE;
+    }
+
+    @Override
+    public @Nullable Attribute getMovementEfficiencyAttribute() {
+        return Attribute.GENERIC_MOVEMENT_EFFICIENCY;
+    }
+
+    @Override
+    public @Nullable Attribute getOxygenBonusAttribute() {
+        return Attribute.GENERIC_OXYGEN_BONUS;
+    }
+
+    @Override
+    public @Nullable Attribute getWaterMovementEfficiencyAttribute() {
+        return Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY;
+    }
+
+    @Override
+    public @Nullable Attribute getTemptRangeAttribute() {
+        return null;
+    }
     public NMSInvokerV1_21(FileConfiguration config) {
         super(config);
     }
@@ -52,6 +182,26 @@ public class NMSInvokerV1_21 extends NMSInvoker {
     @Override
     public Component applyFont(Component component, Key font) {
         return component.font(font);
+    }
+
+    @Override
+    public @NotNull Attribute getArmorAttribute() {
+        return Attribute.GENERIC_ARMOR;
+    }
+
+    @Override
+    public @NotNull Attribute getMaxHealthAttribute() {
+        return Attribute.GENERIC_MAX_HEALTH;
+    }
+
+    @Override
+    public @NotNull Attribute getMovementSpeedAttribute() {
+        return Attribute.GENERIC_MOVEMENT_SPEED;
+    }
+
+    @Override
+    public @NotNull Attribute getAttackDamageAttribute() {
+        return Attribute.GENERIC_ATTACK_DAMAGE;
     }
 
     @Override

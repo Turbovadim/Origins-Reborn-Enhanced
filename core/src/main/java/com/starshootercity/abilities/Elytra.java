@@ -1,6 +1,7 @@
 package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
+import com.starshootercity.commands.FlightToggleCommand;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.entity.Player;
@@ -49,6 +50,7 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
 
     @EventHandler
     public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+        if (FlightToggleCommand.canFly(event.getPlayer())) return;
         AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
             if (event.isFlying()) {
                 event.setCancelled(true);

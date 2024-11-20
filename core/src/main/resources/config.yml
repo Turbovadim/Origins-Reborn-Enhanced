@@ -108,6 +108,8 @@ orb-of-origin:
   consume: true
   # Enable recipe for crafting the Orb of Origin
   enable-recipe: false
+  # Randomise origin instead of opening the selector upon using the orb
+  random: false
   # Crafting recipe for the Orb of Origin
   recipe:
     - [minecraft:air, minecraft:diamond, minecraft:air]
@@ -157,4 +159,4 @@ extra-settings:
   fresh-air-required-sleep-height: 86
 
 # Config version - do not touch this!
-config-version: 2.3.18
+config-version: 2.3.20

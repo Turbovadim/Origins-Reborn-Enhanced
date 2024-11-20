@@ -57,6 +57,7 @@ public class OriginsReborn extends OriginsAddon {
     private static void initializeNMSInvoker(OriginsReborn instance) {
         String version = Bukkit.getBukkitVersion().split("-")[0];
         nmsInvoker = switch (version) {
+            case "1.18.1" -> new NMSInvokerV1_18_1(getInstance().getConfig());
             case "1.18.2" -> new NMSInvokerV1_18_2(getInstance().getConfig());
             case "1.19" -> new NMSInvokerV1_19(getInstance().getConfig());
             case "1.19.1" -> new NMSInvokerV1_19_1(getInstance().getConfig());
@@ -71,7 +72,8 @@ public class OriginsReborn extends OriginsAddon {
             case "1.20.5", "1.20.6" -> new NMSInvokerV1_20_6(getInstance().getConfig());
             case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
             case "1.21.1" -> new NMSInvokerV1_21_1(getInstance().getConfig());
-            default -> throw new IllegalStateException("Unexpected version: " + version + " only versions 1.20 - 1.20.6 are supported");
+            case "1.21.2", "1.21.3" -> new NMSInvokerV1_21_3(getInstance().getConfig());
+            default -> throw new IllegalStateException("Unexpected version: " + version + " only versions 1.18.1 - 1.21.3 are supported");
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
     }
@@ -241,26 +243,20 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("prevent-abilities-in", List.of("A list of WorldGuard regions in which to prevent the use of certain abilities, use 'all' for all abilities"));
                 saveConfig();
             }
-            /*
-            if (version.equals("2.1.11") || version.equals("2.1.10")) {
-                getConfig().set("config-version", "2.2.0");
-                getConfig().set("display.language", "en_us");
-                getNMSInvoker().setComments("display.language", List.of(
-                        "Language file to use - default is en_us"
-                ));
-                getConfig().set("display.force-unicode-font", "false");
-                getNMSInvoker().setComments("display.force-unicode-font", List.of(
-                        "Force unicode font for all characters"
-                ));
+            if (version.equals("2.3.18")) {
+                getConfig().set("config-version", "2.3.20");
+                getConfig().set("orb-of-origin.random", false);
+                getNMSInvoker().setComments("orb-of-origin.random", List.of("Randomise origin instead of opening the selector upon using the orb"));
                 saveConfig();
             }
-             */
         }
     }
 
     @Override
     public void onRegister() {
         instance = this;
+
+        WidthGetter.initialize(this);
 
         AbilityRegister.setupAMAF();
 

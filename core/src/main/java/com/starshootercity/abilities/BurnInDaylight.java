@@ -22,7 +22,8 @@ public class BurnInDaylight implements VisibleAbility, DependantAbility, Listene
     }
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent ignored) {
+    public void onServerTickEnd(ServerTickEndEvent event) {
+        if (event.getTickNumber() % 20 != 0) return;
         for (Player player : Bukkit.getOnlinePlayers()) {
             AbilityRegister.runForAbility(player, getKey(),
                     () -> {

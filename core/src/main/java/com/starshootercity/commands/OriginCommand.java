@@ -66,6 +66,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                     }
                 }
                 AddonLoader.reloadAddons();
+                WidthGetter.reload();
                 OriginsReborn.getInstance().reloadConfig();
                 return true;
             }

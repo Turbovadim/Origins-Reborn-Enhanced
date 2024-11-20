@@ -22,6 +22,7 @@ dependencies {
     //compileOnly("org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT") // Spigot
     //implementation("net.kyori:adventure-platform-bukkit:4.3.3") // Spigot
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
+    compileOnly("com.github.aromaa:WorldGuardExtraFlags:v4.2.4")
     compileOnly("org.geysermc.geyser:api:2.2.0-SNAPSHOT")
     compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")
     compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")
@@ -30,6 +31,7 @@ dependencies {
     compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
     compileOnly(project(":version"))
+    compileOnly(project(":1.18.1"))
     compileOnly(project(":1.18.2"))
     compileOnly(project(":1.19"))
     compileOnly(project(":1.19.1"))
@@ -44,6 +46,7 @@ dependencies {
     compileOnly(project(":1.20.6"))
     compileOnly(project(":1.21"))
     compileOnly(project(":1.21.1"))
+    compileOnly(project(":1.21.3"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
 }

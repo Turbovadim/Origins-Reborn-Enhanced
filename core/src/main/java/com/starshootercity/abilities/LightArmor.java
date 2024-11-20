@@ -16,7 +16,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class LightArmor implements VisibleAbility, Listener {
@@ -35,6 +34,21 @@ public class LightArmor implements VisibleAbility, Listener {
         return OriginSwapper.LineData.makeLineFor("Need for Mobility", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
+    private final List<Material> allowedTypes = List.of(
+        Material.CHAINMAIL_HELMET,
+        Material.CHAINMAIL_CHESTPLATE,
+        Material.CHAINMAIL_LEGGINGS,
+        Material.CHAINMAIL_BOOTS,
+        Material.LEATHER_HELMET,
+        Material.LEATHER_CHESTPLATE,
+        Material.LEATHER_LEGGINGS,
+        Material.LEATHER_BOOTS,
+        Material.GOLDEN_HELMET,
+        Material.GOLDEN_CHESTPLATE,
+        Material.GOLDEN_LEGGINGS,
+        Material.GOLDEN_BOOTS
+    );
+
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
         if (event.getNewOrigin() == null) return;
@@ -44,19 +58,19 @@ public class LightArmor implements VisibleAbility, Listener {
             ItemStack leggings = event.getPlayer().getInventory().getLeggings();
             ItemStack boots = event.getPlayer().getInventory().getBoots();
             if (helmet == null || chestplate == null || leggings == null || boots == null) return;
-            if (helmet.getType() == Material.DIAMOND_HELMET) {
+            if (!allowedTypes.contains(helmet.getType())) {
                 event.getPlayer().getInventory().setHelmet(null);
                 ShortcutUtils.giveItemWithDrops(event.getPlayer(), helmet);
             }
-            if (chestplate.getType() == Material.DIAMOND_CHESTPLATE) {
+            if (!allowedTypes.contains(chestplate.getType())) {
                 event.getPlayer().getInventory().setChestplate(null);
                 ShortcutUtils.giveItemWithDrops(event.getPlayer(), chestplate);
             }
-            if (leggings.getType() == Material.DIAMOND_LEGGINGS) {
+            if (!allowedTypes.contains(leggings.getType())) {
                 event.getPlayer().getInventory().setLeggings(null);
                 ShortcutUtils.giveItemWithDrops(event.getPlayer(), leggings);
             }
-            if (boots.getType() == Material.DIAMOND_BOOTS) {
+            if (!allowedTypes.contains(boots.getType())) {
                 event.getPlayer().getInventory().setBoots(null);
                 ShortcutUtils.giveItemWithDrops(event.getPlayer(), boots);
             }
@@ -88,7 +102,7 @@ public class LightArmor implements VisibleAbility, Listener {
                 if (MaterialTags.HELMETS.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getHelmet() == null) {
                     checkArmorEvent(event, player, event.getCurrentItem());
                 }
-                if (MaterialTags.CHESTPLATES.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getLeggings() == null) {
+                if (MaterialTags.CHESTPLATES.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getChestplate() == null) {
                     checkArmorEvent(event, player, event.getCurrentItem());
                 }
                 if (MaterialTags.LEGGINGS.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getLeggings() == null) {
@@ -143,20 +157,6 @@ public class LightArmor implements VisibleAbility, Listener {
 
     public void checkArmorEvent(Cancellable event, Player player, ItemStack armor) {
         AbilityRegister.runForAbility(player, getKey(), () -> {
-            List<Material> allowedTypes = new ArrayList<>() {{
-                add(Material.CHAINMAIL_HELMET);
-                add(Material.CHAINMAIL_CHESTPLATE);
-                add(Material.CHAINMAIL_LEGGINGS);
-                add(Material.CHAINMAIL_BOOTS);
-                add(Material.LEATHER_HELMET);
-                add(Material.LEATHER_CHESTPLATE);
-                add(Material.LEATHER_LEGGINGS);
-                add(Material.LEATHER_BOOTS);
-                add(Material.GOLDEN_HELMET);
-                add(Material.GOLDEN_CHESTPLATE);
-                add(Material.GOLDEN_LEGGINGS);
-                add(Material.GOLDEN_BOOTS);
-            }};
             if (allowedTypes.contains(armor.getType())) return;
             event.setCancelled(true);
         });
