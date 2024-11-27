@@ -43,10 +43,31 @@ public class Cooldowns implements Listener {
         event.getPlayer().getPersistentDataContainer().remove(cooldownKey);
     }
 
+    private static @Nullable String getTime(int cooldownTime) {
+        if (cooldownTime <= 0) return null;
+        String time;
+        if (Math.floorDiv(cooldownTime, 60) == 0) {
+            time = "%ss".formatted(cooldownTime);
+        } else {
+            time = "%sm %ss".formatted(Math.floorDiv(cooldownTime, 60), cooldownTime % 60);
+        }
+        return time;
+    }
+
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) continue;
+            if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+                StringBuilder s = new StringBuilder();
+                for (NamespacedKey key : getCooldowns(player)) {
+                    CooldownInfo info = registeredCooldowns.get(key);
+                    if (info.getIcon() == null) continue;
+                    int amount = (int) (getCooldown(player, key) / 50);
+                    s.append(getTime(amount)).append(" ");
+                }
+                player.sendActionBar(Component.text(s.toString()));
+                continue;
+            }
             Component message = Component.empty();
             int num = 0;
             Entity vehicle = player.getVehicle();

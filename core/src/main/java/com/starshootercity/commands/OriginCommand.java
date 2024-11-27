@@ -37,16 +37,15 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case "swap" -> {
                 if (sender instanceof Player player) {
                     if (OriginsReborn.getCooldowns().hasCooldown(player, key)) {
-                        /*
-                        long cooldown = OriginsReborn.getCooldowns().getCooldown(player, key);
-                        player.sendMessage(Component.text("You are on cooldown for %s".formatted(ShortcutUtils.getFormattedTime(cooldown))).color(NamedTextColor.RED));
-                         */
                         player.sendMessage(Component.text("You are on cooldown.").color(NamedTextColor.RED));
                         return true;
                     }
                     if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.enabled")) {
                         if (AddonLoader.allowOriginSwapCommand(player)) {
-                            OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, OriginsReborn.getInstance().isVaultEnabled());
+                            String layer;
+                            if (args.length == 2) layer = args[1];
+                            else layer = "origin";
+                            OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, 0, 0, OriginsReborn.getInstance().isVaultEnabled(), layer);
                         } else {
                             sender.sendMessage(Component.text(OriginsReborn.getInstance().getConfig().getString("messages.no-swap-command-permissions", "§cYou don't have permission to do this!")));
                         }
@@ -73,26 +72,28 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             case "exchange" -> {
                 if (sender instanceof Player player) {
                     if (sender.hasPermission("originsreborn.exchange")) {
-                        if (args.length != 2) {
-                            sender.sendMessage(Component.text("You need to specify a player!").color(NamedTextColor.RED));
+                        if (args.length < 2) {
+                            sender.sendMessage(Component.text("Usage: /origin exchange <player> [<layer>]").color(NamedTextColor.RED));
                             return true;
                         }
                         Player target = Bukkit.getPlayer(args[1]);
                         if (target == null) {
-                            sender.sendMessage(Component.text("You need to specify a player!").color(NamedTextColor.RED));
+                            sender.sendMessage(Component.text("Usage: /origin exchange <player> [<layer>]").color(NamedTextColor.RED));
                             return true;
                         }
                         for (ExchangeRequest request : exchangeRequests.getOrDefault(player, List.of())) {
                             if (request.expireTime > Bukkit.getCurrentTick()) continue;
+                            String l = request.layer.substring(0, 0).toUpperCase() + request.layer.substring(1);
+                            String layer = request.layer;
                             if (request.p2.equals(player) && request.p1.equals(target)) {
-                                target.sendMessage(Component.text("Origin swapped with %s.".formatted(player.getName())).color(NamedTextColor.AQUA));
-                                player.sendMessage(Component.text("Origin swapped with %s.".formatted(target.getName())).color(NamedTextColor.AQUA));
+                                target.sendMessage(Component.text("%s swapped with %s.".formatted(l, player.getName())).color(NamedTextColor.AQUA));
+                                player.sendMessage(Component.text("%s swapped with %s.".formatted(l, target.getName())).color(NamedTextColor.AQUA));
 
-                                Origin pOrigin = OriginSwapper.getOrigin(player);
-                                Origin tOrigin = OriginSwapper.getOrigin(target);
+                                Origin pOrigin = OriginSwapper.getOrigin(player, layer);
+                                Origin tOrigin = OriginSwapper.getOrigin(target, layer);
 
-                                OriginSwapper.setOrigin(player, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
-                                OriginSwapper.setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
+                                OriginSwapper.setOrigin(player, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer);
+                                OriginSwapper.setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer);
                                 return true;
                             }
                         }
@@ -100,9 +101,13 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                             exchangeRequests.put(target, new ArrayList<>());
                         }
                         exchangeRequests.get(target).removeIf(request -> request.p1.equals(player) && request.p2.equals(player));
-                        exchangeRequests.get(target).add(new ExchangeRequest(player, target, Bukkit.getCurrentTick() + 6000));
-                        target.sendMessage(Component.text("%s is requesting to swap origins with you, type /origin exchange %s to accept. The request will expire in 5 minutes.".formatted(player.getName(), player.getName())).color(NamedTextColor.AQUA));
-                        player.sendMessage(Component.text("Requesting to swap origins with %s. The request will expire in 5 minutes.".formatted(target.getName())).color(NamedTextColor.AQUA));
+                        String layer;
+                        if (args.length != 3) layer = "origin";
+                        else layer = args[2];
+
+                        exchangeRequests.get(target).add(new ExchangeRequest(player, target, Bukkit.getCurrentTick() + 6000, layer));
+                        target.sendMessage(Component.text("%s is requesting to swap %s with you, type /origin exchange %s to accept. The request will expire in 5 minutes.".formatted(layer, player.getName(), player.getName())).color(NamedTextColor.AQUA));
+                        player.sendMessage(Component.text("Requesting to swap %s with %s. The request will expire in 5 minutes.".formatted(layer, target.getName())).color(NamedTextColor.AQUA));
                     } else {
                         sender.sendMessage(Component.text("You don't have permission to do this!").color(NamedTextColor.RED));
                     }
@@ -118,21 +123,22 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                 }
-                if (args.length < 3) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                if (args.length < 4) {
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
-                Player player = Bukkit.getPlayer(args[1]);
+                String layer = args[1];
+                Player player = Bukkit.getPlayer(args[2]);
                 if (player == null) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
-                Origin origin = AddonLoader.originNameMap.get(args[2].replace("_", " "));
+                Origin origin = AddonLoader.getOrigin(args[3].replace("_", " "));
                 if (origin == null) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <origin>").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
-                OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false);
+                OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer);
                 return true;
             }
             case "orb" -> {
@@ -152,7 +158,10 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             }
             case "check" -> {
                 if (sender instanceof Player player) {
-                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, AddonLoader.origins.indexOf(OriginSwapper.getOrigin(player)), 0, false, true);
+                    String layer;
+                    if (args.length == 2) layer = args[1];
+                    else layer = "origin";
+                    OriginSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.COMMAND, AddonLoader.getOrigins(layer).indexOf(OriginSwapper.getOrigin(player, layer)), 0, false, true, layer);
                 } else {
                     sender.sendMessage(Component.text("This command can only be run by a player").color(NamedTextColor.RED));
                 }
@@ -212,7 +221,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
 
     private final Map<Player, List<ExchangeRequest>> exchangeRequests = new HashMap<>();
 
-    public record ExchangeRequest(Player p1, Player p2, int expireTime) {
+    public record ExchangeRequest(Player p1, Player p2, int expireTime, String layer) {
 
     }
 
@@ -263,20 +272,26 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                         yield fileNames;
                     }
                     default -> {
-                        yield new ArrayList<>();
+                        yield List.of();
                     }
                 }
             }
             case 3 -> {
                 if (args[0].equals("set")) {
+                    yield new ArrayList<>(AddonLoader.layers);
+                } else yield List.of();
+            }
+            case 4 -> {
+                if (args[0].equals("set")) {
+                    String layer = args[2];
                     yield new ArrayList<>() {{
-                        for (Origin origin : AddonLoader.origins) {
+                        for (Origin origin : AddonLoader.getOrigins(layer)) {
                             add(origin.getName().toLowerCase().replace(" ", "_"));
                         }
                     }};
-                } else yield new ArrayList<>();
+                } else yield List.of();
             }
-            default -> new ArrayList<>();
+            default -> List.of();
         };
         StringUtil.copyPartialMatches(args[args.length - 1], data, result);
         return result;

@@ -6,9 +6,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OriginsRebornPlaceholderExpansion extends PlaceholderExpansion {
+
+    private final String layer;
+
+    public OriginsRebornPlaceholderExpansion(String layer) {
+        this.layer = layer;
+    }
+
     @Override
     public @NotNull String getIdentifier() {
-        return "origin";
+        return layer;
     }
 
     @Override
@@ -23,7 +30,7 @@ public class OriginsRebornPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String params) {
-        Origin origin = OriginSwapper.getOrigin(player);
+        Origin origin = OriginSwapper.getOrigin(player, layer);
         if (origin == null) return "";
         return origin.getName();
     }

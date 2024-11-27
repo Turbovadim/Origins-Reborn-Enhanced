@@ -30,6 +30,7 @@ public class Origin {
     private final String permission;
     private final Integer cost;
     private final int max;
+    private final String layer;
 
     public Integer getCost() {
         return cost;
@@ -85,12 +86,17 @@ public class Origin {
         return permission != null;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max) {
+    public String getLayer() {
+        return layer;
+    }
+
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max, String layer) {
         this.description = description;
         this.name = name;
         this.permission = permission;
         this.cost = cost;
         this.max = max;
+        this.layer = layer;
         if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
             Team oldTeam = scoreboard.getTeam(name);

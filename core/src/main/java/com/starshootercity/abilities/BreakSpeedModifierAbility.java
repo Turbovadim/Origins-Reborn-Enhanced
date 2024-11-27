@@ -25,10 +25,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public interface BreakSpeedModifierAbility extends Ability {
@@ -102,10 +99,11 @@ public interface BreakSpeedModifierAbility extends Ability {
         public void onBlockDamage(BlockDamageEvent event) {
             if (event.getBlock().getType().getHardness() < 0) return;
             Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-                Origin origin = OriginSwapper.getOrigin(event.getPlayer());
-                if (origin == null) return;
+                List<Origin> origins = OriginSwapper.getOrigins(event.getPlayer());
+                List<Ability> abilities = new ArrayList<>();
+                for (Origin origin : origins) abilities.addAll(origin.getAbilities());
                 BreakSpeedModifierAbility speedModifierAbility = null;
-                for (Ability ability : origin.getAbilities()) {
+                for (Ability ability : abilities) {
                     if (ability instanceof BreakSpeedModifierAbility modifierAbility) {
                         if (modifierAbility.shouldActivate(event.getPlayer())) {
                             speedModifierAbility = modifierAbility;
@@ -261,10 +259,11 @@ public interface BreakSpeedModifierAbility extends Ability {
         public void onServerTickEnd(ServerTickEndEvent event) {
             Attribute attribute = OriginsReborn.getNMSInvoker().getBlockBreakSpeedAttribute();
             for (Player player : Bukkit.getOnlinePlayers()) {
-                Origin origin = OriginSwapper.getOrigin(player);
-                if (origin == null) continue;
+                List<Origin> origins = OriginSwapper.getOrigins(player);
+                List<Ability> abilities = new ArrayList<>();
+                for (Origin origin : origins) abilities.addAll(origin.getAbilities());
                 BreakSpeedModifierAbility speedModifierAbility = null;
-                for (Ability ability : origin.getAbilities()) {
+                for (Ability ability : abilities) {
                     if (ability instanceof BreakSpeedModifierAbility modifierAbility) {
                         if (modifierAbility.shouldActivate(player)) {
                             speedModifierAbility = modifierAbility;

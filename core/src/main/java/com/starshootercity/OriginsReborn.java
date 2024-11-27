@@ -249,6 +249,11 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("orb-of-origin.random", List.of("Randomise origin instead of opening the selector upon using the orb"));
                 saveConfig();
             }
+            if (version.equals("2.3.20")) {
+                getConfig().set("config-version", "2.4.0");
+                getConfig().set("origin-selection.default-origin.origin", getConfig().get("origin-selection.default-origin"));
+                saveConfig();
+            }
         }
     }
 
@@ -259,10 +264,6 @@ public class OriginsReborn extends OriginsAddon {
         WidthGetter.initialize(this);
 
         AbilityRegister.setupAMAF();
-
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new OriginsRebornPlaceholderExpansion().register();
-        }
 
         if (getConfig().getBoolean("swap-command.vault.enabled")) {
             vaultEnabled = setupEconomy();

@@ -2,6 +2,7 @@ package com.starshootercity;
 
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -18,11 +19,37 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class AddonLoader {
-    public static List<Origin> origins = new ArrayList<>();
-    public static Map<String, Origin> originNameMap = new HashMap<>();
-    public static Map<String, Origin> originFileNameMap = new HashMap<>();
+    private static final List<Origin> origins = new ArrayList<>();
+    private static final Map<String, Origin> originNameMap = new HashMap<>();
+    private static final Map<String, Origin> originFileNameMap = new HashMap<>();
     public static final List<OriginsAddon> registeredAddons = new ArrayList<>();
     public static Map<String, List<File>> originFiles = new HashMap<>();
+    public static Set<String> layers = new HashSet<>();
+
+    private static final Random random = new Random();
+
+    public static Origin getOrigin(String name) {
+        return originNameMap.get(name);
+    }
+
+    public static Origin getOriginByFilename(String name) {
+        return originFileNameMap.get(name);
+    }
+
+    public static List<Origin> getOrigins(String layer) {
+        List<Origin> o = new ArrayList<>(origins);
+        o.removeIf(or -> !or.getLayer().equals(layer));
+        return o;
+    }
+
+    public static Origin getFirstOrigin(String layer) {
+        return getOrigins(layer).get(0);
+    }
+
+    public static Origin getRandomOrigin(String layer) {
+        List<Origin> o = getOrigins(layer);
+        return o.get(random.nextInt(o.size()));
+    }
 
     public static void register(OriginsAddon addon) {
         if (registeredAddons.contains(addon)) {
@@ -106,6 +133,7 @@ public class AddonLoader {
         bos.close();
     }
 
+    @SuppressWarnings("unused")
     private static void prepareLanguagesFor(OriginsAddon addon) {
         File langFolder = new File(addon.getDataFolder(), "lang");
         boolean ignored = langFolder.mkdirs();
@@ -161,7 +189,29 @@ public class AddonLoader {
         }
     }
 
+    public static void registerLayer(String layer) {
+        if (layers.contains(layer)) return;
+        layers.add(layer);
+
+        if (!OriginsReborn.getInstance().getConfig().contains("origin-selection.default-origin.%s".formatted(layer))) {
+            OriginsReborn.getInstance().getConfig().set("origin-selection.default-origin.%s".formatted(layer), "NONE");
+            OriginsReborn.getInstance().saveConfig();
+        }
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new OriginsRebornPlaceholderExpansion(layer).register();
+        }
+    }
+
     public static void loadOrigin(File file, OriginsAddon addon) {
+        if (!file.getName().toLowerCase().equals(file.getName())) {
+            File lowercaseFile = new File(file.getParentFile(), file.getName().toLowerCase());
+            if (!file.renameTo(lowercaseFile)) {
+                OriginsReborn.getInstance().getLogger().warning("Origin %s failed to load - make sure file name is lowercase".formatted(file.getName()));
+                return;
+            }
+            file = lowercaseFile;
+        }
         JSONObject object = ShortcutUtils.openJSONFile(file);
         boolean unchoosable = false;
         if (object.has("unchoosable")) {
@@ -198,8 +248,12 @@ public class AddonLoader {
         if (object.has("max")) {
             max = object.getInt("max");
         } else max = -1;
+        String layer;
+        if (object.has("layer")) layer = object.getString("layer");
+        else layer = "origin";
         if (object.has("permission")) permission = object.getString("permission");
         if (object.has("cost")) cost = object.getInt("cost");
+        registerLayer(layer);
         Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
             if (object.has("powers")) {
                 JSONArray array = object.getJSONArray("powers");
@@ -207,7 +261,7 @@ public class AddonLoader {
                     add(Key.key(((String) o)));
                 }
             }
-        }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost, max);
+        }}, object.getString("description"), addon, unchoosable, object.has("priority") ? object.getInt("priority") : 1, permission, cost, max, layer);
         String actualName = origin.getActualName().toLowerCase();
         Origin previouslyRegisteredOrigin = originNameMap.get(name.replace("_", " "));
         if (previouslyRegisteredOrigin != null) {
@@ -224,8 +278,20 @@ public class AddonLoader {
         originFileNameMap.put(actualName, origin);
     }
 
+    /**
+     * @deprecated Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once
+     * @return The default origin for the 'origin' layer
+     */
+    @Deprecated
     public static @Nullable Origin getDefaultOrigin() {
-        String originName = OriginsReborn.getInstance().getConfig().getString("origin-selection.default-origin", "NONE");
+        return getDefaultOrigin("origin");
+    }
+
+    /**
+     * @return The default origin for the specified layer
+     */
+    public static @Nullable Origin getDefaultOrigin(String layer) {
+        String originName = OriginsReborn.getInstance().getConfig().getString("origin-selection.default-origin.%s".formatted(layer), "NONE");
         return originFileNameMap.getOrDefault(originName, null);
     }
 }

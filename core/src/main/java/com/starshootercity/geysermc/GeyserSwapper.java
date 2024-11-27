@@ -25,12 +25,12 @@ import java.util.UUID;
 import static com.starshootercity.OriginSwapper.orbCooldown;
 
 public class GeyserSwapper {
-    public static boolean checkBedrockSwap(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean cost, boolean displayOnly) {
+    public static boolean checkBedrockSwap(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean cost, boolean displayOnly, String layer) {
         try {
             if (!ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
                 return true;
             } else {
-                openOriginSwapper(player, reason, displayOnly, cost);
+                openOriginSwapper(player, reason, displayOnly, cost, layer);
                 return false;
             }
         } catch (NoClassDefFoundError e) {
@@ -38,11 +38,11 @@ public class GeyserSwapper {
         }
     }
 
-    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
-        List<Origin> origins = new ArrayList<>(AddonLoader.origins);
+    public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost, String layer) {
+        List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
         if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(origin.getPermission()));
         else {
-            openOriginInfo(player, OriginSwapper.getOrigin(player), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false);
+            openOriginInfo(player, OriginSwapper.getOrigin(player, layer), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false, layer);
             return;
         }
         origins.sort((o1, o2) -> {
@@ -69,11 +69,11 @@ public class GeyserSwapper {
 
         sendForm(player.getUniqueId(), form
                 .closedOrInvalidResultHandler(() -> {
-                    if (OriginSwapper.getOrigin(player) == null) {
-                        openOriginSwapper(player, reason, false, cost);
+                    if (OriginSwapper.getOrigin(player, layer) == null) {
+                        openOriginSwapper(player, reason, false, cost, layer);
                     }
                 })
-                .validResultHandler(response -> openOriginInfo(player, AddonLoader.originNameMap.get(response.clickedButton().text().toLowerCase()), reason, false, cost)).build());
+                .validResultHandler(response -> openOriginInfo(player, AddonLoader.getOrigin(response.clickedButton().text().toLowerCase()), reason, false, cost, layer)).build());
 
     }
 
@@ -87,7 +87,7 @@ public class GeyserSwapper {
 
     private static final Random random = new Random();
 
-    public static void setOrigin(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean cost) {
+    public static void setOrigin(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean cost, String layer) {
         if (OriginsReborn.getInstance().isVaultEnabled() && cost) {
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
             if (origin.getCost() != null) amount = origin.getCost();
@@ -130,17 +130,17 @@ public class GeyserSwapper {
         }
         boolean resetPlayer = OriginSwapper.shouldResetPlayer(reason);
         if (origin == null) {
-            List<Origin> origins = new ArrayList<>(AddonLoader.origins);
+            List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
             origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             origins.removeIf(possibleOrigin -> excludedOrigins.contains(possibleOrigin.getName()));
             origin = origins.get(random.nextInt(origins.size()));
         }
         OriginsReborn.getCooldowns().setCooldown(player, OriginCommand.key);
-        OriginSwapper.setOrigin(player, origin, reason, resetPlayer);
+        OriginSwapper.setOrigin(player, origin, reason, resetPlayer, layer);
     }
 
-    public static void openOriginInfo(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost) {
+    public static void openOriginInfo(Player player, Origin origin, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost, String layer) {
         ModalForm.Builder form = ModalForm.builder();
         StringBuilder info = new StringBuilder();
         if (origin != null) {
@@ -155,7 +155,7 @@ public class GeyserSwapper {
             }
         } else {
             form.title("Random Origin");
-            List<Origin> origins = new ArrayList<>(AddonLoader.origins);
+            List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
             origins.removeIf(origin1 -> origin1.isUnchoosable(player));
             List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
             info.append("You'll be assigned one of the following:\n\n");
@@ -179,15 +179,15 @@ public class GeyserSwapper {
         sendForm(player.getUniqueId(), form
                 .closedOrInvalidResultHandler(() -> {
                     if (!displayOnly) {
-                        openOriginInfo(player, origin, reason, false, cost);
+                        openOriginInfo(player, origin, reason, false, cost, layer);
                     }
                 })
                 .validResultHandler(response -> {
                     if (displayOnly) return;
                     if (response.clickedButtonId() == 0) {
-                        openOriginSwapper(player, reason, false, cost);
+                        openOriginSwapper(player, reason, false, cost, layer);
                     } else {
-                        setOrigin(player, origin, reason, cost);
+                        setOrigin(player, origin, reason, cost, layer);
                     }
                 }).build());
     }

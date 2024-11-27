@@ -73,6 +73,7 @@ public class ShulkerInventory implements VisibleAbility, Listener {
                 if (event.isRightClick()) {
                     if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
                         if (event.getSlot() == 38) {
+                            event.setCancelled(true);
                             Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.text(AddonLoader.getTextFor("container.shulker_inventory_power", "Shulker Inventory")));
                             player.openInventory(inventory);
                             for (int i = 0; i < 9; i++) {

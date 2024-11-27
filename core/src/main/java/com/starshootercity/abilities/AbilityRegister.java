@@ -114,14 +114,15 @@ public class AbilityRegister {
             } catch (NoClassDefFoundError ignored) {}
         }
 
-        Origin origin = OriginSwapper.getOrigin(player);
-        if (origin == null) {
-            return false;
+        List<Origin> origins = OriginSwapper.getOrigins(player);
+        boolean hasAbility = false;
+        for (Origin origin : origins) {
+            if (origin.hasAbility(key)) hasAbility = true;
         }
         if (abilityMap.get(key) instanceof DependantAbility dependantAbility) {
-            return origin.hasAbility(key) && ((dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR) == dependantAbility.getDependency().isEnabled(player));
+            return hasAbility && ((dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR) == dependantAbility.getDependency().isEnabled(player));
         }
-        return origin.hasAbility(key);
+        return hasAbility;
     }
 
     public static void runForAbility(Entity entity, Key key, Runnable runnable, Runnable other) {
