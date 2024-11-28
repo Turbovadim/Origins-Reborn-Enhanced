@@ -25,9 +25,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class OriginSwapper implements Listener {
-    private final static NamespacedKey displayKey = new NamespacedKey(OriginsReborn.getInstance(), "display-item");
+    private final static NamespacedKey displayKey = new NamespacedKey(OriginsReborn.getInstance(), "displayed-item");
     private final static NamespacedKey layerKey = new NamespacedKey(OriginsReborn.getInstance(), "layer");
     private final static NamespacedKey confirmKey = new NamespacedKey(OriginsReborn.getInstance(), "confirm-select");
     private final static NamespacedKey costsCurrencyKey = new NamespacedKey(OriginsReborn.getInstance(), "costs-currency");
@@ -131,7 +131,7 @@ public class OriginSwapper implements Listener {
                     if (origin == null) continue;
                     excludedOriginNames.add(AddonLoader.getTextFor("origin." + origin.getAddon().getNamespace() + "." + s.replace(" ", "_").toLowerCase() + ".name", origin.getName()));
                 }
-                icon = OrbOfOrigin.orb;
+                icon = OrbOfOrigin.orb.clone();
                 name = AddonLoader.getTextFor("origin.origins.random.name", "Random");
                 nameForDisplay = AddonLoader.getTextFor("origin.origins.random.name", "Random");
                 impact = '\uE002';
@@ -362,32 +362,7 @@ public class OriginSwapper implements Listener {
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
                     player.closeInventory();
 
-                    ItemMeta meta = player.getInventory().getItemInMainHand().getItemMeta();
-
-                    if (reason == PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN) {
-                        EquipmentSlot hand = null;
-                        if (meta != null) {
-                            if (meta.getPersistentDataContainer().has(OrbOfOrigin.orbKey, BooleanPDT.BOOLEAN)) {
-                                hand = EquipmentSlot.HAND;
-                            }
-                        }
-                        if (hand == null) {
-                            ItemMeta offhandMeta = player.getInventory().getItemInOffHand().getItemMeta();
-                            if (offhandMeta != null) {
-                                if (offhandMeta.getPersistentDataContainer().has(OrbOfOrigin.orbKey, BooleanPDT.BOOLEAN)) {
-                                    hand = EquipmentSlot.OFF_HAND;
-                                }
-                            }
-                        }
-                        if (hand == null) return;
-                        orbCooldown.put(player, System.currentTimeMillis());
-                        if (hand == EquipmentSlot.HAND) player.swingMainHand();
-                        else player.swingOffHand();
-                        if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.consume")) {
-                            ItemStack handItem = player.getInventory().getItem(hand);
-                            if (handItem != null) handItem.setAmount(handItem.getAmount() - 1);
-                        }
-                    }
+                    if (reason == PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN) orbCooldown.put(player, System.currentTimeMillis());
                     boolean resetPlayer = shouldResetPlayer(reason);
                     if (origin.isUnchoosable(player)) {
                         openOriginSwapper(player, reason, 0, 0, layer);
@@ -537,7 +512,7 @@ public class OriginSwapper implements Listener {
             } else {
                 if (AddonLoader.getDefaultOrigin(layer) != null) {
                     setOrigin(event.getPlayer(), AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
-                } else if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
+                } else if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer))) {
                     selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, layer);
                 } else if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false, layer), OriginsReborn.getInstance().getConfig().getInt("geyser.join-form-delay", 20));
@@ -563,24 +538,30 @@ public class OriginSwapper implements Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL))) continue;
+            if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL)))
+                continue;
             if (!OriginsReborn.getInstance().getConfig().getBoolean("misc-settings.disable-flight-stuff")) {
                 player.setAllowFlight(AbilityRegister.canFly(player));
                 AbilityRegister.updateFlight(player);
             }
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
-            for (String layer : AddonLoader.layers) {
-                if (getOrigin(player, layer) == null && player.getOpenInventory().getType() != InventoryType.CHEST) {
-                    if (AddonLoader.getDefaultOrigin(layer) != null) {
-                        setOrigin(player, AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
-                    }
-                    if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise") && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
-                        openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0, layer);
-                    }
+            String layer = AddonLoader.getFirstUnselectedLayer(player);
+            if (layer == null) continue;
+            if (player.getOpenInventory().getType() != InventoryType.CHEST) {
+                if (AddonLoader.getDefaultOrigin(layer) != null) {
+                    setOrigin(player, AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
+                }
+                if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer)) && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+                    openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0, layer);
                 }
             }
         }
+    }
+
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (hasNotSelectedAllOrigins(event.getPlayer())) event.setCancelled(true);
     }
 
     public static boolean shouldDisallowSelection(Player player, PlayerSwapOriginEvent.SwapReason reason) {
@@ -661,7 +642,7 @@ public class OriginSwapper implements Listener {
         if (config.getBoolean("origin-selection.death-origin-change")) {
             for (String layer : AddonLoader.layers) {
                 setOrigin(event.getPlayer(), null, PlayerSwapOriginEvent.SwapReason.DIED, false, layer);
-                if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise")) {
+                if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer))) {
                     selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, layer);
                 } else openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, layer);
             }
@@ -684,9 +665,8 @@ public class OriginSwapper implements Listener {
         String oldOrigin = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
         if (!oldOrigin.equals("null") && layer.equals("origin")) {
             if (!oldOrigin.contains("MemorySection")) {
-            originFileConfiguration.set(player.getUniqueId() + "." + layer, oldOrigin);
-            originFileConfiguration.set(player.getUniqueId().toString(), null);
-            saveOrigins();
+                originFileConfiguration.set(player.getUniqueId() + "." + layer, oldOrigin);
+                saveOrigins();
             }
         }
         String name = originFileConfiguration.getString(player.getUniqueId() + "." + layer, "null");

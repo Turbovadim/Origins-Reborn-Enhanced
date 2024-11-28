@@ -257,12 +257,21 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("origin-section.layer-orders", List.of("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first."));
                 saveConfig();
             }
+            if (version.equals("2.4.0")) {
+                getConfig().set("config-version", "2.4.1");
+                getConfig().set("orb-of-origin.random.origin", getConfig().get("orb-of-origin.random"));
+                getConfig().set("origin-selection.randomise.origin", getConfig().get("origin-selection.randomise"));
+                getNMSInvoker().setComments("orb-of-origin.random", List.of("Randomise origin instead of opening the selector upon using the orb"));
+                getNMSInvoker().setComments("origin-selection.randomise", List.of("Randomise origins instead of letting players pick"));
+                saveConfig();
+            }
         }
     }
 
     @Override
     public void onRegister() {
         instance = this;
+        saveDefaultConfig();
 
         WidthGetter.initialize(this);
 
@@ -278,7 +287,6 @@ public class OriginsReborn extends OriginsAddon {
         if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") && getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
             Bukkit.getPluginManager().registerEvents(cooldowns, this);
         }
-        saveDefaultConfig();
         initializeNMSInvoker(this);
         SkriptInitializer.initialize(this);
         updateConfig();

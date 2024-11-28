@@ -29,6 +29,13 @@ public class AddonLoader {
 
     private static final Random random = new Random();
 
+    public static @Nullable String getFirstUnselectedLayer(Player player) {
+        for (String layer : layers) {
+            if (OriginSwapper.getOrigin(player, layer) == null) return layer;
+        }
+        return null;
+    }
+
     public static Origin getOrigin(String name) {
         return originNameMap.get(name);
     }
@@ -211,6 +218,12 @@ public class AddonLoader {
         if (!OriginsReborn.getInstance().getConfig().contains("origin-selection.layer-orders.%s".formatted(layer))) {
             OriginsReborn.getInstance().getConfig().set("origin-selection.layer-orders.%s".formatted(layer), priority);
             OriginsReborn.getNMSInvoker().setComments("origin-section.layer-orders", List.of("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first."));
+            OriginsReborn.getInstance().saveConfig();
+        }
+
+        if (!OriginsReborn.getInstance().getConfig().contains("orb-of-origin.random.%s".formatted(layer))) {
+            OriginsReborn.getInstance().getConfig().set("orb-of-origin.random.%s".formatted(layer), false);
+            OriginsReborn.getNMSInvoker().setComments("orb-of-origin.random", List.of("Randomise origin instead of opening the selector upon using the orb"));
             OriginsReborn.getInstance().saveConfig();
         }
 
