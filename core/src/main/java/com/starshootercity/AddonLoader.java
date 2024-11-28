@@ -274,7 +274,7 @@ public class AddonLoader {
         int extraLayerPriority = 0;
         ConfigurationSection cs = OriginsReborn.getInstance().getConfig().getConfigurationSection("origin-selection.layers");
         if (cs != null) for (String s : cs.getValues(false).keySet()) {
-            extraLayerPriority = Math.max(extraLayerPriority, cs.getInt(s)+1);
+            extraLayerPriority = Math.min(extraLayerPriority, cs.getInt(s)-1);
         }
         registerLayer(layer, extraLayerPriority);
         String displayName;
