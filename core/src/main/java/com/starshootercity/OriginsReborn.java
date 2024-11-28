@@ -73,7 +73,7 @@ public class OriginsReborn extends OriginsAddon {
             case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
             case "1.21.1" -> new NMSInvokerV1_21_1(getInstance().getConfig());
             case "1.21.2", "1.21.3" -> new NMSInvokerV1_21_3(getInstance().getConfig());
-            default -> throw new IllegalStateException("Unexpected version: " + version + " only versions 1.18.1 - 1.21.3 are supported");
+            default -> throw new IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion());
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
     }
