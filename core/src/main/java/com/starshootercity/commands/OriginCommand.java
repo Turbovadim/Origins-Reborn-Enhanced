@@ -81,6 +81,10 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                             sender.sendMessage(Component.text("Usage: /origin exchange <player> [<layer>]").color(NamedTextColor.RED));
                             return true;
                         }
+                        if (target.equals(player)) {
+                            sender.sendMessage(Component.text("You must specify another player.").color(NamedTextColor.RED));
+                            return true;
+                        }
                         for (ExchangeRequest request : exchangeRequests.getOrDefault(player, List.of())) {
                             if (request.expireTime > Bukkit.getCurrentTick()) continue;
                             String l = request.layer.substring(0, 0).toUpperCase() + request.layer.substring(1);
@@ -127,14 +131,14 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
-                String layer = args[1];
-                Player player = Bukkit.getPlayer(args[2]);
+                String layer = args[2];
+                Player player = Bukkit.getPlayer(args[1]);
                 if (player == null) {
                     sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
                 Origin origin = AddonLoader.getOrigin(args[3].replace("_", " "));
-                if (origin == null) {
+                if (origin == null || !origin.getLayer().equals(layer)) {
                     sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
@@ -250,7 +254,7 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
             }
             case 2 -> {
                 switch (args[0]) {
-                    case "set", "orb" -> {
+                    case "set", "orb", "exchange" -> {
                         yield new ArrayList<>() {{
                             for (Player player : Bukkit.getOnlinePlayers()) {
                                 add(player.getName());
@@ -259,6 +263,9 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                     }
                     case "export" -> {
                         yield new ArrayList<>(AddonLoader.originFiles.keySet());
+                    }
+                    case "check", "swap" -> {
+                        yield new ArrayList<>(AddonLoader.layers);
                     }
                     case "import" -> {
                         File input = new File(OriginsReborn.getInstance().getDataFolder(), "import");

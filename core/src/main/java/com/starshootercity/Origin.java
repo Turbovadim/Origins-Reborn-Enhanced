@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class Origin {
     private final int position;
     private final char impact;
     private final String name;
+    private final @NotNull String displayName;
     private final int priority;
     private final boolean unchoosable;
     private final OriginsAddon addon;
@@ -90,7 +92,12 @@ public class Origin {
         return layer;
     }
 
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max, String layer) {
+    public String getNameForDisplay() {
+        return displayName;
+    }
+
+    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, @NotNull String displayName, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max, String layer) {
+        this.displayName = displayName;
         this.description = description;
         this.name = name;
         this.permission = permission;

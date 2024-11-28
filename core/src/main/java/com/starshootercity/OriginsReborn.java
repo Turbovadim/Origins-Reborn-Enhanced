@@ -252,6 +252,9 @@ public class OriginsReborn extends OriginsAddon {
             if (version.equals("2.3.20")) {
                 getConfig().set("config-version", "2.4.0");
                 getConfig().set("origin-selection.default-origin.origin", getConfig().get("origin-selection.default-origin"));
+                getConfig().set("origin-selection.layer-orders.origin", 1);
+                getNMSInvoker().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
+                getNMSInvoker().setComments("origin-section.layer-orders", List.of("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first."));
                 saveConfig();
             }
         }

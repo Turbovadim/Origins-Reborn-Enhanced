@@ -4,6 +4,7 @@ import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -24,7 +25,7 @@ public class AddonLoader {
     private static final Map<String, Origin> originFileNameMap = new HashMap<>();
     public static final List<OriginsAddon> registeredAddons = new ArrayList<>();
     public static Map<String, List<File>> originFiles = new HashMap<>();
-    public static Set<String> layers = new HashSet<>();
+    public static List<String> layers = new ArrayList<>();
 
     private static final Random random = new Random();
 
@@ -189,14 +190,31 @@ public class AddonLoader {
         }
     }
 
-    public static void registerLayer(String layer) {
+    private static void sortLayers() {
+        layers.sort((o1, o2) -> {
+            int a1 = OriginsReborn.getInstance().getConfig().getInt("origin-selection.layers.%s".formatted(o1));
+            int a2 = OriginsReborn.getInstance().getConfig().getInt("origin-selection.layers.%s".formatted(o2));
+            return a1 - a2;
+        });
+    }
+
+    public static void registerLayer(String layer, int priority) {
         if (layers.contains(layer)) return;
         layers.add(layer);
 
         if (!OriginsReborn.getInstance().getConfig().contains("origin-selection.default-origin.%s".formatted(layer))) {
             OriginsReborn.getInstance().getConfig().set("origin-selection.default-origin.%s".formatted(layer), "NONE");
+            OriginsReborn.getNMSInvoker().setComments("origin-selection.default-origin", List.of("Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin", "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'", "Disabled if set to an invalid name such as \"NONE\""));
             OriginsReborn.getInstance().saveConfig();
         }
+
+        if (!OriginsReborn.getInstance().getConfig().contains("origin-selection.layer-orders.%s".formatted(layer))) {
+            OriginsReborn.getInstance().getConfig().set("origin-selection.layer-orders.%s".formatted(layer), priority);
+            OriginsReborn.getNMSInvoker().setComments("origin-section.layer-orders", List.of("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first."));
+            OriginsReborn.getInstance().saveConfig();
+        }
+
+        sortLayers();
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new OriginsRebornPlaceholderExpansion(layer).register();
@@ -253,8 +271,16 @@ public class AddonLoader {
         else layer = "origin";
         if (object.has("permission")) permission = object.getString("permission");
         if (object.has("cost")) cost = object.getInt("cost");
-        registerLayer(layer);
-        Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), new ArrayList<>() {{
+        int extraLayerPriority = 0;
+        ConfigurationSection cs = OriginsReborn.getInstance().getConfig().getConfigurationSection("origin-selection.layers");
+        if (cs != null) for (String s : cs.getValues(false).keySet()) {
+            extraLayerPriority = Math.max(extraLayerPriority, cs.getInt(s)+1);
+        }
+        registerLayer(layer, extraLayerPriority);
+        String displayName;
+        if (object.has("name")) displayName = object.getString("name");
+        else displayName = formattedName.toString();
+        Origin origin = new Origin(formattedName.toString(), icon, object.getInt("order"), object.getInt("impact"), displayName, new ArrayList<>() {{
             if (object.has("powers")) {
                 JSONArray array = object.getJSONArray("powers");
                 for (@Subst("origins:ability") Object o : array) {

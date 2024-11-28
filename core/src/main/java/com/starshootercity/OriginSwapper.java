@@ -119,6 +119,7 @@ public class OriginSwapper implements Listener {
             }
             ItemStack icon;
             String name;
+            String nameForDisplay;
             char impact;
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.default-cost", 1000);
             LineData data;
@@ -132,6 +133,7 @@ public class OriginSwapper implements Listener {
                 }
                 icon = OrbOfOrigin.orb;
                 name = AddonLoader.getTextFor("origin.origins.random.name", "Random");
+                nameForDisplay = AddonLoader.getTextFor("origin.origins.random.name", "Random");
                 impact = '\uE002';
                 StringBuilder names = new StringBuilder("%s\n\n".formatted(AddonLoader.getTextFor("origin.origins.random.description", "You'll be assigned one of the following:")));
                 for (Origin origin : origins) {
@@ -147,6 +149,7 @@ public class OriginSwapper implements Listener {
                 Origin origin = origins.get(slot);
                 icon = origin.getIcon();
                 name = origin.getName();
+                nameForDisplay = origin.getNameForDisplay();
                 impact = origin.getImpact();
                 data = new LineData(origin);
                 if (origin.getCost() != null) {
@@ -154,7 +157,7 @@ public class OriginSwapper implements Listener {
                 }
             }
             StringBuilder compressedName = new StringBuilder("\uF001");
-            for (char c : name.toCharArray()) {
+            for (char c : nameForDisplay.toCharArray()) {
                 compressedName.append(c);
                 compressedName.append('\uF000');
             }
@@ -166,7 +169,7 @@ public class OriginSwapper implements Listener {
                     .append(applyFont(Component.text(compressedName.toString()),
                             Key.key("minecraft:origin_title_text")
                     ).color(NamedTextColor.WHITE))
-                    .append(applyFont(Component.text(getInverse(name) + "\uF000"),
+                    .append(applyFont(Component.text(getInverse(nameForDisplay) + "\uF000"),
                             Key.key("minecraft:reverse_text")
                     ).color(NamedTextColor.WHITE));
             for (Component c : data.getLines(scrollAmount)) {
@@ -263,7 +266,6 @@ public class OriginSwapper implements Listener {
             swapperInventory.setItem(53, down);
 
 
-            // Change to unchoosable
             if (!displayOnly) {
                 ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
                 ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
@@ -681,9 +683,11 @@ public class OriginSwapper implements Listener {
     public static Origin getOrigin(Player player, String layer) {
         String oldOrigin = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
         if (!oldOrigin.equals("null") && layer.equals("origin")) {
+            if (!oldOrigin.contains("MemorySection")) {
             originFileConfiguration.set(player.getUniqueId() + "." + layer, oldOrigin);
             originFileConfiguration.set(player.getUniqueId().toString(), null);
             saveOrigins();
+            }
         }
         String name = originFileConfiguration.getString(player.getUniqueId() + "." + layer, "null");
         return AddonLoader.getOrigin(name);

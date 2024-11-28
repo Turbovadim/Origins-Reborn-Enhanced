@@ -66,6 +66,9 @@ swap-command:
 
 # Settings for origin selection
 origin-selection:
+  # Priorities for different origin 'layers' to be selected in, higher priority layers are selected first.
+  layers:
+    origin: 1
   # Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin
   # Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'
   # Disabled if set to an invalid name such as "NONE"
@@ -160,4 +163,4 @@ extra-settings:
   fresh-air-required-sleep-height: 86
 
 # Config version - do not touch this!
-config-version: 2.3.20
+config-version: 2.4.0
