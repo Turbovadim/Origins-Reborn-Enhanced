@@ -17,7 +17,7 @@ public class Aquatic implements Ability, Listener {
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
+        runForAbility(event.getEntity(), player -> {
             if (event.getDamager() instanceof Trident trident) {
                 event.setDamage(event.getDamage() + trident.getItem().getEnchantmentLevel(Enchantment.IMPALING) * 2.5);
             } else if (event.getDamager() instanceof LivingEntity entity) {

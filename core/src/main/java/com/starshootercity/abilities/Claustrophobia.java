@@ -24,8 +24,8 @@ public class Claustrophobia implements VisibleAbility, Listener {
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 if (player.getLocation().getBlock().getRelative(BlockFace.UP, 2).isSolid()) {
                     stacks.put(player, Math.min(stacks.getOrDefault(player, -200) + 1, 3600));
                 } else stacks.put(player, Math.max(stacks.getOrDefault(player, -200) - 1, -200));

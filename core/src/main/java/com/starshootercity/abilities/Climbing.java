@@ -30,8 +30,8 @@ public class Climbing implements FlightAllowingAbility, Listener, VisibleAbility
     @EventHandler
     @SuppressWarnings("deprecation")
     public void onServerTickEnd(ServerTickEndEvent ignored) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 boolean anySolid = false;
                 boolean anysolidAbove = false;
                 for (BlockFace face : new ArrayList<BlockFace>() {{

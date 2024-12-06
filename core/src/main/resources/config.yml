@@ -66,6 +66,8 @@ swap-command:
 
 # Settings for origin selection
 origin-selection:
+  # The amount of time (in ticks, a tick is a 20th of a second) to wait between a player joining and when the GUI should open
+  delay-before-required: 0
   # Priorities for different origin 'layers' to be selected in, higher priority layers are selected first.
   layer-orders:
     origin: 1
@@ -165,4 +167,4 @@ extra-settings:
   fresh-air-required-sleep-height: 86
 
 # Config version - do not touch this!
-config-version: 2.4.1
+config-version: 2.4.2

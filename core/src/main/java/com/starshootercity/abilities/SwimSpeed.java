@@ -25,8 +25,8 @@ public class SwimSpeed implements Listener, VisibleAbility {
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 if (OriginsReborn.getNMSInvoker().isUnderWater(player)) {
                     PotionEffect effect = player.getPotionEffect(PotionEffectType.DOLPHINS_GRACE);
                     boolean ambient = false;

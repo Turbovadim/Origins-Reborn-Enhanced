@@ -61,12 +61,12 @@ public class StrongArms implements MultiAbility, VisibleAbility, Listener {
 
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         public void onBlockBreak(BlockBreakEvent event) {
-            AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+            runForAbility(event.getPlayer(), player -> {
                 if (naturalStones.contains(event.getBlock().getType())) {
-                    if (!MaterialTags.PICKAXES.isTagged(event.getPlayer().getInventory().getItemInMainHand().getType())) {
+                    if (!MaterialTags.PICKAXES.isTagged(player.getInventory().getItemInMainHand().getType())) {
                         event.setCancelled(true);
                         ItemStack item = new ItemStack(Material.IRON_PICKAXE);
-                        item.addUnsafeEnchantments(event.getPlayer().getInventory().getItemInMainHand().getEnchantments());
+                        item.addUnsafeEnchantments(player.getInventory().getItemInMainHand().getEnchantments());
                         event.getBlock().breakNaturally(item, event instanceof StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent);
                     }
                 }

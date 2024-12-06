@@ -35,6 +35,7 @@ import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,12 @@ public class NMSInvokerV1_21_1 extends NMSInvoker {
     @Override
     public @Nullable Attribute getSweepingDamageRatioAttribute() {
         return Attribute.PLAYER_SWEEPING_DAMAGE_RATIO;
+    }
+
+    @Override
+    public @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd) {
+        meta.setCustomModelData(cmd);
+        return meta;
     }
 
     @Override

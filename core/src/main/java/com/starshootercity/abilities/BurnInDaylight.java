@@ -24,9 +24,9 @@ public class BurnInDaylight implements VisibleAbility, DependantAbility, Listene
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         if (event.getTickNumber() % 20 != 0) return;
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(),
-                    () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p,
+                    player -> {
                         Block block = player.getWorld().getHighestBlockAt(player.getLocation());
                         while ((MaterialTags.GLASS.isTagged(block) || (MaterialTags.GLASS_PANES.isTagged(block)) && block.getY() >= player.getLocation().getY())) {
                             block = block.getRelative(BlockFace.DOWN);

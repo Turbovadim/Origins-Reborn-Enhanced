@@ -25,8 +25,8 @@ public class WaterVision implements VisibleAbility, Listener {
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 if (OriginsReborn.getNMSInvoker().isUnderWater(player)) {
                     PotionEffect effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
                     boolean ambient = false;

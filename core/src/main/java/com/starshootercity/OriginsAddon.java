@@ -2,6 +2,7 @@ package com.starshootercity;
 
 import com.starshootercity.abilities.Ability;
 import com.starshootercity.abilities.AbilityRegister;
+import com.starshootercity.abilities.custom.ToggleableAbility;
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import com.starshootercity.packetsenders.OriginsRebornResourcePackInfo;
 import net.kyori.adventure.key.Key;
@@ -28,7 +29,7 @@ public abstract class OriginsAddon extends JavaPlugin {
         return null;
     }
 
-    public @Nullable KeyStateGetter hasAbilityOverride() {
+    public @Nullable KeyStateGetter getAbilityOverride() {
         return null;
     }
 
@@ -53,6 +54,7 @@ public abstract class OriginsAddon extends JavaPlugin {
         onRegister();
         AddonLoader.register(this);
         for (Ability ability : getAbilities()) {
+            if (ability instanceof ToggleableAbility toggleableAbility && !toggleableAbility.shouldRegister()) continue;
             AbilityRegister.registerAbility(ability, this);
         }
         if (getResourcePackInfo() != null) PackApplier.addResourcePack(this, getResourcePackInfo());

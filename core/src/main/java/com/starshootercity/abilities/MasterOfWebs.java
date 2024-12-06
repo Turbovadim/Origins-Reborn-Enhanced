@@ -42,23 +42,21 @@ public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Lis
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player player) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (hasCooldown(player)) return;
-                if (!event.getEntity().getLocation().getBlock().isSolid()) {
-                    setCooldown(player);
-                    Location location = event.getEntity().getLocation().getBlock().getLocation();
-                    temporaryCobwebs.add(location);
-                    location.getBlock().setType(Material.COBWEB);
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-                        if (location.getBlock().getType() == Material.COBWEB && temporaryCobwebs.contains(location)) {
-                            temporaryCobwebs.remove(location);
-                            location.getBlock().setType(Material.AIR);
-                        }
-                    }, 60);
-                }
-            });
-        }
+        runForAbility(event.getDamager(), player -> {
+            if (hasCooldown(player)) return;
+            if (!event.getEntity().getLocation().getBlock().isSolid()) {
+                setCooldown(player);
+                Location location = event.getEntity().getLocation().getBlock().getLocation();
+                temporaryCobwebs.add(location);
+                location.getBlock().setType(Material.COBWEB);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
+                    if (location.getBlock().getType() == Material.COBWEB && temporaryCobwebs.contains(location)) {
+                        temporaryCobwebs.remove(location);
+                        location.getBlock().setType(Material.AIR);
+                    }
+                }, 60);
+            }
+        });
     }
 
 
@@ -72,8 +70,8 @@ public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Lis
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player webMaster : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(webMaster, getKey(), () -> {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            runForAbility(player, webMaster -> {
                 if (isInCobweb(webMaster)) {
                     setCanFly(webMaster, true);
                     webMaster.setFlying(true);
@@ -86,8 +84,8 @@ public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Lis
                 entities.addAll(Bukkit.getOnlinePlayers());
                 entities.removeIf(entity -> entity.getWorld() != webMaster.getWorld());
                 entities.removeIf(entity -> entity.getLocation().distance(webMaster.getLocation()) > 16);
-                for (Entity webStuck : entities) {
-                    AbilityRegister.runWithoutAbility(webStuck, getKey(), () -> {
+                for (Entity entity : entities) {
+                    runForAbility(entity, null, webStuck -> {
                         if (webStuck != webMaster) {
                             if (!glowingEntities.containsKey(webMaster)) {
                                 glowingEntities.put(webMaster, new ArrayList<>());
@@ -150,9 +148,7 @@ public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Lis
         if (event.getRecipe() != null) {
             if (event.getRecipe().getResult().getType() == Material.COBWEB) {
                 for (HumanEntity entity : event.getInventory().getViewers()) {
-                    if (entity instanceof Player player) {
-                        AbilityRegister.runWithoutAbility(player, getKey(), () -> event.getInventory().setResult(null));
-                    }
+                    runForAbility(entity, null, player -> event.getInventory().setResult(null));
                 }
             }
         }

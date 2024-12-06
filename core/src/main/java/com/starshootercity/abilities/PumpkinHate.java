@@ -27,8 +27,8 @@ public class PumpkinHate implements VisibleAbility, Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player pumpkinWearer : Bukkit.getOnlinePlayers()) {
-            for (Player pumpkinHater : Bukkit.getOnlinePlayers()) {
-                AbilityRegister.runForAbility(pumpkinHater, getKey(), () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                runForAbility(player, pumpkinHater -> {
                     if (pumpkinWearer != pumpkinHater) {
                         if (!ignoringPlayers.containsKey(pumpkinHater)) {
                             ignoringPlayers.put(pumpkinHater, new ArrayList<>());
@@ -81,13 +81,13 @@ public class PumpkinHate implements VisibleAbility, Listener {
 
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+        runForAbility(event.getPlayer(), player -> {
             if (event.getItem().getType() == Material.PUMPKIN_PIE) {
                 event.setCancelled(true);
                 event.getItem().setAmount(event.getItem().getAmount() - 1);
-                event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 300, 2, false, true));
-                event.getPlayer().addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getNauseaEffect(), 300, 1, false, true));
-                event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.POISON, 1200, 1, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, 300, 2, false, true));
+                player.addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getNauseaEffect(), 300, 1, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 1200, 1, false, true));
             }
         });
     }

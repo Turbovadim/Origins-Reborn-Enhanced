@@ -26,7 +26,7 @@ public class FreshAir implements VisibleAbility, Listener {
                         event.getPlayer().getInventory().getItemInMainHand().getType() == Material.AIR
         ) return;
         if (Tag.BEDS.isTagged(event.getClickedBlock().getType())) {
-            AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+            runForAbility(event.getPlayer(), player -> {
                 if (event.getClickedBlock().getY() < 86) {
                     String overworld = OriginsReborn.getInstance().getConfig().getString("worlds.world");
                     if (overworld == null) {
@@ -34,13 +34,13 @@ public class FreshAir implements VisibleAbility, Listener {
                         OriginsReborn.getInstance().getConfig().set("worlds.world", "world");
                         OriginsReborn.getInstance().saveConfig();
                     }
-                    boolean isInOverworld = event.getPlayer().getWorld() == Bukkit.getWorld(overworld);
+                    boolean isInOverworld = player.getWorld() == Bukkit.getWorld(overworld);
 
                     if (!isInOverworld) return;
                     if (event.getClickedBlock().getWorld().isDayTime() && event.getClickedBlock().getWorld().isClearWeather()) return;
                     event.setCancelled(true);
-                    event.getPlayer().swingMainHand();
-                    event.getPlayer().sendActionBar(Component.text(AddonLoader.getTextFor("origins.avian_sleep_fail", "You need fresh air to sleep")));
+                    player.swingMainHand();
+                    player.sendActionBar(Component.text(AddonLoader.getTextFor("origins.avian_sleep_fail", "You need fresh air to sleep")));
                 }
             });
         }

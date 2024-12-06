@@ -41,15 +41,15 @@ public class ThrowEnderPearl implements VisibleAbility, Listener, CooldownAbilit
     private final NamespacedKey falseEnderPearlKey = new NamespacedKey(OriginsReborn.getInstance(), "false-ender-pearl");
 
     @EventHandler
-    public void onLeftClick(PlayerLeftClickEvent event) {
+    public void onPlayerLeftClick(PlayerLeftClickEvent event) {
         if (event.hasBlock()) return;
-        if (event.getPlayer().getTargetBlock(6) != null) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (hasCooldown(event.getPlayer())) return;
-            setCooldown(event.getPlayer());
-            if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) return;
-            Projectile projectile = event.getPlayer().launchProjectile(EnderPearl.class);
-            projectile.getPersistentDataContainer().set(falseEnderPearlKey, PersistentDataType.STRING, event.getPlayer().getName());
+        runForAbility(event.getPlayer(), player -> {
+            if (player.getTargetBlock(6) != null) return;
+            if (player.getInventory().getItemInMainHand().getType() != Material.AIR) return;
+            if (hasCooldown(player)) return;
+            setCooldown(player);
+            Projectile projectile = player.launchProjectile(EnderPearl.class);
+            projectile.getPersistentDataContainer().set(falseEnderPearlKey, PersistentDataType.STRING, player.getName());
         });
     }
 

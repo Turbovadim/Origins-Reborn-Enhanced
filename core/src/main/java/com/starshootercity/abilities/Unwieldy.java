@@ -15,8 +15,8 @@ import java.util.List;
 public class Unwieldy implements VisibleAbility, Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> player.setCooldown(Material.SHIELD, 1000));
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> player.setCooldown(Material.SHIELD, 1000));
         }
     }
     @Override

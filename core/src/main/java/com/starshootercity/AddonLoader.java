@@ -69,7 +69,7 @@ public class AddonLoader {
         //prepareLanguagesFor(addon);
         if (addon.shouldAllowOriginSwapCommand() != null) allowOriginSwapChecks.add(addon.shouldAllowOriginSwapCommand());
         if (addon.shouldOpenSwapMenu() != null) openSwapMenuChecks.add(addon.shouldOpenSwapMenu());
-        if (addon.hasAbilityOverride() != null) hasAbilityOverrideChecks.add(addon.hasAbilityOverride());
+        if (addon.getAbilityOverride() != null) abilityOverrideChecks.add(addon.getAbilityOverride());
         sortOrigins();
     }
 
@@ -93,7 +93,7 @@ public class AddonLoader {
 
     public static final List<OriginsAddon.SwapStateGetter> allowOriginSwapChecks = new ArrayList<>();
     public static final List<OriginsAddon.SwapStateGetter> openSwapMenuChecks = new ArrayList<>();
-    public static final List<OriginsAddon.KeyStateGetter> hasAbilityOverrideChecks = new ArrayList<>();
+    public static final List<OriginsAddon.KeyStateGetter> abilityOverrideChecks = new ArrayList<>();
 
     private static final Map<String, String> languageData = new HashMap<>();
 
@@ -262,7 +262,7 @@ public class AddonLoader {
         }
         ItemStack icon = new ItemStack(material);
         ItemMeta meta = icon.getItemMeta();
-        meta.setCustomModelData(cmd);
+        meta = OriginsReborn.getNMSInvoker().setCustomModelData(meta, cmd);
         icon.setItemMeta(meta);
         String name = file.getName().split("\\.")[0];
         StringBuilder formattedName = new StringBuilder();

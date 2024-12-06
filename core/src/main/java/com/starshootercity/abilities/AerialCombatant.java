@@ -2,7 +2,6 @@ package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
 import net.kyori.adventure.key.Key;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -13,11 +12,9 @@ import java.util.List;
 public class AerialCombatant implements VisibleAbility, Listener {
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player player) {
-            AbilityRegister.runForAbility(event.getDamager(), getKey(), () -> {
-                if (player.isGliding()) event.setDamage(event.getDamage() * 2);
-            });
-        }
+        runForAbility(event.getDamager(), player -> {
+            if (player.isGliding()) event.setDamage(event.getDamage() * 2);
+        });
     }
 
     @Override

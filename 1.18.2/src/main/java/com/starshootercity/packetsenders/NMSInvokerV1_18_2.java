@@ -39,6 +39,7 @@ import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,12 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_18_2 extends NMSInvoker {
+
+    @Override
+    public @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd) {
+        meta.setCustomModelData(cmd);
+        return meta;
+    }
 
     @Override
     public @Nullable Attribute getMiningEfficiencyAttribute() {

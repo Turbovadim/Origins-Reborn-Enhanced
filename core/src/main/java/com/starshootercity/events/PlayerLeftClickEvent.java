@@ -1,5 +1,6 @@
 package com.starshootercity.events;
 
+import com.starshootercity.OriginsReborn;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -75,19 +76,21 @@ public class PlayerLeftClickEvent extends PlayerEvent {
             if (!event.getAction().isLeftClick()) {
                 return;
             }
-            if (lastInteractionTickMap.getOrDefault(event.getPlayer(), -1) == Bukkit.getCurrentTick()) return;
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick());
-            new PlayerLeftClickEvent(event).callEvent();
+            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
+                if (lastInteractionTickMap.getOrDefault(event.getPlayer(), -1) >= Bukkit.getCurrentTick()) return;
+                lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick());
+                new PlayerLeftClickEvent(event).callEvent();
+            });
         }
 
         @EventHandler
         public void onPlayerDropItem(PlayerDropItemEvent event) {
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick());
+            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick()+1);
         }
 
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event) {
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick());
+            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick()+1);
         }
     }
 }

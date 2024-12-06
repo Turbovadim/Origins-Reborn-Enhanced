@@ -30,8 +30,8 @@ public class HungerOverTime implements DependantAbility, VisibleAbility, Listene
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         if (event.getTickNumber() % 20 != 0) return;
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> player.setExhaustion(player.getExhaustion() + 0.812f));
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> player.setExhaustion(player.getExhaustion() + 0.812f));
         }
     }
 

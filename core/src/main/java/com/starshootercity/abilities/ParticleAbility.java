@@ -14,7 +14,9 @@ import java.util.List;
 
 public interface ParticleAbility extends Ability {
     Particle getParticle();
-    int getFrequency();
+    default int getFrequency() {
+        return 4;
+    }
     default int getExtra() {
         return 0;
     }

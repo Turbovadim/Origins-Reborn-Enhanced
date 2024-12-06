@@ -1,6 +1,7 @@
 package com.starshootercity;
 
 import com.starshootercity.abilities.*;
+import com.starshootercity.abilities.custom.ToggleableAbilities;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.commands.OriginCommand;
 import com.starshootercity.cooldowns.Cooldowns;
@@ -57,6 +58,8 @@ public class OriginsReborn extends OriginsAddon {
     private static void initializeNMSInvoker(OriginsReborn instance) {
         String version = Bukkit.getBukkitVersion().split("-")[0];
         nmsInvoker = switch (version) {
+            // case "1.17.1" -> new NMSInvokerV1_17_1(getInstance().getConfig());
+            // case "1.18" -> new NMSInvokerV1_18(getInstance().getConfig());
             case "1.18.1" -> new NMSInvokerV1_18_1(getInstance().getConfig());
             case "1.18.2" -> new NMSInvokerV1_18_2(getInstance().getConfig());
             case "1.19" -> new NMSInvokerV1_19(getInstance().getConfig());
@@ -73,6 +76,7 @@ public class OriginsReborn extends OriginsAddon {
             case "1.21" -> new NMSInvokerV1_21(getInstance().getConfig());
             case "1.21.1" -> new NMSInvokerV1_21_1(getInstance().getConfig());
             case "1.21.2", "1.21.3" -> new NMSInvokerV1_21_3(getInstance().getConfig());
+            case "1.21.4" -> new NMSInvokerV1_21_4(getInstance().getConfig());
             default -> throw new IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion());
         };
         Bukkit.getPluginManager().registerEvents(nmsInvoker, instance);
@@ -265,12 +269,21 @@ public class OriginsReborn extends OriginsAddon {
                 getNMSInvoker().setComments("origin-selection.randomise", List.of("Randomise origins instead of letting players pick"));
                 saveConfig();
             }
+            if (version.equals("2.4.1")) {
+                getConfig().set("config-version", "2.4.2");
+                getConfig().set("origin-selection.delay-before-required", 0);
+                getNMSInvoker().setComments("origin-selection.delay-before-required", List.of("The amount of time (in ticks, a tick is a 20th of a second) to wait between a player joining and when the GUI should open"));
+                saveConfig();
+            }
         }
     }
 
     @Override
     public void onRegister() {
         instance = this;
+
+        ToggleableAbilities.initialize(this);
+
         saveDefaultConfig();
 
         WidthGetter.initialize(this);
@@ -381,6 +394,7 @@ public class OriginsReborn extends OriginsAddon {
             abilities.add(ExtraReach.ExtraReachBlocks.extraReachBlocks);
             abilities.add(ExtraReach.ExtraReachEntities.extraReachEntities);
         }
+        abilities.addAll(ToggleableAbilities.getAbilities());
         return abilities;
     }
 }

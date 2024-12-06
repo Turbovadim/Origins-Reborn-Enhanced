@@ -7,21 +7,19 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class FireImmunity implements VisibleAbility, Listener {
     @EventHandler
     public void onEntityDamageEvent(EntityDamageEvent event) {
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
-            List<EntityDamageEvent.DamageCause> causes = new ArrayList<>() {{
-                add(EntityDamageEvent.DamageCause.FIRE);
-                add(EntityDamageEvent.DamageCause.FIRE_TICK);
-                add(EntityDamageEvent.DamageCause.LAVA);
-                add(EntityDamageEvent.DamageCause.HOT_FLOOR);
-            }};
-
-            if (causes.contains(event.getCause())) {
+        runForAbility(event.getEntity(), player -> {
+            if (Set.of(
+                    EntityDamageEvent.DamageCause.FIRE,
+                    EntityDamageEvent.DamageCause.FIRE_TICK,
+                    EntityDamageEvent.DamageCause.LAVA,
+                    EntityDamageEvent.DamageCause.HOT_FLOOR
+            ).contains(event.getCause())) {
                 event.setCancelled(true);
             }
         });

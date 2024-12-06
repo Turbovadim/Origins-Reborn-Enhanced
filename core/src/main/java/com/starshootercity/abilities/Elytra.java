@@ -30,9 +30,10 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
     }
 
     @EventHandler
+    @SuppressWarnings("deprecation")
     public void onEntityToggleGlide(EntityToggleGlideEvent event) {
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
-            if (!event.getEntity().isOnGround() && !event.isGliding()) {
+        runForAbility(event.getEntity(), player -> {
+            if (!player.isOnGround() && !event.isGliding()) {
                 event.setCancelled(true);
             }
         });
@@ -51,10 +52,10 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
     @EventHandler
     public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
         if (FlightToggleCommand.canFly(event.getPlayer())) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+        runForAbility(event.getPlayer(), player -> {
             if (event.isFlying()) {
                 event.setCancelled(true);
-                event.getPlayer().setGliding(true);
+                player.setGliding(true);
             }
         });
     }

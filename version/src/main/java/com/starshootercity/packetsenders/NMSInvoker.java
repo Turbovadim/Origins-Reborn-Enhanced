@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,4 +178,6 @@ public abstract class NMSInvoker implements Listener {
     public abstract @Nullable Attribute getSubmergedMiningSpeedAttribute();
 
     public abstract @Nullable Attribute getSweepingDamageRatioAttribute();
+
+    public abstract @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd);
 }

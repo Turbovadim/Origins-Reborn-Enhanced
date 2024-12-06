@@ -35,6 +35,7 @@ import org.bukkit.event.block.BlockDamageAbortEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,12 @@ public class NMSInvokerV1_21_3 extends NMSInvoker {
         eData.add(SynchedEntityData.DataValue.create(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE), bytes));
         ClientboundSetEntityDataPacket metadata = new ClientboundSetEntityDataPacket(target.getId(), eData);
         serverPlayer.connection.send(metadata);
+    }
+
+    @Override
+    public @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd) {
+        meta.setCustomModelData(cmd);
+        return meta;
     }
 
     @Override

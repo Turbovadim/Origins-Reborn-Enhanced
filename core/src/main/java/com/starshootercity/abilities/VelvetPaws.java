@@ -29,7 +29,7 @@ public class VelvetPaws implements VisibleAbility, Listener {
     @EventHandler
     public void onGenericGameEvent(GenericGameEvent event) {
         if (event.getEvent() == GameEvent.STEP) {
-            AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> event.setCancelled(true));
+            runForAbility(event.getEntity(), player -> event.setCancelled(true));
         }
     }
 }

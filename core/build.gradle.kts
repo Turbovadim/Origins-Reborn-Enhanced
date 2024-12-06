@@ -31,6 +31,8 @@ dependencies {
     compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
     compileOnly(project(":version"))
+    compileOnly(project(":1.17.1"))
+    compileOnly(project(":1.18"))
     compileOnly(project(":1.18.1"))
     compileOnly(project(":1.18.2"))
     compileOnly(project(":1.19"))
@@ -47,6 +49,7 @@ dependencies {
     compileOnly(project(":1.21"))
     compileOnly(project(":1.21.1"))
     compileOnly(project(":1.21.3"))
+    compileOnly(project(":1.21.4"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
 }

@@ -42,7 +42,8 @@ public class GeyserSwapper {
         List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
         if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(origin.getPermission()));
         else {
-            openOriginInfo(player, OriginSwapper.getOrigin(player, layer), PlayerSwapOriginEvent.SwapReason.COMMAND, true, false, layer);
+            Origin origin = OriginSwapper.getOrigin(player, layer);
+            if (origin != null) openOriginInfo(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, true, false, layer);
             return;
         }
         origins.sort((o1, o2) -> {

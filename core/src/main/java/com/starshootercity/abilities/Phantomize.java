@@ -14,20 +14,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Phantomize implements DependencyAbility, Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (isEnabled(player) && player.getFoodLevel() <= 6) {
-                phantomizedPlayers.put(player, false);
+                phantomizedPlayers.put(player.getUniqueId(), false);
                 PhantomizeToggleEvent phantomizeToggleEvent = new PhantomizeToggleEvent(player, false);
                 phantomizeToggleEvent.callEvent();
             }
         }
     }
 
-    private final Map<Player, Boolean> phantomizedPlayers = new HashMap<>();
+    private final Map<UUID, Boolean> phantomizedPlayers = new HashMap<>();
 
     @Override
     public @NotNull Key getKey() {
@@ -36,7 +37,7 @@ public class Phantomize implements DependencyAbility, Listener {
 
     @Override
     public boolean isEnabled(Player player) {
-        return phantomizedPlayers.getOrDefault(player, false);
+        return phantomizedPlayers.getOrDefault(player.getUniqueId(), false);
     }
 
     @EventHandler
@@ -44,9 +45,9 @@ public class Phantomize implements DependencyAbility, Listener {
         if (event.hasBlock()) return;
         if (event.getPlayer().getFoodLevel() <= 6) return;
         if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.AIR) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            boolean enabling = !phantomizedPlayers.getOrDefault(event.getPlayer(), false);
-            phantomizedPlayers.put(event.getPlayer(), enabling);
+        runForAbility(event.getPlayer(), player -> {
+            boolean enabling = !phantomizedPlayers.getOrDefault(player.getUniqueId(), false);
+            phantomizedPlayers.put(player.getUniqueId(), enabling);
             PhantomizeToggleEvent phantomizeToggleEvent = new PhantomizeToggleEvent(event.getPlayer(), enabling);
             phantomizeToggleEvent.callEvent();
         });

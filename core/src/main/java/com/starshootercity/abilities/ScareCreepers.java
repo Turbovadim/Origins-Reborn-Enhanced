@@ -53,7 +53,7 @@ public class ScareCreepers implements VisibleAbility, Listener {
     }
 
     public void fixCreeper(Creeper creeper) {
-        Bukkit.getMobGoals().addGoal(creeper, 0, OriginsReborn.getNMSInvoker().getCreeperAfraidGoal(creeper, player -> AbilityRegister.hasAbility(player, getKey()), livingEntity -> {
+        Bukkit.getMobGoals().addGoal(creeper, 0, OriginsReborn.getNMSInvoker().getCreeperAfraidGoal(creeper, this::hasAbility, livingEntity -> {
             String data = creeper.getPersistentDataContainer().get(hitByPlayerKey, PersistentDataType.STRING);
             if (data == null) {
                 return false;
@@ -73,25 +73,23 @@ public class ScareCreepers implements VisibleAbility, Listener {
                 else return;
             } else if (event.getDamager() instanceof org.bukkit.entity.Player damager) player = damager;
             else return;
-            AbilityRegister.runForAbility(player, getKey(), () -> event.getEntity().getPersistentDataContainer().set(hitByPlayerKey, PersistentDataType.STRING, player.getUniqueId().toString()));
+            runForAbility(player, p -> p.getPersistentDataContainer().set(hitByPlayerKey, PersistentDataType.STRING, p.getUniqueId().toString()));
         }
     }
 
     @EventHandler
     public void onEntityTargetLivingEntity(EntityTargetLivingEntityEvent event) {
         if (event.getEntity().getType() == EntityType.CREEPER) {
-            if (event.getTarget() instanceof org.bukkit.entity.Player player) {
-                AbilityRegister.runForAbility(player, getKey(), () -> {
-                    String data = event.getEntity().getPersistentDataContainer().get(hitByPlayerKey, PersistentDataType.STRING);
-                    if (data == null) {
-                        event.setCancelled(true);
-                        return;
-                    }
-                    if (!data.equals(player.getUniqueId().toString())) {
-                        event.setCancelled(true);
-                    }
-                });
-            }
+            runForAbility(event.getTarget(), player -> {
+                String data = event.getEntity().getPersistentDataContainer().get(hitByPlayerKey, PersistentDataType.STRING);
+                if (data == null) {
+                    event.setCancelled(true);
+                    return;
+                }
+                if (!data.equals(player.getUniqueId().toString())) {
+                    event.setCancelled(true);
+                }
+            });
         }
     }
 }

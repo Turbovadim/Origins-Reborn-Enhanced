@@ -12,8 +12,8 @@ import java.util.List;
 public class BurningWrath implements VisibleAbility, Listener {
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        AbilityRegister.runForAbility(event.getDamager(), getKey(), () -> {
-            if (event.getDamager().getFireTicks() > 0) event.setDamage(event.getDamage() + 3);
+        runForAbility(event.getDamager(), player -> {
+            if (player.getFireTicks() > 0) event.setDamage(event.getDamage() + 3);
         });
     }
 

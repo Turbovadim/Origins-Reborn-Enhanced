@@ -27,6 +27,6 @@ public class MoreExhaustion implements VisibleAbility, Listener {
 
     @EventHandler
     public void onEntityExhaustion(EntityExhaustionEvent event) {
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> event.setExhaustion(event.getExhaustion() * 1.6f));
+        runForAbility(event.getEntity(), player -> event.setExhaustion(event.getExhaustion() * 1.6f));
     }
 }

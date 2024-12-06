@@ -78,17 +78,30 @@ public class AbilityRegister {
         abilityMap.put(ability.getKey(), ability);
     }
 
+
+    /**
+     * @deprecated Testing abilities is now contained in the Ability interface
+     */
+    @Deprecated
     public static void runForAbility(Entity entity, Key key, Runnable runnable) {
         runForAbility(entity, key, runnable, () -> {});
     }
 
+    /**
+     * @deprecated Testing abilities is now contained in the Ability interface
+     */
+    @Deprecated
     public static boolean hasAbility(Player player, Key key) {
         return hasAbility(player, key, false);
     }
 
+    /**
+     * @deprecated Testing abilities is now contained in the Ability interface
+     */
+    @Deprecated
     public static boolean hasAbility(Player player, Key key, boolean ignoreOverrides) {
         if (!ignoreOverrides) {
-            for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.hasAbilityOverrideChecks) {
+            for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
                 OriginsAddon.State state = keyStateGetter.get(player, key);
                 if (state == OriginsAddon.State.DENY) return false;
                 else if (state == OriginsAddon.State.ALLOW) return true;
@@ -125,6 +138,10 @@ public class AbilityRegister {
         return hasAbility;
     }
 
+    /**
+     * @deprecated Testing abilities is now contained in the Ability interface
+     */
+    @Deprecated
     public static void runForAbility(Entity entity, Key key, Runnable runnable, Runnable other) {
         if (entity == null) return;
         String worldId = entity.getWorld().getName();
@@ -138,6 +155,10 @@ public class AbilityRegister {
         other.run();
     }
 
+    /**
+     * @deprecated Testing abilities is now contained in the Ability interface
+     */
+    @Deprecated
     public static void runWithoutAbility(Entity entity, Key key, Runnable runnable) {
         runForAbility(entity, key, () -> {}, runnable);
     }
@@ -147,7 +168,7 @@ public class AbilityRegister {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) return true;
         for (Ability ability : AbilityRegister.abilityMap.values()) {
             if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
-                if (hasAbility(player, ability.getKey()) && flightAllowingAbility.canFly(player)) return true;
+                if (ability.hasAbility(player) && flightAllowingAbility.canFly(player)) return true;
             }
         }
         return false;
@@ -158,7 +179,7 @@ public class AbilityRegister {
         if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) return true;
         for (Ability ability : abilityMap.values()) {
             if (ability instanceof VisibilityChangingAbility visibilityChangingAbility) {
-                if (hasAbility(player, ability.getKey()) && visibilityChangingAbility.isInvisible(player)) return true;
+                if (ability.hasAbility(player) && visibilityChangingAbility.isInvisible(player)) return true;
             }
         }
         return false;
@@ -173,7 +194,7 @@ public class AbilityRegister {
         float speed = -1f;
         for (Ability ability : abilityMap.values()) {
             if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
-                if (hasAbility(player, ability.getKey()) && flightAllowingAbility.canFly(player)) {
+                if (ability.hasAbility(player) && flightAllowingAbility.canFly(player)) {
                     float abilitySpeed = flightAllowingAbility.getFlightSpeed(player);
                     speed = speed == -1 ? abilitySpeed : Math.min(speed, abilitySpeed);
                     if (flightAllowingAbility.getFlyingFallDamage(player) == TriState.TRUE) {

@@ -198,14 +198,14 @@ public class OriginSwapper implements Listener {
             confirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            confirmMeta.setCustomModelData(5);
+            confirmMeta = OriginsReborn.getNMSInvoker().setCustomModelData(confirmMeta, 5);
             if (!displayOnly) confirmMeta.getPersistentDataContainer().set(confirmKey, BooleanPDT.BOOLEAN, true);
             else confirmMeta.getPersistentDataContainer().set(closeKey, BooleanPDT.BOOLEAN, true);
 
             invisibleConfirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            invisibleConfirmMeta.setCustomModelData(6);
+            invisibleConfirmMeta = OriginsReborn.getNMSInvoker().setCustomModelData(invisibleConfirmMeta, 6);
             if (!displayOnly) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, BooleanPDT.BOOLEAN, true);
             else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, BooleanPDT.BOOLEAN, true);
 
@@ -240,7 +240,7 @@ public class OriginSwapper implements Listener {
                 upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
                 upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
             }
-            upMeta.setCustomModelData(3 + (scrollAmount == 0 ? 6 : 0));
+            upMeta = OriginsReborn.getNMSInvoker().setCustomModelData(upMeta, 3 + (scrollAmount == 0 ? 6 : 0));
             upMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
             upMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
 
@@ -255,7 +255,7 @@ public class OriginSwapper implements Listener {
                 downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
                 downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
             }
-            downMeta.setCustomModelData(4 + (!canGoDown ? 6 : 0));
+            downMeta = OriginsReborn.getNMSInvoker().setCustomModelData(downMeta, 4 + (!canGoDown ? 6 : 0));
             downMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
             downMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
 
@@ -277,7 +277,7 @@ public class OriginSwapper implements Listener {
                         .decoration(TextDecoration.ITALIC, false));
                 leftMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
                 leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-                leftMeta.setCustomModelData(1);
+                leftMeta = OriginsReborn.getNMSInvoker().setCustomModelData(leftMeta, 1);
                 leftMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
                 leftMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
 
@@ -286,7 +286,7 @@ public class OriginSwapper implements Listener {
                         .decoration(TextDecoration.ITALIC, false));
                 rightMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
                 rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-                rightMeta.setCustomModelData(2);
+                rightMeta = OriginsReborn.getNMSInvoker().setCustomModelData(rightMeta, 2);
                 rightMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
                 rightMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
 
@@ -484,7 +484,7 @@ public class OriginSwapper implements Listener {
                 }
                 if (instance == null) continue;
                 NamespacedKey key = new NamespacedKey(OriginsReborn.getInstance(), ability.getKey().asString().replace(":", "-"));
-                if (AbilityRegister.hasAbility(player, ability.getKey())) {
+                if (ability.hasAbility(player)) {
                     AttributeModifier modifier = OriginsReborn.getNMSInvoker().getAttributeModifier(instance, key);
                     if (modifier != null) {
                         if (modifier.getAmount() == attributeModifierAbility.getTotalAmount(player)) {
@@ -504,6 +504,7 @@ public class OriginSwapper implements Listener {
     @SuppressWarnings("deprecation")
     public void onPlayerJoin(PlayerJoinEvent event) {
         resetAttributes(event.getPlayer());
+        lastJoinedTick.put(event.getPlayer(), Bukkit.getCurrentTick());
         for (String layer : AddonLoader.layers) {
             Origin origin = getOrigin(event.getPlayer(), layer);
             if (origin != null) {
@@ -535,9 +536,14 @@ public class OriginSwapper implements Listener {
 
     private static final Map<Player, PlayerSwapOriginEvent.SwapReason> lastSwapReasons = new HashMap<>();
 
+    private static final Map<Player, Integer> lastJoinedTick = new HashMap<>();
+
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            int delay = OriginsReborn.getInstance().getConfig().getInt("origin-selection.delay-before-required", 0);
+            if (!lastJoinedTick.containsKey(player)) lastJoinedTick.put(player, event.getTickNumber());
+            if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) continue;
             if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL)))
                 continue;
             if (!OriginsReborn.getInstance().getConfig().getBoolean("misc-settings.disable-flight-stuff")) {
@@ -657,11 +663,11 @@ public class OriginSwapper implements Listener {
      * @deprecated Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once
      */
     @Deprecated
-    public static Origin getOrigin(Player player) {
+    public static @Nullable Origin getOrigin(Player player) {
         return getOrigin(player, "origin");
     }
 
-    public static Origin getOrigin(Player player, String layer) {
+    public static @Nullable Origin getOrigin(Player player, String layer) {
         String oldOrigin = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
         if (!oldOrigin.equals("null") && layer.equals("origin")) {
             if (!oldOrigin.contains("MemorySection")) {
@@ -774,6 +780,7 @@ public class OriginSwapper implements Listener {
     }
 
     public static class LineData {
+        // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
         public static List<LineComponent> makeLineFor(String text, LineComponent.LineType type) {
             StringBuilder result = new StringBuilder();
             StringBuilder rawResult = new StringBuilder();

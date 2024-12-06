@@ -27,24 +27,22 @@ import java.util.Random;
 public class WaterBreathing implements Listener, VisibleAbility {
     @EventHandler
     public void onEntityAirChange(EntityAirChangeEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, OriginSwapper.BooleanPDT.BOOLEAN)))
-                    return;
-                if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN)))
-                    return;
-                if (player.getRemainingAir() - event.getAmount() > 0) {
-                    if (!OriginsReborn.getNMSInvoker().isUnderWater(player) && !hasWaterBreathing(player)) return;
-                } else if (OriginsReborn.getNMSInvoker().isUnderWater(player) || hasWaterBreathing(player)) return;
-                event.setCancelled(true);
-            });
-        }
+        runForAbility(event.getEntity(), player -> {
+            if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, OriginSwapper.BooleanPDT.BOOLEAN)))
+                return;
+            if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN)))
+                return;
+            if (player.getRemainingAir() - event.getAmount() > 0) {
+                if (!OriginsReborn.getNMSInvoker().isUnderWater(player) && !hasWaterBreathing(player)) return;
+            } else if (OriginsReborn.getNMSInvoker().isUnderWater(player) || hasWaterBreathing(player)) return;
+            event.setCancelled(true);
+        });
     }
 
     @EventHandler
     public void onEntityPotionEffect(EntityPotionEffectEvent event) {
         if (event.getCause() != EntityPotionEffectEvent.Cause.TURTLE_HELMET) return;
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> event.setCancelled(true));
+        runForAbility(event.getEntity(), player -> event.setCancelled(true));
     }
 
     public boolean hasWaterBreathing(Player player) {
@@ -57,8 +55,8 @@ public class WaterBreathing implements Listener, VisibleAbility {
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent ignored) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 if (OriginsReborn.getNMSInvoker().isUnderWater(player) || hasWaterBreathing(player) || player.isInRain()) {
                     ItemStack helmet = player.getInventory().getHelmet();
                     if (helmet != null && OriginsReborn.getNMSInvoker().isUnderWater(player)) {
@@ -89,7 +87,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
                         OriginsReborn.getNMSInvoker().dealDrowningDamage(player, 2);
                     }
                 }
-            }, () -> {
+            }, player -> {
                 if (player.getPersistentDataContainer().has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
                     player.setRemainingAir(player.getMaximumAir());
                     player.getPersistentDataContainer().remove(airKey);

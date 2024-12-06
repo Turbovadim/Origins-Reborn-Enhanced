@@ -155,8 +155,8 @@ public class LightArmor implements VisibleAbility, Listener {
         }
     }
 
-    public void checkArmorEvent(Cancellable event, Player player, ItemStack armor) {
-        AbilityRegister.runForAbility(player, getKey(), () -> {
+    public void checkArmorEvent(Cancellable event, Player p, ItemStack armor) {
+        runForAbility(p, player -> {
             if (allowedTypes.contains(armor.getType())) return;
             event.setCancelled(true);
         });

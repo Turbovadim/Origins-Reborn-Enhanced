@@ -39,19 +39,21 @@ public class Carnivore implements VisibleAbility, Listener {
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
         if (event.getItem().getType() == Material.POTION) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+        runForAbility(event.getPlayer(), player -> {
             if (!meat.contains(event.getItem().getType())) {
                 event.setCancelled(true);
                 event.getItem().setAmount(event.getItem().getAmount() - 1);
-                event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 1, false, true));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 1, false, true));
             }
         });
     }
+
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
         return OriginSwapper.LineData.makeLineFor(
                 "Your diet is restricted to meat, you can't eat vegetables.",
-                OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+                OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+        );
     }
 
     @Override

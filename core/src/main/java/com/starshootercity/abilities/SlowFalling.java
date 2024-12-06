@@ -15,10 +15,10 @@ import java.util.List;
 public class SlowFalling implements VisibleAbility, Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (event.getPlayer().isSneaking()) {
-                event.getPlayer().removePotionEffect(PotionEffectType.SLOW_FALLING);
-            } else event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, ShortcutUtils.infiniteDuration(), 0, false, false));
+        runForAbility(event.getPlayer(), player -> {
+            if (player.isSneaking()) {
+                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
+            } else player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, ShortcutUtils.infiniteDuration(), 0, false, false));
         });
     }
 

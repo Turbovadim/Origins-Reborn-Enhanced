@@ -13,7 +13,7 @@ import java.util.List;
 public class Hotblooded implements VisibleAbility, Listener {
     @EventHandler
     public void onEntityPotionEffect(EntityPotionEffectEvent event) {
-        AbilityRegister.runForAbility(event.getEntity(), getKey(), () -> {
+        runForAbility(event.getEntity(), player -> {
             if (event.getNewEffect() != null) {
                 if (event.getNewEffect().getType().equals(PotionEffectType.POISON) || event.getNewEffect().getType().equals(PotionEffectType.HUNGER)) {
                     event.setCancelled(true);

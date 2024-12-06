@@ -68,8 +68,8 @@ public class ShulkerInventory implements VisibleAbility, Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getWhoClicked() instanceof Player player) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        if (event.getWhoClicked() instanceof Player p) {
+            runForAbility(p, player -> {
                 if (event.isRightClick()) {
                     if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
                         if (event.getSlot() == 38) {

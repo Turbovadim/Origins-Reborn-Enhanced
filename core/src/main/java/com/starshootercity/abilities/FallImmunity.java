@@ -2,7 +2,6 @@ package com.starshootercity.abilities;
 
 import com.starshootercity.OriginSwapper;
 import net.kyori.adventure.key.Key;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -13,13 +12,11 @@ import java.util.List;
 public class FallImmunity implements VisibleAbility, Listener {
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
-                    event.setCancelled(true);
-                }
-            });
-        }
+        runForAbility(event.getEntity(), player -> {
+            if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+                event.setCancelled(true);
+            }
+        });
     }
 
     @Override

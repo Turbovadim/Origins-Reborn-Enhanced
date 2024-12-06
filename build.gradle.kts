@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.starshootercity"
-version = "2.4.1"
+version = "2.4.5"
 
 repositories {
     mavenCentral()
@@ -17,6 +17,8 @@ dependencies {
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
+    implementation(project(":1.17.1", "reobf"))
+    implementation(project(":1.18", "reobf"))
     implementation(project(":1.18.1", "reobf"))
     implementation(project(":1.18.2", "reobf"))
     implementation(project(":1.19", "reobf"))
@@ -33,6 +35,7 @@ dependencies {
     implementation(project(":1.21", "reobf"))
     implementation(project(":1.21.1", "reobf"))
     implementation(project(":1.21.3", "reobf"))
+    implementation(project(":1.21.4", "reobf"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 

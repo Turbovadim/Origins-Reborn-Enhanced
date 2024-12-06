@@ -31,32 +31,32 @@ public class LikeWater implements VisibleAbility, FlightAllowingAbility, Listene
 
     @EventHandler
     public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (event.getPlayer().isInWater()) event.getPlayer().setFlying(false);
+        runForAbility(event.getPlayer(), player -> {
+            if (player.isInWater()) player.setFlying(false);
         });
     }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         if (event.getPlayer().isInWater() && !event.getPlayer().isSwimming()) {
-            AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> event.getPlayer().setFlying((event.getPlayer().isFlying() || event.getTo().getY() > event.getFrom().getY()) && !event.getPlayer().isInBubbleColumn()));
+            runForAbility(event.getPlayer(), player -> player.setFlying((player.isFlying() || event.getTo().getY() > event.getFrom().getY()) && !player.isInBubbleColumn()));
         }
     }
 
     @EventHandler
     public void onPlayerToggleSprint(PlayerToggleSprintEvent event) {
         if (!event.getPlayer().isFlying()) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (event.getPlayer().isInWater()) {
-                event.getPlayer().setFlying(false);
+        runForAbility(event.getPlayer(), player -> {
+            if (player.isInWater()) {
+                player.setFlying(false);
             }
         });
     }
 
     @EventHandler
     public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (event.getPlayer().isInWater()) event.setCancelled(true);
+        runForAbility(event.getPlayer(), player -> {
+            if (player.isInWater()) event.setCancelled(true);
         });
     }
 

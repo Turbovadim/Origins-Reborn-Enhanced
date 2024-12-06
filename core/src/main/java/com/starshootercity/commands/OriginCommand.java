@@ -128,18 +128,18 @@ public class OriginCommand implements CommandExecutor, TabCompleter {
                     }
                 }
                 if (args.length < 4) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
                 String layer = args[2];
                 Player player = Bukkit.getPlayer(args[1]);
                 if (player == null) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
                 Origin origin = AddonLoader.getOrigin(args[3].replace("_", " "));
                 if (origin == null || !origin.getLayer().equals(layer)) {
-                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <layer> <player> <origin>").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>").color(NamedTextColor.RED));
                     return true;
                 }
                 OriginSwapper.setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer);

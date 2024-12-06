@@ -31,11 +31,11 @@ public class LaunchIntoAir implements VisibleAbility, Listener, CooldownAbility 
     @EventHandler
     public void onSneakToggle(PlayerToggleSneakEvent event) {
         if (!event.isSneaking()) return;
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
-            if (event.getPlayer().isGliding()) {
-                if (hasCooldown(event.getPlayer())) return;
-                setCooldown(event.getPlayer());
-                event.getPlayer().setVelocity(event.getPlayer().getVelocity().add(new Vector(0, 2, 0)));
+        runForAbility(event.getPlayer(), player -> {
+            if (player.isGliding()) {
+                if (hasCooldown(player)) return;
+                setCooldown(player);
+                player.setVelocity(player.getVelocity().add(new Vector(0, 2, 0)));
             }
         });
     }

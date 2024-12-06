@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -22,11 +23,13 @@ import java.util.List;
 
 public class OrbOfOrigin implements Listener {
     public static NamespacedKey orbKey = new NamespacedKey(OriginsReborn.getInstance(), "orb-of-origin");
+    public static NamespacedKey updatedKey = new NamespacedKey(OriginsReborn.getInstance(), "updated-orb");
 
     public static final ItemStack orb = new ItemStack(Material.NAUTILUS_SHELL) {{
         ItemMeta meta = getItemMeta();
         meta.getPersistentDataContainer().set(orbKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-        meta.setCustomModelData(1);
+        meta.getPersistentDataContainer().set(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
+        meta = OriginsReborn.getNMSInvoker().setCustomModelData(meta, 1);
         meta.displayName(
                 Component.text(AddonLoader.getTextFor("item.origins.orb_of_origin", "Orb of Origin"))
                         .color(NamedTextColor.AQUA)
@@ -34,6 +37,15 @@ public class OrbOfOrigin implements Listener {
         );
         setItemMeta(meta);
     }};
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getCurrentItem() == null || event.getCurrentItem().getItemMeta() == null) return;
+        ItemMeta meta = event.getCurrentItem().getItemMeta();
+        if (meta.getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.getPersistentDataContainer().has(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+            event.getCurrentItem().setItemMeta(orb.getItemMeta());
+        }
+    }
 
     @EventHandler
     @SuppressWarnings("ConstantConditions") // itemStack is null on some versions
@@ -83,6 +95,7 @@ public class OrbOfOrigin implements Listener {
         if (event.getClickedBlock() != null) {
             if (event.getClickedBlock().getType().isInteractable()) return;
         }
+        if (!event.getAction().isRightClick()) return;
         ItemStack item = event.getItem();
         if (item == null) return;
         ItemMeta meta = item.getItemMeta();

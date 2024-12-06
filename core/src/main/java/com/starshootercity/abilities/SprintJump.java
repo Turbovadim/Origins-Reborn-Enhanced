@@ -16,9 +16,9 @@ import java.util.List;
 public class SprintJump implements VisibleAbility, Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(),
-                    () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p,
+                    player -> {
                         if (player.isSprinting()) {
                             player.addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getJumpBoostEffect(), 5, 1, false, false));
                         }

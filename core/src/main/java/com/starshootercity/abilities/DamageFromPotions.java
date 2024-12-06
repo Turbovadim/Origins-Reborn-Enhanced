@@ -16,9 +16,9 @@ public class DamageFromPotions implements Ability, Listener {
 
     @EventHandler
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        AbilityRegister.runForAbility(event.getPlayer(), getKey(), () -> {
+        runForAbility(event.getPlayer(), player -> {
             if (event.getItem().getType() == Material.POTION) {
-                OriginsReborn.getNMSInvoker().dealFreezeDamage(event.getPlayer(), 2);
+                OriginsReborn.getNMSInvoker().dealFreezeDamage(player, 2);
             }
         });
     }

@@ -28,17 +28,18 @@ public class PackApplier implements Listener {
     }
 
     public static String getPackURL(Player player) {
-        String ver = getVersion(player);
-        return switch (ver) {
-            case "1.19.1-1.19.2", "1.19.1", "1.19.2" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.19.1-1.19.2.zip";
+        String[] ver = getVersion(player).split("-");
+        return switch (ver[ver.length-1]) {
+            case "1.19.1", "1.19.2" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.19.1-1.19.2.zip";
             case "1.19.3" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.19.3.zip";
             case "1.19.4" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.19.4.zip";
-            case "1.20", "1.20.1", "1.20-1.20.1" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20-1.20.1.zip";
+            case "1.20", "1.20.1" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20-1.20.1.zip";
             case "1.20.2" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.2.zip";
-            case "1.20.3", "1.20.4", "1.20.3-1.20.4" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.3-1.20.4.zip";
-            case "1.20.5", "1.20.6", "1.20.5-1.20.6" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.5-1.20.6.zip";
-            case "1.21", "1.21.1", "1.21-1.21.1" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.zip";
-            case "1.21.2", "1.21.3", "1.21.2-1.21.3" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.3.zip";
+            case "1.20.3", "1.20.4" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.3-1.20.4.zip";
+            case "1.20.5", "1.20.6" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.20.5-1.20.6.zip";
+            case "1.21", "1.21.1" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.zip";
+            case "1.21.2", "1.21.3" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.3.zip";
+            case "1.21.4" -> "https://github.com/cometcake575/Origins-Reborn/raw/main/packs/1.21.4.zip";
             default -> "https://github.com/cometcake575/Origins-Reborn/raw/main/src/main/Origins%20Pack.zip";
         };
     }

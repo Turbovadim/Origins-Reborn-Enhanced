@@ -32,39 +32,7 @@ public interface BreakSpeedModifierAbility extends Ability {
     BlockMiningContext provideContextFor(Player player);
     boolean shouldActivate(Player player);
 
-    class BlockMiningContext {
-        private final PotionEffect slowDigging;
-        private final PotionEffect fastDigging;
-        private final PotionEffect conduitPower;
-        private final ItemStack heldItem;
-        private final boolean underwater;
-        private final boolean aquaAffinity;
-        private final boolean onGround;
-        public BlockMiningContext(ItemStack heldItem, @Nullable PotionEffect slowDigging, @Nullable PotionEffect fastDigging, @Nullable PotionEffect conduitPower, boolean underwater, boolean aquaAffinity, boolean onGround) {
-            this.heldItem = heldItem;
-            this.slowDigging = slowDigging;
-            this.fastDigging = fastDigging;
-            this.conduitPower = conduitPower;
-            this.underwater = underwater;
-            this.aquaAffinity = aquaAffinity;
-            this.onGround = onGround;
-        }
-
-        public boolean isOnGround() {
-            return onGround;
-        }
-
-        public boolean hasAquaAffinity() {
-            return aquaAffinity;
-        }
-
-        public boolean isUnderwater() {
-            return underwater;
-        }
-
-        public ItemStack getHeldItem() {
-            return heldItem;
-        }
+    record BlockMiningContext(ItemStack heldItem, @Nullable PotionEffect slowDigging, @Nullable PotionEffect fastDigging, @Nullable PotionEffect conduitPower, boolean underwater, boolean aquaAffinity, boolean onGround) {
 
         public boolean hasDigSpeed() {
             return fastDigging != null || conduitPower != null;
@@ -91,7 +59,6 @@ public interface BreakSpeedModifierAbility extends Ability {
             return Math.max(i, j);
         }
     }
-
 
     class BreakSpeedModifierAbilityListener implements Listener {
         Random random = new Random();
@@ -131,7 +98,7 @@ public interface BreakSpeedModifierAbility extends Ability {
                                 if (random.nextDouble() <= 1d / unbreakingLevel) {
                                     itemDamage += 1;
                                 }
-                                if (event.getBlock().getDrops(context.getHeldItem()).isEmpty()) {
+                                if (event.getBlock().getDrops(context.heldItem()).isEmpty()) {
                                     if (random.nextDouble() <= 1d / unbreakingLevel) {
                                         itemDamage += 1;
                                     }
@@ -198,16 +165,16 @@ public interface BreakSpeedModifierAbility extends Ability {
         }
 
         private static float getBlockDamage(Block block, BreakSpeedModifierAbility.BlockMiningContext context, int time) {
-            return (float) (Math.round(getDestroySpeed(context, block.getType()) * time * 1000) / 1000) / (block.getDrops(context.getHeldItem()).isEmpty() ? 100 : 30);
+            return (float) (Math.round(getDestroySpeed(context, block.getType()) * time * 1000) / 1000) / (block.getDrops(context.heldItem()).isEmpty() ? 100 : 30);
         }
 
 
         public static float getDestroySpeed(BreakSpeedModifierAbility.BlockMiningContext context, Material blockType) {
             float f;
-                f = OriginsReborn.getNMSInvoker().getDestroySpeed(context.getHeldItem(), blockType);
+                f = OriginsReborn.getNMSInvoker().getDestroySpeed(context.heldItem(), blockType);
 
             if (f > 1.0F) {
-                ItemStack itemstack = context.getHeldItem();
+                ItemStack itemstack = context.heldItem();
                 int i = itemstack.getEnchantmentLevel(OriginsReborn.getNMSInvoker().getEfficiencyEnchantment());
 
                 if (i > 0 && itemstack.getType() != Material.AIR) {
@@ -231,11 +198,11 @@ public interface BreakSpeedModifierAbility extends Ability {
                 f *= f1;
             }
 
-            if (context.isUnderwater() && !context.hasAquaAffinity()) {
+            if (context.underwater() && !context.aquaAffinity()) {
                 f /= 5.0F;
             }
 
-            if (!context.isOnGround()) {
+            if (!context.onGround()) {
                 f /= 5.0F;
             }
 
@@ -244,7 +211,6 @@ public interface BreakSpeedModifierAbility extends Ability {
             return f / d;
         }
 
-        // ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK
         @EventHandler
         public void onBlockDamage(OriginsRebornBlockDamageAbortEvent event) {
             if (blockbreakingTasks.containsKey(event.getPlayer())) {

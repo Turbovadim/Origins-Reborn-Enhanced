@@ -52,8 +52,8 @@ public class Phasing implements DependantAbility, VisibleAbility, FlightAllowing
     @EventHandler
     @SuppressWarnings("deprecation")
     public void onServerTick(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 boolean isInBlock = isInBlock(player);
                 setPhasing(player, (player.isOnGround() && player.isSneaking() && !UNPHASEABLE.contains(player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType())) || (isInBlock));
                 OriginsReborn.getNMSInvoker().setNoPhysics(player, player.getGameMode() == GameMode.SPECTATOR || isPhasing.getOrDefault(player, false));
@@ -61,7 +61,7 @@ public class Phasing implements DependantAbility, VisibleAbility, FlightAllowing
                     player.setFallDistance(0);
                     if (player.getAllowFlight()) player.setFlying(true);
                 }
-            }, () -> {
+            }, player -> {
                 if (isPhasing.getOrDefault(player, false)) setPhasing(player, false);
             });
         }
@@ -115,13 +115,11 @@ public class Phasing implements DependantAbility, VisibleAbility, FlightAllowing
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
-                if (event.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION) {
-                    event.setCancelled(true);
-                }
-            });
-        }
+        runForAbility(event.getEntity(), player -> {
+            if (event.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION) {
+                event.setCancelled(true);
+            }
+        });
     }
 
     @Override
@@ -153,7 +151,7 @@ public class Phasing implements DependantAbility, VisibleAbility, FlightAllowing
     }
 
     private void setPhasing(Player player, boolean enabled) {
-        enabled = AbilityRegister.hasAbility(player, getKey()) && enabled;
+        enabled = hasAbility(player) && enabled;
         Block block = player.getEyeLocation().getBlock();
         if (block.getType().isCollidable() && enabled) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false));

@@ -45,8 +45,8 @@ public class WeakArms implements VisibleAbility, Listener {
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
         Attribute attribute = OriginsReborn.getNMSInvoker().getBlockBreakSpeedAttribute();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            AbilityRegister.runForAbility(player, getKey(), () -> {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            runForAbility(p, player -> {
                 Block target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
                 PotionEffect strength = player.getPotionEffect(OriginsReborn.getNMSInvoker().getStrengthEffect());
                 int sides = 0;

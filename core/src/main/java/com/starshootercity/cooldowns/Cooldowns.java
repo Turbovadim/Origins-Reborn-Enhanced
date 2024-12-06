@@ -10,7 +10,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -73,7 +72,7 @@ public class Cooldowns implements Listener {
             Entity vehicle = player.getVehicle();
             if (vehicle != null) {
                 if (vehicle instanceof LivingEntity entity) {
-                    AttributeInstance instance = entity.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+                    AttributeInstance instance = entity.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
                     if (instance != null) {
                         num += (int) (Math.floor((instance.getValue() - 1) / 10) - 1);
                     }

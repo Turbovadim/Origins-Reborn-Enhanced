@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+@SuppressWarnings("unused")
 public class ExprFlight extends SimpleExpression<Boolean> {
     static {
         Skript.registerExpression(ExprFlight.class, Boolean.class, ExpressionType.COMBINED, "[the] flight ability of %player%");
@@ -43,6 +44,7 @@ public class ExprFlight extends SimpleExpression<Boolean> {
     }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     public @NotNull String toString(@Nullable Event event, boolean b) {
         return "Example expression with expression player>: " + player.toString(event, b);
     }
