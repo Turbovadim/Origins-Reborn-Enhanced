@@ -8,6 +8,7 @@ import com.starshootercity.cooldowns.Cooldowns;
 import com.starshootercity.events.PlayerLeftClickEvent;
 import com.starshootercity.packetsenders.*;
 import com.starshootercity.skript.SkriptInitializer;
+import com.starshootercity.util.WorldGuardHook;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -278,9 +279,28 @@ public class OriginsReborn extends OriginsAddon {
         }
     }
 
+    private static boolean worldGuardHookInitialized;
+
+    public static boolean isWorldGuardHookInitialized() {
+        return worldGuardHookInitialized;
+    }
+
+    @Override
+    public void onLoad() {
+        try {
+            if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+                worldGuardHookInitialized = WorldGuardHook.tryInitialize();
+            }
+        }
+        catch (Throwable t) {
+            worldGuardHookInitialized = false;
+        }
+    }
+
     @Override
     public void onRegister() {
         instance = this;
+        if (worldGuardHookInitialized) WorldGuardHook.completeInitialize();
 
         ToggleableAbilities.initialize(this);
 

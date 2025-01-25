@@ -41,7 +41,7 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
 
     @Override
     public boolean canFly(Player player) {
-        return !player.isGliding();
+        return true;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
         runForAbility(event.getPlayer(), player -> {
             if (event.isFlying()) {
                 event.setCancelled(true);
-                player.setGliding(true);
+                player.setGliding(!player.isGliding());
             }
         });
     }

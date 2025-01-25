@@ -1,12 +1,5 @@
 package com.starshootercity.abilities;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
 import com.starshootercity.*;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.cooldowns.CooldownAbility;
@@ -14,7 +7,6 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -100,42 +92,8 @@ public class AbilityRegister {
      */
     @Deprecated
     public static boolean hasAbility(Player player, Key key, boolean ignoreOverrides) {
-        if (!ignoreOverrides) {
-            for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
-                OriginsAddon.State state = keyStateGetter.get(player, key);
-                if (state == OriginsAddon.State.DENY) return false;
-                else if (state == OriginsAddon.State.ALLOW) return true;
-            }
-        }
-
-        ConfigurationSection section = OriginsReborn.getInstance().getConfig().getConfigurationSection("prevent-abilities-in");
-        if (section != null) {
-            try {
-                Location loc = BukkitAdapter.adapt(player.getLocation());
-                RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-                RegionQuery query = container.createQuery();
-                ApplicableRegionSet set = query.getApplicableRegions(loc);
-                for (ProtectedRegion region : set) {
-                    for (String sectionKey : section.getKeys(false)) {
-                        if (!section.getStringList(sectionKey).contains(key.toString()) && !section.getStringList(sectionKey).contains("all"))
-                            continue;
-                        if (region.getId().equalsIgnoreCase(sectionKey)) {
-                            return false;
-                        }
-                    }
-                }
-            } catch (NoClassDefFoundError ignored) {}
-        }
-
-        List<Origin> origins = OriginSwapper.getOrigins(player);
-        boolean hasAbility = false;
-        for (Origin origin : origins) {
-            if (origin.hasAbility(key)) hasAbility = true;
-        }
-        if (abilityMap.get(key) instanceof DependantAbility dependantAbility) {
-            return hasAbility && ((dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR) == dependantAbility.getDependency().isEnabled(player));
-        }
-        return hasAbility;
+        if (!abilityMap.containsKey(key)) return false;
+        return abilityMap.get(key).hasAbility(player);
     }
 
     /**
@@ -164,8 +122,9 @@ public class AbilityRegister {
     }
 
 
-    public static boolean canFly(Player player) {
+    public static boolean canFly(Player player, boolean disabledWorld) {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) return true;
+        if (disabledWorld) return false;
         for (Ability ability : AbilityRegister.abilityMap.values()) {
             if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
                 if (ability.hasAbility(player) && flightAllowingAbility.canFly(player)) return true;
@@ -185,11 +144,12 @@ public class AbilityRegister {
         return false;
     }
 
-    public static void updateFlight(Player player) {
+    public static void updateFlight(Player player, boolean inDisabledWorld) {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) {
             player.setFlySpeed(0.1f);
             return;
         }
+        if (inDisabledWorld) return;
         TriState flyingFallDamage = TriState.FALSE;
         float speed = -1f;
         for (Ability ability : abilityMap.values()) {

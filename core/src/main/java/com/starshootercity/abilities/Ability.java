@@ -8,6 +8,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import com.starshootercity.*;
+import com.starshootercity.util.WorldGuardHook;
 import net.kyori.adventure.key.Key;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
@@ -35,15 +36,18 @@ public interface Ability {
     }
 
     default boolean hasAbility(Player player) {
+
         for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
             OriginsAddon.State state = keyStateGetter.get(player, getKey());
             if (state == OriginsAddon.State.DENY) return false;
             else if (state == OriginsAddon.State.ALLOW) return true;
         }
 
-        ConfigurationSection section = OriginsReborn.getInstance().getConfig().getConfigurationSection("prevent-abilities-in");
-        if (section != null) {
-            try {
+        if (OriginsReborn.isWorldGuardHookInitialized()) {
+            if (WorldGuardHook.isAbilityDisabled(player.getLocation(), this)) return false;
+
+            ConfigurationSection section = OriginsReborn.getInstance().getConfig().getConfigurationSection("prevent-abilities-in");
+            if (section != null) {
                 Location loc = BukkitAdapter.adapt(player.getLocation());
                 RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
                 RegionQuery query = container.createQuery();
@@ -57,7 +61,6 @@ public interface Ability {
                         }
                     }
                 }
-            } catch (NoClassDefFoundError ignored) {
             }
         }
 

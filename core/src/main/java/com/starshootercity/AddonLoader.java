@@ -4,6 +4,7 @@ import com.starshootercity.events.PlayerSwapOriginEvent;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -26,6 +27,7 @@ public class AddonLoader {
     public static final List<OriginsAddon> registeredAddons = new ArrayList<>();
     public static Map<String, List<File>> originFiles = new HashMap<>();
     public static List<String> layers = new ArrayList<>();
+    public static Map<String, NamespacedKey> layerKeys = new HashMap<>();
 
     private static final Random random = new Random();
 
@@ -205,9 +207,10 @@ public class AddonLoader {
         });
     }
 
-    public static void registerLayer(String layer, int priority) {
+    public static void registerLayer(String layer, int priority, OriginsAddon addon) {
         if (layers.contains(layer)) return;
         layers.add(layer);
+        layerKeys.put(layer, new NamespacedKey(addon, layer.toLowerCase().replace(" ", "_")));
 
         if (!OriginsReborn.getInstance().getConfig().contains("origin-selection.default-origin.%s".formatted(layer))) {
             OriginsReborn.getInstance().getConfig().set("origin-selection.default-origin.%s".formatted(layer), "NONE");
@@ -289,7 +292,7 @@ public class AddonLoader {
         if (cs != null) for (String s : cs.getValues(false).keySet()) {
             extraLayerPriority = Math.min(extraLayerPriority, cs.getInt(s)-1);
         }
-        registerLayer(layer, extraLayerPriority);
+        registerLayer(layer, extraLayerPriority, addon);
         String displayName;
         if (object.has("name")) displayName = object.getString("name");
         else displayName = formattedName.toString();

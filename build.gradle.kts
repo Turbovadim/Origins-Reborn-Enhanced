@@ -1,11 +1,11 @@
 plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("io.papermc.paperweight.userdev") version "1.7.1" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.11" apply false
 }
 
 group = "com.starshootercity"
-version = "2.4.5"
+version = "2.4.9"
 
 repositories {
     mavenCentral()
@@ -13,12 +13,10 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.stleary:JSON-java:20231013")
+    implementation("com.github.stleary:JSON-java:20241224")
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
-    implementation(project(":1.17.1", "reobf"))
-    implementation(project(":1.18", "reobf"))
     implementation(project(":1.18.1", "reobf"))
     implementation(project(":1.18.2", "reobf"))
     implementation(project(":1.19", "reobf"))

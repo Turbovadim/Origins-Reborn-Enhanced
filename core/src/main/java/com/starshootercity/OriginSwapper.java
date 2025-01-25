@@ -25,6 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -33,6 +34,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataAdapterContext;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.intellij.lang.annotations.Subst;
@@ -501,11 +503,20 @@ public class OriginSwapper implements Listener {
     }
 
     @EventHandler
+    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> resetAttributes(event.getPlayer()), 5);
+    }
+
+    @EventHandler
     @SuppressWarnings("deprecation")
     public void onPlayerJoin(PlayerJoinEvent event) {
+        loadOrigins(event.getPlayer());
         resetAttributes(event.getPlayer());
         lastJoinedTick.put(event.getPlayer(), Bukkit.getCurrentTick());
         for (String layer : AddonLoader.layers) {
+            if (event.getPlayer().getOpenInventory().getType() == InventoryType.CHEST) {
+                continue;
+            }
             Origin origin = getOrigin(event.getPlayer(), layer);
             if (origin != null) {
                 if (origin.getTeam() == null) return;
@@ -525,6 +536,7 @@ public class OriginSwapper implements Listener {
     }
 
     public static void resetAttributes(Player player) {
+        final double[] health = {player.getHealth()};
         for (Attribute attribute : Attribute.values()) {
             AttributeInstance instance = player.getAttribute(attribute);
             if (instance == null) continue;
@@ -532,6 +544,13 @@ public class OriginSwapper implements Listener {
                 instance.removeModifier(modifier);
             }
         }
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
+            AttributeInstance mh = player.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
+            if (mh == null) return;
+            double maxHealth = mh.getValue();
+            health[0] = Math.min(maxHealth, health[0]);
+            player.setHealth(health[0]);
+        }, 10);
     }
 
     private static final Map<Player, PlayerSwapOriginEvent.SwapReason> lastSwapReasons = new HashMap<>();
@@ -544,11 +563,15 @@ public class OriginSwapper implements Listener {
             int delay = OriginsReborn.getInstance().getConfig().getInt("origin-selection.delay-before-required", 0);
             if (!lastJoinedTick.containsKey(player)) lastJoinedTick.put(player, event.getTickNumber());
             if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) continue;
-            if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL)))
+            if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL))) {
+                player.setAllowFlight(AbilityRegister.canFly(player, true));
+                AbilityRegister.updateFlight(player, true);
+                resetAttributes(player);
                 continue;
+            }
             if (!OriginsReborn.getInstance().getConfig().getBoolean("misc-settings.disable-flight-stuff")) {
-                player.setAllowFlight(AbilityRegister.canFly(player));
-                AbilityRegister.updateFlight(player);
+                player.setAllowFlight(AbilityRegister.canFly(player, false));
+                AbilityRegister.updateFlight(player, false);
             }
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
@@ -668,6 +691,17 @@ public class OriginSwapper implements Listener {
     }
 
     public static @Nullable Origin getOrigin(Player player, String layer) {
+        if (player.getPersistentDataContainer().has(originKey, PersistentDataType.STRING)) {
+            return getStoredOrigin(player, layer);
+        }
+        PersistentDataContainer pdc = player.getPersistentDataContainer().get(originKey, PersistentDataType.TAG_CONTAINER);
+        if (pdc == null) return null;
+        String name = pdc.get(AddonLoader.layerKeys.get(layer), PersistentDataType.STRING);
+        if (name == null) return null;
+        return AddonLoader.getOrigin(name);
+    }
+
+    public static @Nullable Origin getStoredOrigin(Player player, String layer) {
         String oldOrigin = originFileConfiguration.getString(player.getUniqueId().toString(), "null");
         if (!oldOrigin.equals("null") && layer.equals("origin")) {
             if (!oldOrigin.contains("MemorySection")) {
@@ -677,6 +711,18 @@ public class OriginSwapper implements Listener {
         }
         String name = originFileConfiguration.getString(player.getUniqueId() + "." + layer, "null");
         return AddonLoader.getOrigin(name);
+    }
+
+    public static void loadOrigins(Player player) {
+        player.getPersistentDataContainer().remove(originKey);
+        for (String layer : AddonLoader.layers) {
+            Origin origin = getStoredOrigin(player, layer);
+            if (origin == null) continue;
+            PersistentDataContainer pdc = player.getPersistentDataContainer().get(originKey, PersistentDataType.TAG_CONTAINER);
+            if (pdc == null) pdc = player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer();
+            pdc.set(AddonLoader.layerKeys.get(layer), PersistentDataType.STRING, origin.getName().toLowerCase());
+            player.getPersistentDataContainer().set(originKey, PersistentDataType.TAG_CONTAINER, pdc);
+        }
     }
 
     public static List<Origin> getOrigins(Player player) {
@@ -721,6 +767,7 @@ public class OriginSwapper implements Listener {
         usedOriginFileConfiguration.set(player.getUniqueId().toString(), usedOrigins);
         saveUsedOrigins();
         resetPlayer(player, swapOriginEvent.isResetPlayer());
+        loadOrigins(player);
     }
 
     private static File originFile;

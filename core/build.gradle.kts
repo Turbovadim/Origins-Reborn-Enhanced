@@ -27,7 +27,7 @@ dependencies {
     compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")
     compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")
     compileOnly("me.clip:placeholderapi:2.11.5")
-    compileOnly("com.github.stleary:JSON-java:20231013")
+    compileOnly("com.github.stleary:JSON-java:20241224")
     compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
     compileOnly(project(":version"))

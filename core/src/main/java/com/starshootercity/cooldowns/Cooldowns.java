@@ -78,7 +78,7 @@ public class Cooldowns implements Listener {
                     }
                 }
             }
-            if (player.getRemainingAir() < player.getMaximumAir()) num++;
+            if (player.getRemainingAir() < player.getMaximumAir() || OriginsReborn.getNMSInvoker().isUnderWater(player)) num++;
             int i = 0;
             for (NamespacedKey key : getCooldowns(player)) {
                 CooldownInfo info = registeredCooldowns.get(key);

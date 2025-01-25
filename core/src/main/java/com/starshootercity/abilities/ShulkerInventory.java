@@ -3,6 +3,8 @@ package com.starshootercity.abilities;
 import com.starshootercity.AddonLoader;
 import com.starshootercity.OriginSwapper;
 import com.starshootercity.OriginsReborn;
+import com.starshootercity.ShortcutUtils;
+import com.starshootercity.events.PlayerLeftClickEvent;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -64,6 +66,23 @@ public class ShulkerInventory implements VisibleAbility, Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         event.getPlayer().getPersistentDataContainer().set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
+    }
+
+    @EventHandler
+    public void onPlayerLeftClick(PlayerLeftClickEvent event) {
+        if (event.hasBlock()) return;
+        if (event.hasItem()) return;
+        if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) {
+            runForAbility(event.getPlayer(), player -> {
+                Inventory inventory = Bukkit.createInventory(player, InventoryType.DISPENSER, Component.text(AddonLoader.getTextFor("container.shulker_inventory_power", "Shulker Inventory")));
+                player.openInventory(inventory);
+                for (int i = 0; i < 9; i++) {
+                    ItemStack item = getInventoriesConfig().getItemStack("%s.%s".formatted(player.getUniqueId().toString(), i));
+                    if (item != null) inventory.setItem(i, item);
+                }
+                player.getPersistentDataContainer().set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
+            });
+        }
     }
 
     @EventHandler
