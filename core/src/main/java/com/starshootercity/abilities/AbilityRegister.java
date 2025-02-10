@@ -3,6 +3,7 @@ package com.starshootercity.abilities;
 import com.starshootercity.*;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.cooldowns.CooldownAbility;
+import com.starshootercity.packetsenders.NMSInvoker;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 import org.bukkit.Bukkit;
@@ -31,35 +32,53 @@ public class AbilityRegister {
     public static Map<Key, DependencyAbility> dependencyAbilityMap = new HashMap<>();
     public static Map<Key, List<MultiAbility>> multiAbilityMap = new HashMap<>();
 
+    public static ConfigOptions options = ConfigOptions.getInstance();
+    public static OriginsReborn origins = OriginsReborn.getInstance();
+    public static NMSInvoker nmsInvoker = OriginsReborn.getNMSInvoker();
+
     public static void registerAbility(Ability ability, JavaPlugin instance) {
+        // Регистрируем способность-зависимость, если она реализует DependencyAbility
         if (ability instanceof DependencyAbility dependencyAbility) {
             dependencyAbilityMap.put(ability.getKey(), dependencyAbility);
         }
+
+        // Регистрируем мультиспособности, используя computeIfAbsent для оптимизации работы с картой
         if (ability instanceof MultiAbility multiAbility) {
             for (Ability a : multiAbility.getAbilities()) {
-                List<MultiAbility> abilities = multiAbilityMap.getOrDefault(a.getKey(), new ArrayList<>());
-                abilities.add(multiAbility);
-                multiAbilityMap.put(a.getKey(), abilities);
+                multiAbilityMap.computeIfAbsent(a.getKey(), k -> new ArrayList<>()).add(multiAbility);
             }
         }
+
+        // Регистрируем способность с кулдауном
         if (ability instanceof CooldownAbility cooldownAbility) {
             OriginsReborn.getCooldowns().registerCooldown(instance, cooldownAbility.getCooldownKey(), cooldownAbility.getCooldownInfo());
         }
+
+        // Если способность также является Listener, регистрируем её для получения событий
         if (ability instanceof Listener listener) {
             Bukkit.getPluginManager().registerEvents(listener, instance);
         }
+
+        // Если способность изменяет атрибуты, проверяем конфигурационный файл и обновляем его при необходимости
         if (ability instanceof AttributeModifierAbility ama) {
+            // Формируем ключи для value и operation
+            String formattedValueKey = "%s.value".formatted(ama.getKey());
+            String formattedOperationKey = "%s.operation".formatted(ama.getKey());
+            boolean changed = false;
+
+            // Если конфигурация не содержит запись по ключу (используем toString() для сравнения), задаём значения по умолчанию
             if (!attributeModifierAbilityFileConfig.contains(ama.getKey().toString())) {
-                attributeModifierAbilityFileConfig.set("%s.value".formatted(ama.getKey()), "x");
-                attributeModifierAbilityFileConfig.set("%s.operation".formatted(ama.getKey()), "default");
-                try {
-                    attributeModifierAbilityFileConfig.save(attributeModifierAbilityFile);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                attributeModifierAbilityFileConfig.set(formattedValueKey, "x");
+                attributeModifierAbilityFileConfig.set(formattedOperationKey, "default");
+                changed = true;
             }
-            if (attributeModifierAbilityFileConfig.get("%s.value".formatted(ama.getKey()), "default").equals("default")) {
-                attributeModifierAbilityFileConfig.set("%s.value".formatted(ama.getKey()), "x");
+            // Если по сформированному ключу значение равно "default", обновляем его
+            if ("default".equals(attributeModifierAbilityFileConfig.get(formattedValueKey, "default"))) {
+                attributeModifierAbilityFileConfig.set(formattedValueKey, "x");
+                changed = true;
+            }
+            // Если в конфигурации произошли изменения, сохраняем файл один раз
+            if (changed) {
                 try {
                     attributeModifierAbilityFileConfig.save(attributeModifierAbilityFile);
                 } catch (IOException e) {
@@ -67,6 +86,8 @@ public class AbilityRegister {
                 }
             }
         }
+
+        // Регистрируем способность в основной карте способностей
         abilityMap.put(ability.getKey(), ability);
     }
 
@@ -103,7 +124,7 @@ public class AbilityRegister {
     public static void runForAbility(Entity entity, Key key, Runnable runnable, Runnable other) {
         if (entity == null) return;
         String worldId = entity.getWorld().getName();
-        if (OriginsReborn.getInstance().getConfig().getStringList("worlds.disabled-worlds").contains(worldId)) return;
+        if (options.getWorldsDisabledWorlds().contains(worldId)) return;
         if (entity instanceof Player player) {
             if (hasAbility(player, key)) {
                 runnable.run();
@@ -145,63 +166,87 @@ public class AbilityRegister {
     }
 
     public static void updateFlight(Player player, boolean inDisabledWorld) {
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || FlightToggleCommand.canFly(player)) {
+        // Если игрок в творческом или режиме наблюдения, либо включена возможность летать через команду — задаём стандартную скорость.
+        if (
+            player.getGameMode() == GameMode.CREATIVE ||
+            player.getGameMode() == GameMode.SPECTATOR ||
+            FlightToggleCommand.canFly(player)
+        ) {
             player.setFlySpeed(0.1f);
             return;
         }
         if (inDisabledWorld) return;
+
         TriState flyingFallDamage = TriState.FALSE;
-        float speed = -1f;
+        float speed = -1f; // Используем -1 как индикатор отсутствия способности
+
+        // Перебираем все способности из abilityMap
         for (Ability ability : abilityMap.values()) {
-            if (ability instanceof FlightAllowingAbility flightAllowingAbility) {
-                if (ability.hasAbility(player) && flightAllowingAbility.canFly(player)) {
-                    float abilitySpeed = flightAllowingAbility.getFlightSpeed(player);
-                    speed = speed == -1 ? abilitySpeed : Math.min(speed, abilitySpeed);
-                    if (flightAllowingAbility.getFlyingFallDamage(player) == TriState.TRUE) {
-                        flyingFallDamage = TriState.TRUE;
-                    }
-                }
+            if (!(ability instanceof FlightAllowingAbility flightAllowingAbility)) continue;
+            // Если у игрока нет способности или он не может летать по данной способности, пропускаем её
+            if (!ability.hasAbility(player) || !flightAllowingAbility.canFly(player)) continue;
+
+            // Получаем скорость для данной способности и выбираем минимальную (если их несколько)
+            float abilitySpeed = flightAllowingAbility.getFlightSpeed(player);
+            speed = (speed < 0f) ? abilitySpeed : Math.min(speed, abilitySpeed);
+
+            // Если хотя бы одна способность требует TRUE для урона при падении — запоминаем это
+            if (flightAllowingAbility.getFlyingFallDamage(player) == TriState.TRUE) {
+                flyingFallDamage = TriState.TRUE;
             }
         }
-        OriginsReborn.getNMSInvoker().setFlyingFallDamage(player, flyingFallDamage);
-        player.setFlySpeed(speed == -1 ? 0 : speed);
+
+        // Устанавливаем урон при падении и скорость полёта
+        nmsInvoker.setFlyingFallDamage(player, flyingFallDamage);
+        player.setFlySpeed(speed < 0f ? 0 : speed);
     }
+
 
     public static void updateEntity(Player player, Entity target) {
         byte data = 0;
+
+        // Если у объекта есть огненные тики, устанавливаем бит 0 (0x01)
         if (target.getFireTicks() > 0) {
-            data += 0x01;
+            data |= 0x01;
         }
+        // Если объект подсвечивается, устанавливаем бит 6 (0x40)
         if (target.isGlowing()) {
-            data += 0x40;
+            data |= 0x40;
         }
-        if (target instanceof LivingEntity entity) {
-            if (entity.isInvisible()) data += 0x20;
+        // Если объект – LivingEntity и невидим, устанавливаем бит 5 (0x20)
+        if (target instanceof LivingEntity living && living.isInvisible()) {
+            data |= 0x20;
         }
+        // Если объект – Player, проверяем дополнительные состояния
         if (target instanceof Player targetPlayer) {
             if (targetPlayer.isSneaking()) {
-                data += 0x02;
+                data |= 0x02;
             }
             if (targetPlayer.isSprinting()) {
-                data += 0x08;
+                data |= 0x08;
             }
             if (targetPlayer.isSwimming()) {
-                data += 0x10;
+                data |= 0x10;
             }
             if (targetPlayer.isGliding()) {
-                data += (byte) 0x80;
+                data |= (byte) 0x80;
             }
-            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+
+            // Кэшируем инвентарь игрока, чтобы не запрашивать его для каждого слота
+            var inventory = targetPlayer.getInventory();
+            for (EquipmentSlot slot : EquipmentSlot.values()) {
                 try {
-                    ItemStack item = targetPlayer.getInventory().getItem(equipmentSlot);
+                    ItemStack item = inventory.getItem(slot);
                     if (item != null) {
-                        player.sendEquipmentChange(targetPlayer, equipmentSlot, item);
+                        player.sendEquipmentChange(targetPlayer, slot, item);
                     }
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                    // Если слот не поддерживается, пропускаем его
+                }
             }
         }
 
-        OriginsReborn.getNMSInvoker().sendEntityData(player, target, data);
+        nmsInvoker.sendEntityData(player, target, data);
     }
 
     public static FileConfiguration attributeModifierAbilityFileConfig;
@@ -209,10 +254,10 @@ public class AbilityRegister {
     private static File attributeModifierAbilityFile;
 
     public static void setupAMAF() {
-        attributeModifierAbilityFile = new File(OriginsReborn.getInstance().getDataFolder(), "attribute-modifier-ability-config.yml");
+        attributeModifierAbilityFile = new File(origins.getDataFolder(), "attribute-modifier-ability-config.yml");
         if (!attributeModifierAbilityFile.exists()) {
             boolean ignored = attributeModifierAbilityFile.getParentFile().mkdirs();
-            OriginsReborn.getInstance().saveResource("attribute-modifier-ability-config.yml", false);
+            origins.saveResource("attribute-modifier-ability-config.yml", false);
         }
 
         attributeModifierAbilityFileConfig = new YamlConfiguration();

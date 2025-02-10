@@ -15,7 +15,7 @@ public class WidthGetter {
                 return i;
             }
         }
-        System.out.println(c);
+//        System.out.println(c);
         return 0;
     }
 

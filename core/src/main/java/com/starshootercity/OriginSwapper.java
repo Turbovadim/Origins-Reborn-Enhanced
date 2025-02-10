@@ -1,11 +1,11 @@
 package com.starshootercity;
 
 import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.starshootercity.abilities.*;
 import com.starshootercity.commands.OriginCommand;
 import com.starshootercity.events.PlayerSwapOriginEvent;
 import com.starshootercity.geysermc.GeyserSwapper;
+import com.starshootercity.packetsenders.NMSInvoker;
 import fr.xephi.authme.api.v3.AuthMeApi;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -37,6 +37,7 @@ import org.bukkit.persistence.PersistentDataAdapterContext;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,10 @@ public class OriginSwapper implements Listener {
     private final static NamespacedKey displayOnlyKey = new NamespacedKey(OriginsReborn.getInstance(), "display-only");
     private final static NamespacedKey closeKey = new NamespacedKey(OriginsReborn.getInstance(), "close");
     private final static Random random = new Random();
+
+    public static ConfigOptions options = ConfigOptions.getInstance();
+    public static OriginsReborn origins = OriginsReborn.getInstance();
+    public static NMSInvoker nmsInvoker = OriginsReborn.getNMSInvoker();
 
     public static String getInverse(String string) {
         StringBuilder result = new StringBuilder();
@@ -100,7 +105,7 @@ public class OriginSwapper implements Listener {
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, int slot, int scrollAmount, boolean cost, boolean displayOnly, String layer) {
         if (shouldDisallowSelection(player, reason)) return;
         if (reason == PlayerSwapOriginEvent.SwapReason.INITIAL) {
-            String def = OriginsReborn.getInstance().getConfig().getString("origin-selection.default_origin", "NONE");
+            String def = options.getDefaultOrigin();
             Origin defaultOrigin = AddonLoader.getOriginByFilename(def);
             if (defaultOrigin != null) {
                 setOrigin(player, defaultOrigin, reason, false, layer);
@@ -108,7 +113,8 @@ public class OriginSwapper implements Listener {
             }
         }
         lastSwapReasons.put(player, reason);
-        boolean enableRandom = OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.random-option.enabled");
+        boolean enableRandom = options.isRandomOptionEnabled();
+
         if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly, layer)) {
             if (AddonLoader.getOrigins(layer).isEmpty()) return;
             List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
@@ -123,10 +129,12 @@ public class OriginSwapper implements Listener {
             String name;
             String nameForDisplay;
             char impact;
-            int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.default-cost", 1000);
+            int amount = options.getSwapCommandVaultDefaultCost();
+
             LineData data;
             if (slot == origins.size()) {
-                List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+                List<String> excludedOrigins = options.getRandomOptionExclude();
+
                 List<String> excludedOriginNames = new ArrayList<>();
                 for (String s : excludedOrigins) {
                     Origin origin = AddonLoader.getOriginByFilename(s);
@@ -163,7 +171,7 @@ public class OriginSwapper implements Listener {
                 compressedName.append(c);
                 compressedName.append('\uF000');
             }
-            Component background = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.background", "")), Key.key("minecraft:default"));
+            Component background = applyFont(ShortcutUtils.getColored(options.getScreenTitleBackground()), Key.key("minecraft:default"));
             Component component = applyFont(Component.text("\uF000\uE000\uF001\uE001\uF002" + impact),
                     Key.key("minecraft:origin_selector"))
                     .color(NamedTextColor.WHITE)
@@ -177,74 +185,79 @@ public class OriginSwapper implements Listener {
             for (Component c : data.getLines(scrollAmount)) {
                 component = component.append(c);
             }
-            Component prefix = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.prefix", "")), Key.key("minecraft:default"));
-            Component suffix = applyFont(ShortcutUtils.getColored(OriginsReborn.getInstance().getConfig().getString("origin-selection.screen-title.suffix", "")), Key.key("minecraft:default"));
+            Component prefix = applyFont(ShortcutUtils.getColored(options.getScreenTitlePrefix()), Key.key("minecraft:default"));
+            Component suffix = applyFont(ShortcutUtils.getColored(options.getScreenTitleSuffix()), Key.key("minecraft:default"));
             Inventory swapperInventory = Bukkit.createInventory(null, 54,
                     prefix.append(component).append(suffix)
             );
             ItemMeta meta = icon.getItemMeta();
-            meta.getPersistentDataContainer().set(originKey, PersistentDataType.STRING, name.toLowerCase());
+            PersistentDataContainer container = meta.getPersistentDataContainer();
+            container.set(originKey, PersistentDataType.STRING, name.toLowerCase());
             if (meta instanceof SkullMeta skullMeta) {
                 skullMeta.setOwningPlayer(player);
             }
-            meta.getPersistentDataContainer().set(displayKey, BooleanPDT.BOOLEAN, true);
-            meta.getPersistentDataContainer().set(swapTypeKey, PersistentDataType.STRING, reason.getReason());
-            meta.getPersistentDataContainer().set(layerKey, PersistentDataType.STRING, layer);
+            container.set(displayKey, BooleanPDT.BOOLEAN, true);
+            container.set(swapTypeKey, PersistentDataType.STRING, reason.getReason());
+            container.set(layerKey, PersistentDataType.STRING, layer);
             icon.setItemMeta(meta);
             swapperInventory.setItem(1, icon);
             ItemStack confirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemStack invisibleConfirm = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemMeta confirmMeta = confirm.getItemMeta();
+            PersistentDataContainer confirmContainer = confirmMeta.getPersistentDataContainer();
             ItemMeta invisibleConfirmMeta = invisibleConfirm.getItemMeta();
+            PersistentDataContainer invisibleConfirmContainer = invisibleConfirmMeta.getPersistentDataContainer();
 
             confirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            confirmMeta = OriginsReborn.getNMSInvoker().setCustomModelData(confirmMeta, 5);
-            if (!displayOnly) confirmMeta.getPersistentDataContainer().set(confirmKey, BooleanPDT.BOOLEAN, true);
-            else confirmMeta.getPersistentDataContainer().set(closeKey, BooleanPDT.BOOLEAN, true);
+            confirmMeta = nmsInvoker.setCustomModelData(confirmMeta, 5);
+            if (!displayOnly) confirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true);
+            else confirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true);
 
             invisibleConfirmMeta.displayName(Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
-            invisibleConfirmMeta = OriginsReborn.getNMSInvoker().setCustomModelData(invisibleConfirmMeta, 6);
-            if (!displayOnly) invisibleConfirmMeta.getPersistentDataContainer().set(confirmKey, BooleanPDT.BOOLEAN, true);
-            else invisibleConfirmMeta.getPersistentDataContainer().set(closeKey, BooleanPDT.BOOLEAN, true);
+            invisibleConfirmMeta = nmsInvoker.setCustomModelData(invisibleConfirmMeta, 6);
+            if (!displayOnly) invisibleConfirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true);
+            else invisibleConfirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true);
 
-            if (amount != 0 && cost && !player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass"))) {
+            if (amount != 0 && cost && !player.hasPermission(options.getSwapCommandVaultBypassPermission())) {
                 boolean go = true;
                 if (OriginsReborn.getInstance().getConfig().getBoolean("swap-command.vault.permanent-purchases")) {
                     go = !getUsedOriginFileConfiguration().getStringList(player.getUniqueId().toString()).contains(name);
                 }
                 if (go) {
-                    String symbol = OriginsReborn.getInstance().getConfig().getString("swap-command.vault.currency-symbol", "$");
+                    String symbol = options.getSwapCommandVaultCurrencySymbol();
                     List<Component> costsCurrency = List.of(
                             Component.text((OriginsReborn.getInstance().getEconomy().has(player, amount) ? "This will cost %s%s of your balance!" : "You need at least %s%s in your balance to do this!").formatted(symbol, amount))
                     );
                     confirmMeta.lore(costsCurrency);
                     invisibleConfirmMeta.lore(costsCurrency);
-                    confirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
-                    invisibleConfirmMeta.getPersistentDataContainer().set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
+                    confirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
+                    invisibleConfirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, amount);
                 }
             }
 
             ItemStack up = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemStack down = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
             ItemMeta upMeta = up.getItemMeta();
+            PersistentDataContainer upContainer = upMeta.getPersistentDataContainer();
             ItemMeta downMeta = down.getItemMeta();
+            PersistentDataContainer downContainer = downMeta.getPersistentDataContainer();
 
-            int scrollSize = OriginsReborn.getInstance().getConfig().getInt("origin-selection.scroll-amount", 1);
+            int scrollSize = options.getOriginSelectionScrollAmount();
 
             upMeta.displayName(Component.text("Up")
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
             if (scrollAmount != 0) {
-                upMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-                upMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
+                upContainer.set(pageSetKey, PersistentDataType.INTEGER, slot);
+                upContainer.set(pageScrollKey, PersistentDataType.INTEGER, Math.max(scrollAmount - scrollSize, 0));
             }
-            upMeta = OriginsReborn.getNMSInvoker().setCustomModelData(upMeta, 3 + (scrollAmount == 0 ? 6 : 0));
-            upMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
-            upMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
+            upMeta = nmsInvoker.setCustomModelData(upMeta, 3 + (scrollAmount == 0 ? 6 : 0));
+            upContainer.set(costKey, BooleanPDT.BOOLEAN, cost);
+            upContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
 
 
             int size = data.lines.size() - scrollAmount - 6;
@@ -254,12 +267,12 @@ public class OriginSwapper implements Listener {
                     .color(NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false));
             if (canGoDown) {
-                downMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot);
-                downMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
+                downContainer.set(pageSetKey, PersistentDataType.INTEGER, slot);
+                downContainer.set(pageScrollKey, PersistentDataType.INTEGER, Math.min(scrollAmount + scrollSize, scrollAmount + size));
             }
-            downMeta = OriginsReborn.getNMSInvoker().setCustomModelData(downMeta, 4 + (!canGoDown ? 6 : 0));
-            downMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
-            downMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
+            downMeta = nmsInvoker.setCustomModelData(downMeta, 4 + (!canGoDown ? 6 : 0));
+            downContainer.set(costKey, BooleanPDT.BOOLEAN, cost);
+            downContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly);
 
 
             up.setItemMeta(upMeta);
@@ -272,25 +285,28 @@ public class OriginSwapper implements Listener {
                 ItemStack left = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
                 ItemStack right = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
                 ItemMeta leftMeta = left.getItemMeta();
+                PersistentDataContainer leftContainer = leftMeta.getPersistentDataContainer();
                 ItemMeta rightMeta = right.getItemMeta();
+                PersistentDataContainer rightContainer = rightMeta.getPersistentDataContainer();
+
 
                 leftMeta.displayName(Component.text("Previous origin")
                         .color(NamedTextColor.WHITE)
                         .decoration(TextDecoration.ITALIC, false));
-                leftMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
-                leftMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-                leftMeta = OriginsReborn.getNMSInvoker().setCustomModelData(leftMeta, 1);
-                leftMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
-                leftMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
+                leftContainer.set(pageSetKey, PersistentDataType.INTEGER, slot - 1);
+                leftContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0);
+                leftMeta = nmsInvoker.setCustomModelData(leftMeta, 1);
+                leftContainer.set(costKey, BooleanPDT.BOOLEAN, cost);
+                leftContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
 
                 rightMeta.displayName(Component.text("Next origin")
                         .color(NamedTextColor.WHITE)
                         .decoration(TextDecoration.ITALIC, false));
-                rightMeta.getPersistentDataContainer().set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
-                rightMeta.getPersistentDataContainer().set(pageScrollKey, PersistentDataType.INTEGER, 0);
-                rightMeta = OriginsReborn.getNMSInvoker().setCustomModelData(rightMeta, 2);
-                rightMeta.getPersistentDataContainer().set(costKey, BooleanPDT.BOOLEAN, cost);
-                rightMeta.getPersistentDataContainer().set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
+                rightContainer.set(pageSetKey, PersistentDataType.INTEGER, slot + 1);
+                rightContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0);
+                rightMeta = nmsInvoker.setCustomModelData(rightMeta, 2);
+                rightContainer.set(costKey, BooleanPDT.BOOLEAN, cost);
+                rightContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false);
 
 
                 left.setItemMeta(leftMeta);
@@ -317,38 +333,43 @@ public class OriginSwapper implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         ItemStack item = event.getWhoClicked().getOpenInventory().getItem(1);
         if (item != null) {
-            if (item.getItemMeta() == null) return;
-            if (item.getItemMeta().getPersistentDataContainer().has(displayKey, BooleanPDT.BOOLEAN)) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta == null) return;
+            PersistentDataContainer itemContainer = meta.getPersistentDataContainer();
+            if (itemContainer.has(displayKey, BooleanPDT.BOOLEAN)) {
                 event.setCancelled(true);
             }
-            String layer = item.getItemMeta().getPersistentDataContainer().getOrDefault(layerKey, PersistentDataType.STRING, "origin");
+            String layer = itemContainer.getOrDefault(layerKey, PersistentDataType.STRING, "origin");
             if (event.getWhoClicked() instanceof Player player) {
                 ItemStack currentItem = event.getCurrentItem();
                 if (currentItem == null || currentItem.getItemMeta() == null) return;
-                Integer page = currentItem.getItemMeta().getPersistentDataContainer().get(pageSetKey, PersistentDataType.INTEGER);
+                ItemMeta currentItemMeta = currentItem.getItemMeta();
+                PersistentDataContainer currentItemContainer = currentItemMeta.getPersistentDataContainer();
+                Integer page = currentItemContainer.get(pageSetKey, PersistentDataType.INTEGER);
                 if (page != null) {
-                    boolean cost = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(costKey, BooleanPDT.BOOLEAN, false);
-                    boolean allowUnchoosable = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(displayOnlyKey, BooleanPDT.BOOLEAN, false);
-                    Integer scroll = currentItem.getItemMeta().getPersistentDataContainer().get(pageScrollKey, PersistentDataType.INTEGER);
+                    boolean cost = currentItemContainer.getOrDefault(costKey, BooleanPDT.BOOLEAN, false);
+                    boolean allowUnchoosable = currentItemContainer.getOrDefault(displayOnlyKey, BooleanPDT.BOOLEAN, false);
+                    Integer scroll = currentItemContainer.get(pageScrollKey, PersistentDataType.INTEGER);
                     if (scroll == null) return;
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1, 1);
                     openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable, layer);
                 }
-                if (currentItem.getItemMeta().getPersistentDataContainer().has(confirmKey, BooleanPDT.BOOLEAN)) {
-                    int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
-                    if (!player.hasPermission(OriginsReborn.getInstance().getConfig().getString("swap-command.vault.bypass-permission", "originsreborn.costbypass")) && currentItem.getItemMeta().getPersistentDataContainer().has(costsCurrencyKey, PersistentDataType.INTEGER)) {
-                        amount = currentItem.getItemMeta().getPersistentDataContainer().getOrDefault(costsCurrencyKey, PersistentDataType.INTEGER, amount);
+                if (currentItemContainer.has(confirmKey, BooleanPDT.BOOLEAN)) {
+                    int amount = options.getSwapCommandVaultCost();
+                    if (!player.hasPermission(options.getSwapCommandVaultBypassPermission()) && currentItemContainer.has(costsCurrencyKey, PersistentDataType.INTEGER)) {
+                        amount = currentItemContainer.getOrDefault(costsCurrencyKey, PersistentDataType.INTEGER, amount);
                         if (!OriginsReborn.getInstance().getEconomy().has(player, amount)) {
                             return;
                         } else {
-                            OriginsReborn.getInstance().getEconomy().withdrawPlayer(player, amount);
+                            origins.getEconomy().withdrawPlayer(player, amount);
                         }
                     }
                     String originName = item.getItemMeta().getPersistentDataContainer().get(originKey, PersistentDataType.STRING);
                     if (originName == null) return;
                     Origin origin;
                     if (originName.equalsIgnoreCase("random")) {
-                        List<String> excludedOrigins = OriginsReborn.getInstance().getConfig().getStringList("origin-selection.random-option.exclude");
+                        List<String> excludedOrigins = options.getRandomOptionExclude();
+
                         List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
                         origins.removeIf(origin1 -> excludedOrigins.contains(origin1.getName()));
                         origins.removeIf(origin1 -> origin1.isUnchoosable(player));
@@ -372,15 +393,15 @@ public class OriginSwapper implements Listener {
                     }
                     OriginsReborn.getCooldowns().setCooldown(player, OriginCommand.key);
                     setOrigin(player, origin, reason, resetPlayer, layer);
-                } else if (currentItem.getItemMeta().getPersistentDataContainer().has(closeKey, BooleanPDT.BOOLEAN)) event.getWhoClicked().closeInventory();
+                } else if (currentItemContainer.has(closeKey, BooleanPDT.BOOLEAN)) event.getWhoClicked().closeInventory();
             }
         }
     }
 
     public static boolean shouldResetPlayer(PlayerSwapOriginEvent.SwapReason reason) {
         return switch (reason) {
-            case COMMAND -> OriginsReborn.getInstance().getConfig().getBoolean("swap-command.reset-player");
-            case ORB_OF_ORIGIN -> OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.reset-player");
+            case COMMAND -> options.isSwapCommandResetPlayer();
+            case ORB_OF_ORIGIN -> options.isOrbOfOriginResetPlayer();
             default -> false;
         };
     }
@@ -476,31 +497,58 @@ public class OriginSwapper implements Listener {
     }
 
     public static void applyAttributeChanges(Player player) {
+        // Кэшируем экземпляр плагина и NMSInvoker для сокращения количества вызовов
+
+        // Перебираем все способности из abilityMap
         for (Ability ability : AbilityRegister.abilityMap.values()) {
-            if (ability instanceof AttributeModifierAbility attributeModifierAbility) {
-                AttributeInstance instance;
-                try {
-                    instance = player.getAttribute(attributeModifierAbility.getAttribute());
-                } catch (IllegalArgumentException e) {
-                    continue;
-                }
-                if (instance == null) continue;
-                NamespacedKey key = new NamespacedKey(OriginsReborn.getInstance(), ability.getKey().asString().replace(":", "-"));
-                if (ability.hasAbility(player)) {
-                    AttributeModifier modifier = OriginsReborn.getNMSInvoker().getAttributeModifier(instance, key);
-                    if (modifier != null) {
-                        if (modifier.getAmount() == attributeModifierAbility.getTotalAmount(player)) {
-                            continue;
-                        } else instance.removeModifier(modifier);
+            // Обрабатываем только способности, реализующие AttributeModifierAbility
+            if (!(ability instanceof AttributeModifierAbility attributeAbility)) {
+                continue;
+            }
+
+            // Получаем экземпляр атрибута игрока для данной способности.
+            AttributeInstance instance;
+            try {
+                instance = player.getAttribute(attributeAbility.getAttribute());
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            if (instance == null) {
+                continue;
+            }
+
+            // Получаем строковое представление ключа способности и сразу форматируем его (заменяя ":" на "-")
+            String abilityKeyStr = attributeAbility.getKey().asString();
+            NamespacedKey key = new NamespacedKey(origins, abilityKeyStr.replace(":", "-"));
+
+            // Вычисляем требуемое значение модификатора один раз для данной способности
+            double requiredAmount = attributeAbility.getTotalAmount(player);
+            // Определяем, активна ли способность для игрока
+            boolean hasAbility = ability.hasAbility(player);
+
+            // Получаем текущий модификатор по ключу, чтобы избежать лишних вызовов
+            AttributeModifier currentModifier = nmsInvoker.getAttributeModifier(instance, key);
+
+            if (hasAbility) {
+                // Если модификатор уже существует и его значение совпадает с требуемым, пропускаем способность
+                if (currentModifier != null) {
+                    if (currentModifier.getAmount() == requiredAmount) {
+                        continue;
+                    } else {
+                        instance.removeModifier(currentModifier);
                     }
-                    OriginsReborn.getNMSInvoker().addAttributeModifier(instance, key, attributeModifierAbility.getKey().asString(), attributeModifierAbility.getTotalAmount(player), attributeModifierAbility.getActualOperation());
-                } else {
-                    AttributeModifier am = OriginsReborn.getNMSInvoker().getAttributeModifier(instance, key);
-                    if (am != null) instance.removeModifier(am);
+                }
+                // Добавляем новый (или обновляем существующий) модификатор
+                nmsInvoker.addAttributeModifier(instance, key, abilityKeyStr, requiredAmount, attributeAbility.getActualOperation());
+            } else {
+                // Если способность не применяется, удаляем существующий модификатор (если он есть)
+                if (currentModifier != null) {
+                    instance.removeModifier(currentModifier);
                 }
             }
         }
     }
+
 
     @EventHandler
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
@@ -557,32 +605,127 @@ public class OriginSwapper implements Listener {
 
     private static final Map<Player, Integer> lastJoinedTick = new HashMap<>();
 
-    @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
+
+//    loler
+
+//    @EventHandler
+//    public void onServerTickEnd(ServerTickEndEvent event) {
+//        // Получаем настройки из ConfigOptions
+//        int delay = options.getOriginSelectionDelayBeforeRequired();
+//
+//        // Проходим по всем онлайн-игрокам
+//        for (Player player : Bukkit.getOnlinePlayers()) {
+//            // Если для игрока не зафиксирован tick захода, устанавливаем его
+//            lastJoinedTick.putIfAbsent(player, event.getTickNumber());
+//
+//            // Если игрок ещё не ждал необходимую задержку, переходим к следующему
+//            if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) {
+//                continue;
+//            }
+//
+//            // Получаем причину последней попытки смены origin
+//            PlayerSwapOriginEvent.SwapReason reason = lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
+//
+//            // Если не разрешено выбирать origin в данном мире/ситуации
+//            if (shouldDisallowSelection(player, reason)) {
+//                player.setAllowFlight(AbilityRegister.canFly(player, true));
+//                AbilityRegister.updateFlight(player, true);
+//                resetAttributes(player);
+//                continue;
+//            }
+//
+//            // Если режим полёта не отключён в настройках
+//            if (!options.isMiscSettingsDisableFlightStuff()) {
+//                player.setAllowFlight(AbilityRegister.canFly(player, false));
+//                AbilityRegister.updateFlight(player, false);
+//            }
+//
+//            // Обновляем невидимость и атрибуты
+//            player.setInvisible(AbilityRegister.isInvisible(player));
+//            applyAttributeChanges(player);
+//
+//            // Получаем первый не выбранный слой
+//            String layer = AddonLoader.getFirstUnselectedLayer(player);
+//            if (layer == null) {
+//                continue;
+//            }
+//
+//            // Если игрок не находится в инвентаре сундука
+//            if (player.getOpenInventory().getType() != InventoryType.CHEST) {
+//                // Если для данного слоя задан дефолтный origin – устанавливаем его
+//                if (AddonLoader.getDefaultOrigin(layer) != null) {
+//                    setOrigin(player, AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
+//                }
+//                // Если режим случайного выбора не включён и игрок не Bedrock,
+//                // открываем меню выбора origin
+//                if (!options.isOriginSelectionRandomise(layer) && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+//                    openOriginSwapper(player, reason, 0, 0, layer);
+//                }
+//            }
+//        }
+//    }
+
+    public void startScheduledTask() {
+        // Запускаем задачу, которая будет выполняться каждые 5 тиков (5L)
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateAllPlayers();
+            }
+        }.runTaskTimer(origins, 0L, 10L);
+    }
+
+    private void updateAllPlayers() {
+        // Получаем задержку из настроек
+        int delay = options.getOriginSelectionDelayBeforeRequired();
+
+        // Проходим по всем онлайн-игрокам
         for (Player player : Bukkit.getOnlinePlayers()) {
-            int delay = OriginsReborn.getInstance().getConfig().getInt("origin-selection.delay-before-required", 0);
-            if (!lastJoinedTick.containsKey(player)) lastJoinedTick.put(player, event.getTickNumber());
-            if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) continue;
-            if (shouldDisallowSelection(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL))) {
+            // Если для игрока не зафиксирован тик захода, устанавливаем его
+            lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick());
+
+            // Если игрок ещё не ждал необходимую задержку, пропускаем его
+            if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) {
+                continue;
+            }
+
+            // Получаем причину последней попытки смены origin
+            PlayerSwapOriginEvent.SwapReason reason = lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
+
+            // Если не разрешено выбирать origin в данном мире/ситуации
+            if (shouldDisallowSelection(player, reason)) {
                 player.setAllowFlight(AbilityRegister.canFly(player, true));
                 AbilityRegister.updateFlight(player, true);
                 resetAttributes(player);
                 continue;
             }
-            if (!OriginsReborn.getInstance().getConfig().getBoolean("misc-settings.disable-flight-stuff")) {
+
+            // Если режим полёта не отключён в настройках
+            if (!options.isMiscSettingsDisableFlightStuff()) {
                 player.setAllowFlight(AbilityRegister.canFly(player, false));
                 AbilityRegister.updateFlight(player, false);
             }
+
+            // Обновляем невидимость и атрибуты
             player.setInvisible(AbilityRegister.isInvisible(player));
             applyAttributeChanges(player);
+
+            // Получаем первый не выбранный слой
             String layer = AddonLoader.getFirstUnselectedLayer(player);
-            if (layer == null) continue;
+            if (layer == null) {
+                continue;
+            }
+
+            // Если игрок не находится в инвентаре сундука
             if (player.getOpenInventory().getType() != InventoryType.CHEST) {
+                // Если для данного слоя задан дефолтный origin – устанавливаем его
                 if (AddonLoader.getDefaultOrigin(layer) != null) {
                     setOrigin(player, AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
                 }
-                if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer)) && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
-                    openOriginSwapper(player, lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL), 0, 0, layer);
+                // Если режим случайного выбора не включён и игрок не Bedrock,
+                // открываем меню выбора origin
+                if (!options.isOriginSelectionRandomise(layer) && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+                    openOriginSwapper(player, reason, 0, 0, layer);
                 }
             }
         }
@@ -595,10 +738,10 @@ public class OriginSwapper implements Listener {
 
     public static boolean shouldDisallowSelection(Player player, PlayerSwapOriginEvent.SwapReason reason) {
         try {
-            if (!AuthMeApi.getInstance().isAuthenticated(player)) return true;
+            return !AuthMeApi.getInstance().isAuthenticated(player);
         } catch (NoClassDefFoundError ignored) {}
         String worldId = player.getWorld().getName();
-        return !AddonLoader.shouldOpenSwapMenu(player, reason) || OriginsReborn.getInstance().getConfig().getStringList("worlds.disabled-worlds").contains(worldId);
+        return !AddonLoader.shouldOpenSwapMenu(player, reason) || options.getWorldsDisabledWorlds().contains(worldId);
     }
 
     @EventHandler
@@ -639,7 +782,8 @@ public class OriginSwapper implements Listener {
             }
         }
 
-        if (!OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.auto-spawn-teleport")) return;
+        if (!options.isOriginSelectionAutoSpawnTeleport()) return;
+
         if (event.getReason() == PlayerSwapOriginEvent.SwapReason.INITIAL || event.getReason() == PlayerSwapOriginEvent.SwapReason.DIED) {
             Location loc = OriginsReborn.getNMSInvoker().getRespawnLocation(event.getPlayer());
             event.getPlayer().teleport(Objects.requireNonNullElseGet(loc, () -> getRespawnWorld(Collections.singletonList(event.getNewOrigin())).getSpawnLocation()));
@@ -667,8 +811,7 @@ public class OriginSwapper implements Listener {
     @EventHandler
     public void onPlayerPostRespawn(PlayerPostRespawnEvent event) {
         if (lastRespawnReasons.get(event.getPlayer()).contains(PlayerRespawnEvent.RespawnFlag.END_PORTAL)) return;
-        FileConfiguration config = OriginsReborn.getInstance().getConfig();
-        if (config.getBoolean("origin-selection.death-origin-change")) {
+        if (options.isOriginSelectionDeathOriginChange()) {
             for (String layer : AddonLoader.layers) {
                 setOrigin(event.getPlayer(), null, PlayerSwapOriginEvent.SwapReason.DIED, false, layer);
                 if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer))) {
@@ -829,53 +972,77 @@ public class OriginSwapper implements Listener {
     public static class LineData {
         // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
         public static List<LineComponent> makeLineFor(String text, LineComponent.LineType type) {
-            StringBuilder result = new StringBuilder();
-            StringBuilder rawResult = new StringBuilder();
             List<LineComponent> list = new ArrayList<>();
-            List<String> splitLines = new ArrayList<>(Arrays.stream(text.split("\n", 2)).toList());
+
+            // Разбиваем исходный текст на две части по первому символу новой строки
+            String[] lines = text.split("\n", 2);
+            String firstLine = lines[0];
             StringBuilder otherPart = new StringBuilder();
-            String firstLine = splitLines.remove(0);
-            if (firstLine.contains(" ") && getWidth(firstLine) > 140) {
-                List<String> split = new ArrayList<>(Arrays.stream(firstLine.split(" ")).toList());
-                StringBuilder firstPart = new StringBuilder(split.get(0));
-                split.remove(0);
-                boolean canAdd = true;
-                for (String s : split) {
-                    if (canAdd && getWidth(firstPart + " " + s) <= 140) {
-                        firstPart.append(" ");
-                        firstPart.append(s);
+            if (lines.length > 1) {
+                otherPart.append(lines[1]);
+            }
+
+            // Если строка содержит пробелы и её ширина превышает 140, пытаемся разбить её по словам
+            if (firstLine.indexOf(' ') >= 0 && getWidth(firstLine) > 140) {
+                String[] tokens = firstLine.split(" ");
+                StringBuilder firstPart = new StringBuilder(tokens[0]);
+                int currentWidth = getWidth(firstPart.toString());
+                int spaceWidth = getWidth(" ");
+                // Обрабатываем последующие слова
+                for (int i = 1; i < tokens.length; i++) {
+                    int tokenWidth = getWidth(tokens[i]);
+                    // Если добавление следующего слова (с пробелом) не превышает 140, добавляем его
+                    if (currentWidth + spaceWidth + tokenWidth <= 140) {
+                        firstPart.append(' ').append(tokens[i]);
+                        currentWidth += spaceWidth + tokenWidth;
                     } else {
-                        canAdd = false;
-                        if (!otherPart.isEmpty()) otherPart.append(" ");
-                        otherPart.append(s);
+                        // Иначе оставшиеся слова добавляем в otherPart
+                        if (!otherPart.isEmpty()) {
+                            otherPart.append(' ');
+                        }
+                        otherPart.append(tokens[i]);
                     }
                 }
                 firstLine = firstPart.toString();
             }
-            for (String s : splitLines) {
-                if (!otherPart.isEmpty()) otherPart.append("\n");
-                otherPart.append(s);
+
+            // Если тип строки DESCRIPTION, добавляем префикс \uF00A
+            if (type == LineComponent.LineType.DESCRIPTION) {
+                firstLine = '\uF00A' + firstLine;
             }
-            if (type == LineComponent.LineType.DESCRIPTION) firstLine = '\uF00A' + firstLine;
-            for (char c : firstLine.toCharArray()) {
+
+            // Формируем строки для вывода:
+            // Для каждого символа в firstLine добавляем его в результат, затем вставляем разделитель \uF000,
+            // а в rawResult пропускаем символ \uF00A
+            StringBuilder result = new StringBuilder();
+            StringBuilder rawResult = new StringBuilder();
+            for (int i = 0, len = firstLine.length(); i < len; i++) {
+                char c = firstLine.charAt(i);
                 result.append(c);
-                rawResult.append(c == '\uF00A' ? "" : c);
+                if (c != '\uF00A') {
+                    rawResult.append(c);
+                }
                 result.append('\uF000');
             }
             rawResult.append(' ');
+
+            // Собираем компонент с нужными цветом и текстом, добавляя к нему инвертированный текст
             String finalText = firstLine;
-            list.add(new LineComponent(
-                    Component.text(result.toString())
-                            .color(type == LineComponent.LineType.TITLE ? NamedTextColor.WHITE : TextColor.fromHexString("#CACACA"))
-                            .append(Component.text(getInverse(finalText))),
-                    type,
-                    rawResult.toString()
-            ));
+            Component comp = Component.text(result.toString())
+                    .color(type == LineComponent.LineType.TITLE
+                            ? NamedTextColor.WHITE
+                            : TextColor.fromHexString("#CACACA"))
+                    .append(Component.text(getInverse(finalText)));
+            list.add(new LineComponent(comp, type, rawResult.toString()));
+
+            // Рекурсивно обрабатываем оставшуюся часть, если она не пуста
             if (!otherPart.isEmpty()) {
                 list.addAll(makeLineFor(otherPart.toString(), type));
             }
             return list;
         }
+
+
         public static class LineComponent {
             public enum LineType {
                 TITLE,

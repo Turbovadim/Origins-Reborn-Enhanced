@@ -307,7 +307,7 @@ public class OriginsReborn extends OriginsAddon {
         saveDefaultConfig();
 
         WidthGetter.initialize(this);
-
+        initializeNMSInvoker(this);
         AbilityRegister.setupAMAF();
 
         if (getConfig().getBoolean("swap-command.vault.enabled")) {
@@ -320,15 +320,16 @@ public class OriginsReborn extends OriginsAddon {
         if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") && getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
             Bukkit.getPluginManager().registerEvents(cooldowns, this);
         }
-        initializeNMSInvoker(this);
         SkriptInitializer.initialize(this);
         updateConfig();
-        Bukkit.getPluginManager().registerEvents(new OriginSwapper(), this);
+        OriginSwapper originSwapper = new OriginSwapper();
+        Bukkit.getPluginManager().registerEvents(originSwapper, this);
         Bukkit.getPluginManager().registerEvents(new OrbOfOrigin(), this);
         Bukkit.getPluginManager().registerEvents(new PackApplier(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerLeftClickEvent.PlayerLeftClickEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new ParticleAbility.ParticleAbilityListener(), this);
         Bukkit.getPluginManager().registerEvents(new BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener(), this);
+        originSwapper.startScheduledTask();
 
         PluginCommand flightCommand = getCommand("fly");
         if (flightCommand != null) flightCommand.setExecutor(new FlightToggleCommand());

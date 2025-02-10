@@ -37,6 +37,8 @@ public class Cooldowns implements Listener {
     private final NamespacedKey cooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "cooldowns");
     private final NamespacedKey hasCooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "has_cooldown");
 
+    private int tickCounter = 0;
+
     @EventHandler
     public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
         event.getPlayer().getPersistentDataContainer().remove(cooldownKey);
@@ -55,48 +57,128 @@ public class Cooldowns implements Listener {
 
     @EventHandler
     public void onServerTickEnd(ServerTickEndEvent event) {
+
+        tickCounter++;
+        if (tickCounter < 10) {
+            return;
+        }
+        tickCounter = 0;
+        // Кэшируем текущее время (в миллисекундах)
+        long now = Instant.now().toEpochMilli();
+
+        // Обрабатываем каждого игрока
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
-                StringBuilder s = new StringBuilder();
-                for (NamespacedKey key : getCooldowns(player)) {
-                    CooldownInfo info = registeredCooldowns.get(key);
-                    if (info.getIcon() == null) continue;
-                    int amount = (int) (getCooldown(player, key) / 50);
-                    s.append(getTime(amount)).append(" ");
+            // Получаем контейнер данных игрока и PDC для кулдаунов
+            PersistentDataContainer playerPDC = player.getPersistentDataContainer();
+            PersistentDataContainer cooldownPDC = playerPDC.getOrDefault(
+                    cooldownKey,
+                    PersistentDataType.TAG_CONTAINER,
+                    playerPDC.getAdapterContext().newPersistentDataContainer()
+            );
+
+            // Получаем список активных кулдаунов для игрока (фильтруем неактуальные и незарегистрированные)
+            List<NamespacedKey> cooldownKeys = getActiveCooldownKeys(cooldownPDC, now);
+            if (cooldownKeys.isEmpty()) {
+                // Если кулдаунов нет, удаляем флаг и переходим к следующему игроку
+                if (playerPDC.has(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+                    playerPDC.remove(hasCooldownKey);
                 }
-                player.sendActionBar(Component.text(s.toString()));
                 continue;
             }
-            Component message = Component.empty();
-            int num = 0;
-            Entity vehicle = player.getVehicle();
-            if (vehicle != null) {
-                if (vehicle instanceof LivingEntity entity) {
-                    AttributeInstance instance = entity.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
-                    if (instance != null) {
-                        num += (int) (Math.floor((instance.getValue() - 1) / 10) - 1);
+            // Устанавливаем флаг наличия кулдауна
+            playerPDC.set(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
+
+            // Если игрок — Bedrock, формируем строку с оставшимся временем
+            if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+                StringBuilder sb = new StringBuilder();
+                for (NamespacedKey key : cooldownKeys) {
+                    CooldownInfo info = registeredCooldowns.get(key);
+                    if (info == null || info.getIcon() == null) continue;
+                    // Вычисляем оставшееся время (в миллисекундах) для кулдауна
+                    long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
+                    int secondsRemaining = (int) (remaining / 50);
+                    String timeStr = getTime(secondsRemaining);
+                    if (timeStr != null) {
+                        sb.append(timeStr).append(" ");
                     }
                 }
+                player.sendActionBar(Component.text(sb.toString()));
+            } else {
+                // Для обычных (Java) игроков формируем компонент с иконками и полосками
+                int heightOffset = computeHeightOffset(player);
+                Component message = Component.empty();
+                for (NamespacedKey key : cooldownKeys) {
+                    CooldownInfo info = registeredCooldowns.get(key);
+                    if (info == null || info.getIcon() == null) continue;
+                    long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
+                    // Вычисляем отношение оставшегося времени к полному кулдауну
+                    float ratio = remaining / (info.getCooldownTime() * 50f);
+                    if (!info.isReversed()) {
+                        ratio = 1 - ratio;
+                    }
+                    message = message
+                            .append(Component.text("\uF004"))
+                            .append(formCooldownBar(ratio, info, heightOffset));
+                    heightOffset++;
+                }
+                Component prefix = OriginsReborn.getNMSInvoker().applyFont(
+                        Component.text("\uF003"),
+                        Key.key("minecraft:cooldown_bar/height_0")
+                );
+                player.sendActionBar(prefix.append(message));
             }
-            if (player.getRemainingAir() < player.getMaximumAir() || OriginsReborn.getNMSInvoker().isUnderWater(player)) num++;
-            int i = 0;
-            for (NamespacedKey key : getCooldowns(player)) {
-                CooldownInfo info = registeredCooldowns.get(key);
-                if (info.getIcon() == null) continue;
-                i++;
-                float amount = getCooldown(player, key) / (info.getCooldownTime() * 50f);
-                if (!info.isReversed()) amount = 1 - amount;
-                message = message.append(Component.text("\uF004")).append(formCooldownBar(amount, info, num));
-                num++;
-            }
-            if (i == 0) {
-                if (!player.getPersistentDataContainer().has(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) continue;
-                player.getPersistentDataContainer().remove(hasCooldownKey);
-            }
-            player.getPersistentDataContainer().set(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-            player.sendActionBar(OriginsReborn.getNMSInvoker().applyFont(Component.text("\uF003"), Key.key("minecraft:cooldown_bar/height_0")).append(message));
         }
     }
+
+    /**
+     * Возвращает список активных кулдаунов для игрока.
+     * Фильтруются ключи, для которых не зарегистрирован CooldownInfo,
+     * либо оставшееся время <= 0 (если кулдаун не статичный).
+     */
+    private List<NamespacedKey> getActiveCooldownKeys(PersistentDataContainer cooldownPDC, long now) {
+        List<NamespacedKey> keys = new ArrayList<>(cooldownPDC.getKeys());
+        keys.removeIf(key -> {
+            CooldownInfo info = registeredCooldowns.get(key);
+            if (info == null) return true;
+            long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
+            return remaining <= 0 && !info.isStatic();
+        });
+        return keys;
+    }
+
+    /**
+     * Вычисляет смещение (offset) для отображения полос кулдауна.
+     * Учитываются: наличие транспорта (и его здоровье) и состояние под водой.
+     */
+    private int computeHeightOffset(Player player) {
+        int offset = 0;
+        Entity vehicle = player.getVehicle();
+        if (vehicle instanceof LivingEntity livingEntity) {
+            AttributeInstance instance = livingEntity.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
+            if (instance != null) {
+                offset += (int) (Math.floor((instance.getValue() - 1) / 10) - 1);
+            }
+        }
+        if (player.getRemainingAir() < player.getMaximumAir() || OriginsReborn.getNMSInvoker().isUnderWater(player)) {
+            offset++;
+        }
+        return offset;
+    }
+
+    /**
+     * Перегруженный метод getCooldown, использующий предварительно вычисленное время.
+     */
+    public long getCooldown(Player player, NamespacedKey key, long now) {
+        PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(
+                cooldownKey,
+                PersistentDataType.TAG_CONTAINER,
+                player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer()
+        );
+        CooldownInfo info = registeredCooldowns.get(key);
+        if (info == null) return 0;
+        return Math.max(0, pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now));
+    }
+
 
     public Component formCooldownBar(float percentage, CooldownInfo info, int height) {
         return iconDataMap.get(info.getIcon()).assemble(percentage, height);
