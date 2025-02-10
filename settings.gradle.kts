@@ -1,4 +1,4 @@
-rootProject.name = "Origins-Reborn"
+rootProject.name = "Origins-Reborn-Enhanced"
 include("core")
 include("1.20.4")
 include("1.18.1")

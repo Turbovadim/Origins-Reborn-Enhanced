@@ -21,6 +21,7 @@ import java.util.List;
 import static com.starshootercity.abilities.AbilityRegister.abilityMap;
 
 public interface Ability {
+
     @NotNull Key getKey();
 
     default void runForAbility(Entity entity, @NotNull AbilityRunner runner) {
@@ -31,31 +32,36 @@ public interface Ability {
         if (entity instanceof Player player) {
             if (hasAbility(player)) {
                 if (has != null) has.run(player);
-            } else if (other != null) other.run(player);
+            } else if (other != null) {
+                other.run(player);
+            }
         }
     }
 
     default boolean hasAbility(Player player) {
-
+        // Проверка переопределения способностей через аддоны
         for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
             OriginsAddon.State state = keyStateGetter.get(player, getKey());
             if (state == OriginsAddon.State.DENY) return false;
             else if (state == OriginsAddon.State.ALLOW) return true;
         }
 
+        // Проверка через WorldGuard
         if (OriginsReborn.isWorldGuardHookInitialized()) {
             if (WorldGuardHook.isAbilityDisabled(player.getLocation(), this)) return false;
 
-            ConfigurationSection section = OriginsReborn.getInstance().getConfig().getConfigurationSection("prevent-abilities-in");
+            ConfigurationSection section = OriginsReborn.getInstance().getConfig()
+                    .getConfigurationSection("prevent-abilities-in");
             if (section != null) {
                 Location loc = BukkitAdapter.adapt(player.getLocation());
                 RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
                 RegionQuery query = container.createQuery();
-                ApplicableRegionSet set = query.getApplicableRegions(loc);
-                for (ProtectedRegion region : set) {
+                ApplicableRegionSet regions = query.getApplicableRegions(loc);
+                String keyStr = getKey().toString();
+                for (ProtectedRegion region : regions) {
                     for (String sectionKey : section.getKeys(false)) {
-                        if (!section.getStringList(sectionKey).contains(getKey().toString()) && !section.getStringList(sectionKey).contains("all"))
-                            continue;
+                        List<String> abilities = section.getStringList(sectionKey);
+                        if (!abilities.contains(keyStr) && !abilities.contains("all")) continue;
                         if (region.getId().equalsIgnoreCase(sectionKey)) {
                             return false;
                         }
@@ -64,13 +70,14 @@ public interface Ability {
             }
         }
 
+        // Проверка по списку Origin’ов игрока
         List<Origin> origins = OriginSwapper.getOrigins(player);
-        boolean hasAbility = false;
-        for (Origin origin : origins) {
-            if (origin.hasAbility(getKey())) hasAbility = true;
-        }
+        boolean hasAbility = origins.stream().anyMatch(origin -> origin.hasAbility(getKey()));
+
         if (abilityMap.get(getKey()) instanceof DependantAbility dependantAbility) {
-            return hasAbility && ((dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR) == dependantAbility.getDependency().isEnabled(player));
+            boolean dependencyEnabled = dependantAbility.getDependency().isEnabled(player);
+            boolean expected = (dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR);
+            return hasAbility && (dependencyEnabled == expected);
         }
         return hasAbility;
     }
