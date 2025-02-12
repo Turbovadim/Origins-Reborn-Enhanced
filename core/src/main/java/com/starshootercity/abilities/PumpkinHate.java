@@ -58,11 +58,8 @@ public class PumpkinHate implements VisibleAbility, Listener {
                         byte data = getData(pumpkinWearer);
                         nmsInvoker.sendEntityData(hater, pumpkinWearer, data);
 
-                        // Обновляем экипировку, используя кэшированный AIR_ITEMSTACK
                         hater.hidePlayer(origins, pumpkinWearer);
-//                        for (EquipmentSlot slot : EquipmentSlot.values()) {
-                            hater.sendEquipmentChange(pumpkinWearer, EquipmentSlot.HEAD, AIR_ITEMSTACK);
-//                        }
+                        hater.sendEquipmentChange(pumpkinWearer, EquipmentSlot.HEAD, AIR_ITEMSTACK);
                     } else {
                         // Если игрок не носит тыкву – удаляем из набора игнорируемых и обновляем видимость
                         Set<Player> ignoredSet = ignoringPlayers.computeIfAbsent(hater, key -> new HashSet<>());

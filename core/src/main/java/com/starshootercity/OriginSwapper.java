@@ -558,30 +558,42 @@ public class OriginSwapper implements Listener {
     @EventHandler
     @SuppressWarnings("deprecation")
     public void onPlayerJoin(PlayerJoinEvent event) {
-        loadOrigins(event.getPlayer());
-        resetAttributes(event.getPlayer());
-        lastJoinedTick.put(event.getPlayer(), Bukkit.getCurrentTick());
+        final Player player = event.getPlayer();
+        loadOrigins(player);
+        resetAttributes(player);
+        lastJoinedTick.put(player, Bukkit.getCurrentTick());
+        if (player.getOpenInventory().getType() == InventoryType.CHEST) {
+            return;
+        }
+        final FileConfiguration config = origins.getConfig();
         for (String layer : AddonLoader.layers) {
-            if (event.getPlayer().getOpenInventory().getType() == InventoryType.CHEST) {
-                continue;
-            }
-            Origin origin = getOrigin(event.getPlayer(), layer);
+            final Origin origin = getOrigin(player, layer);
+
             if (origin != null) {
-                if (origin.getTeam() == null) return;
-                origin.getTeam().addPlayer(event.getPlayer());
+                if (origin.getTeam() == null) {
+                    return;
+                }
+                origin.getTeam().addPlayer(player);
             } else {
-                if (AddonLoader.getDefaultOrigin(layer) != null) {
-                    setOrigin(event.getPlayer(), AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
-                } else if (OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise.%s".formatted(layer))) {
-                    selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, layer);
-                } else if (ShortcutUtils.isBedrockPlayer(event.getPlayer().getUniqueId())) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> GeyserSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, false, false, layer), OriginsReborn.getInstance().getConfig().getInt("geyser.join-form-delay", 20));
+                final Origin defaultOrigin = AddonLoader.getDefaultOrigin(layer);
+                if (defaultOrigin != null) {
+                    setOrigin(player, defaultOrigin, PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
+                } else if (config.getBoolean("origin-selection.randomise." + layer)) {
+                    selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.INITIAL, layer);
+                } else if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
+                    final int delay = config.getInt("geyser.join-form-delay", 20);
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(
+                        origins,
+                        () -> GeyserSwapper.openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, false, false, layer),
+                        delay
+                    );
                 } else {
-                    openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, layer);
+                    openOriginSwapper(player, PlayerSwapOriginEvent.SwapReason.INITIAL, 0, 0, layer);
                 }
             }
         }
     }
+
 
     public static void resetAttributes(Player player) {
         final double[] health = {player.getHealth()};
@@ -592,8 +604,8 @@ public class OriginSwapper implements Listener {
                 instance.removeModifier(modifier);
             }
         }
-        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-            AttributeInstance mh = player.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
+        Bukkit.getScheduler().scheduleSyncDelayedTask(origins, () -> {
+            AttributeInstance mh = player.getAttribute(nmsInvoker.getMaxHealthAttribute());
             if (mh == null) return;
             double maxHealth = mh.getValue();
             health[0] = Math.min(maxHealth, health[0]);
@@ -605,65 +617,6 @@ public class OriginSwapper implements Listener {
 
     private static final Map<Player, Integer> lastJoinedTick = new HashMap<>();
 
-
-//    loler
-
-//    @EventHandler
-//    public void onServerTickEnd(ServerTickEndEvent event) {
-//        // Получаем настройки из ConfigOptions
-//        int delay = options.getOriginSelectionDelayBeforeRequired();
-//
-//        // Проходим по всем онлайн-игрокам
-//        for (Player player : Bukkit.getOnlinePlayers()) {
-//            // Если для игрока не зафиксирован tick захода, устанавливаем его
-//            lastJoinedTick.putIfAbsent(player, event.getTickNumber());
-//
-//            // Если игрок ещё не ждал необходимую задержку, переходим к следующему
-//            if (Bukkit.getCurrentTick() - delay < lastJoinedTick.get(player)) {
-//                continue;
-//            }
-//
-//            // Получаем причину последней попытки смены origin
-//            PlayerSwapOriginEvent.SwapReason reason = lastSwapReasons.getOrDefault(player, PlayerSwapOriginEvent.SwapReason.INITIAL);
-//
-//            // Если не разрешено выбирать origin в данном мире/ситуации
-//            if (shouldDisallowSelection(player, reason)) {
-//                player.setAllowFlight(AbilityRegister.canFly(player, true));
-//                AbilityRegister.updateFlight(player, true);
-//                resetAttributes(player);
-//                continue;
-//            }
-//
-//            // Если режим полёта не отключён в настройках
-//            if (!options.isMiscSettingsDisableFlightStuff()) {
-//                player.setAllowFlight(AbilityRegister.canFly(player, false));
-//                AbilityRegister.updateFlight(player, false);
-//            }
-//
-//            // Обновляем невидимость и атрибуты
-//            player.setInvisible(AbilityRegister.isInvisible(player));
-//            applyAttributeChanges(player);
-//
-//            // Получаем первый не выбранный слой
-//            String layer = AddonLoader.getFirstUnselectedLayer(player);
-//            if (layer == null) {
-//                continue;
-//            }
-//
-//            // Если игрок не находится в инвентаре сундука
-//            if (player.getOpenInventory().getType() != InventoryType.CHEST) {
-//                // Если для данного слоя задан дефолтный origin – устанавливаем его
-//                if (AddonLoader.getDefaultOrigin(layer) != null) {
-//                    setOrigin(player, AddonLoader.getDefaultOrigin(layer), PlayerSwapOriginEvent.SwapReason.INITIAL, false, layer);
-//                }
-//                // Если режим случайного выбора не включён и игрок не Bedrock,
-//                // открываем меню выбора origin
-//                if (!options.isOriginSelectionRandomise(layer) && !ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
-//                    openOriginSwapper(player, reason, 0, 0, layer);
-//                }
-//            }
-//        }
-//    }
 
     public void startScheduledTask() {
         // Запускаем задачу, которая будет выполняться каждые 5 тиков (5L)
