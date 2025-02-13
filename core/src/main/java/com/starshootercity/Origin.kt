@@ -1,193 +1,162 @@
-package com.starshootercity;
+package com.starshootercity
 
-import com.starshootercity.abilities.Ability;
-import com.starshootercity.abilities.AbilityRegister;
-import com.starshootercity.abilities.MultiAbility;
-import com.starshootercity.abilities.VisibleAbility;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Range;
+import com.starshootercity.abilities.Ability
+import com.starshootercity.abilities.AbilityRegister
+import com.starshootercity.abilities.MultiAbility
+import com.starshootercity.abilities.VisibleAbility
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.Bukkit
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.bukkit.scoreboard.Scoreboard
+import org.bukkit.scoreboard.Team
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Origin {
-    private final ItemStack icon;
-    private final int position;
-    private final char impact;
-    private final String name;
-    private final @NotNull String displayName;
-    private final int priority;
-    private final boolean unchoosable;
-    private final OriginsAddon addon;
-    private final List<Key> abilities;
-    private final String description;
-    private final String permission;
-    private final Integer cost;
-    private final int max;
-    private final String layer;
-
-    public Integer getCost() {
-        return cost;
+class Origin(
+    private val name: String,
+    val icon: ItemStack,
+    val position: Int,
+    @get:org.jetbrains.annotations.Range(from = 0, to = 3) impactParam: Int,
+    val displayName: String,
+    private val abilities: List<Key>,
+    private val description: String,
+    val addon: OriginsAddon,
+    private val unchoosable: Boolean,
+    val priority: Int,
+    val permission: String?,
+    val cost: Int?, // may be null
+    private val max: Int,
+    val layer: String
+) {
+    val team: Team? = if (OriginsReborn.instance.config.getBoolean("display.enable-prefixes")) {
+        val scoreboard: Scoreboard = Bukkit.getScoreboardManager().mainScoreboard
+        scoreboard.getTeam(name)?.unregister()
+        val newTeam = scoreboard.registerNewTeam(name)
+        newTeam.displayName(Component.text("[")
+            .color(NamedTextColor.DARK_GRAY)
+            .append(Component.text(name).color(NamedTextColor.WHITE))
+            .append(Component.text("] ").color(NamedTextColor.DARK_GRAY))
+        )
+        newTeam
+    } else {
+        null
     }
 
-    public boolean isUnchoosable(Player player) {
-        if (unchoosable) return true;
-        String mode = OriginsReborn.getInstance().getConfig().getString("restrictions.reusing-origins", "NONE");
-        boolean same = OriginsReborn.getInstance().getConfig().getBoolean("restrictions.prevent-same-origins");
+    val impact: Char = when (impactParam) {
+        0 -> '\uE002'
+        1 -> '\uE003'
+        2 -> '\uE004'
+        else -> '\uE005'
+    }
+
+//    fun getCost(): Int? = cost
+
+    fun isUnchoosable(player: Player): Boolean {
+        if (unchoosable) return true
+        val instance = OriginsReborn.instance
+        val mode = instance.config.getString("restrictions.reusing-origins", "NONE")
+        val same = instance.config.getBoolean("restrictions.prevent-same-origins")
         if (max != -1) {
-            int num = 0;
-            for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
-                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) {
-                    num++;
+            var num = 0
+            for (p in OriginSwapper.originFileConfiguration.getKeys(false)) {
+                if (OriginSwapper.originFileConfiguration.getString(p, "").equals(getName().lowercase(Locale.getDefault()))) {
+                    num++
                 }
             }
-            if (num >= max) return true;
+            if (num >= max) return true
         }
         if (same) {
-            for (String p : OriginSwapper.getOriginFileConfiguration().getKeys(false)) {
-                if (OriginSwapper.getOriginFileConfiguration().getString(p, "").equals(getName().toLowerCase())) {
-                    return true;
+            for (p in OriginSwapper.originFileConfiguration.getKeys(false)) {
+                if (OriginSwapper.originFileConfiguration.getString(p, "").equals(getName().lowercase(Locale.getDefault()))) {
+                    return true
                 }
             }
         }
-        if (mode.equals("PERPLAYER")) {
-            return OriginSwapper.getUsedOriginFileConfiguration().getStringList(player.getUniqueId().toString()).contains(getName().toLowerCase());
-        } else if (mode.equals("ALL")) {
-            for (String p : OriginSwapper.getUsedOriginFileConfiguration().getKeys(false)) {
-                if (OriginSwapper.getUsedOriginFileConfiguration().getStringList(p).contains(getName().toLowerCase())) {
-                    return true;
+        return when (mode) {
+            "PERPLAYER" -> OriginSwapper.usedOriginFileConfiguration
+                .getStringList(player.uniqueId.toString())
+                .contains(getName().lowercase(Locale.getDefault()))
+            "ALL" -> {
+                for (p in OriginSwapper.usedOriginFileConfiguration.getKeys(false)) {
+                    if (OriginSwapper.usedOriginFileConfiguration.getStringList(p)
+                            .contains(getName().lowercase(Locale.getDefault()))
+                    ) {
+                        return true
+                    }
                 }
+                false
             }
+            else -> false
         }
-        return false;
     }
 
-    public int getPriority() {
-        return priority;
-    }
+//    fun getPriority(): Int = priority
 
-    private final Team team;
+//    fun getTeam(): Team? = team
 
-    public Team getTeam() {
-        return team;
-    }
+//    fun getPermission(): String? = permission
+//
+    fun hasPermission(): Boolean = permission != null
 
-    public String getPermission() {
-        return permission;
-    }
+//    fun getLayer(): String = layer
 
-    public boolean hasPermission() {
-        return permission != null;
-    }
+    fun getNameForDisplay(): String = displayName
 
-    public String getLayer() {
-        return layer;
-    }
+//    fun getAddon(): OriginsAddon = addon
 
-    public String getNameForDisplay() {
-        return displayName;
-    }
-
-    public Origin(String name, ItemStack icon, int position, @Range(from = 0, to = 3) int impact, @NotNull String displayName, List<Key> abilities, String description, OriginsAddon addon, boolean unchoosable, int priority, String permission, Integer cost, int max, String layer) {
-        this.displayName = displayName;
-        this.description = description;
-        this.name = name;
-        this.permission = permission;
-        this.cost = cost;
-        this.max = max;
-        this.layer = layer;
-        if (OriginsReborn.getInstance().getConfig().getBoolean("display.enable-prefixes")) {
-            Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
-            Team oldTeam = scoreboard.getTeam(name);
-            if (oldTeam != null) oldTeam.unregister();
-            team = scoreboard.registerNewTeam(name);
-            team.displayName(Component.text("[")
-                            .color(NamedTextColor.DARK_GRAY)
-                            .append(Component.text(name)
-                                    .color(NamedTextColor.WHITE))
-                    .append(Component.text("] ")
-                            .color(NamedTextColor.DARK_GRAY)
-                    ));
-        } else team = null;
-        this.abilities = abilities;
-        this.icon = icon;
-        this.position = position;
-        this.unchoosable = unchoosable;
-        this.impact = switch (impact) {
-            case 0 -> '\uE002';
-            case 1 -> '\uE003';
-            case 2 -> '\uE004';
-            default -> '\uE005';
-        };
-        this.addon = addon;
-        this.priority = priority;
-    }
-
-    public List<VisibleAbility> getVisibleAbilities() {
-        List<VisibleAbility> result = new ArrayList<>();
-        for (Key key : abilities) {
-            if (AbilityRegister.abilityMap.get(key) instanceof VisibleAbility visibleAbility) {
-                result.add(visibleAbility);
-            }
+    fun getVisibleAbilities(): List<VisibleAbility> {
+        val result = mutableListOf<VisibleAbility>()
+        for (key in abilities) {
+            val ability = AbilityRegister.abilityMap[key]
+            if (ability is VisibleAbility) result.add(ability)
         }
-        return result;
+        return result
     }
 
-    public OriginsAddon getAddon() {
-        return addon;
-    }
-
-    public List<Ability> getAbilities() {
-        List<Ability> originAbilities = new ArrayList<>();
-        for (Key key : abilities) {
-            Ability a = AbilityRegister.abilityMap.get(key);
-            originAbilities.add(a);
-            if (a instanceof MultiAbility multiAbility) originAbilities.addAll(multiAbility.getAbilities());
+    fun getAbilities(): List<Ability> {
+        val originAbilities = mutableListOf<Ability>()
+        for (key in abilities) {
+            val a = AbilityRegister.abilityMap[key]
+            originAbilities.add(a!!)
+            if (a is MultiAbility) originAbilities.addAll(a.getAbilities())
         }
-        return originAbilities;
+        return originAbilities
     }
 
-    public boolean hasAbility(Key key) {
-        for (MultiAbility ability : AbilityRegister.multiAbilityMap.getOrDefault(key, List.of())) {
-            if (abilities.contains(ability.getKey())) return true;
+    fun hasAbility(key: Key): Boolean {
+        for (ability in AbilityRegister.multiAbilityMap.getOrDefault(key, listOf())) {
+            if (abilities.contains(ability.getKey())) return true
         }
-        return abilities.contains(key);
+        return abilities.contains(key)
     }
 
-    public char getImpact() {
-        return impact;
+//    fun getImpact(): Char = impact
+
+//    fun getPosition(): Int = position
+
+    fun getName(): String {
+        return AddonLoader.getTextFor(
+            "origin.${addon.getNamespace()}.${name.replace(" ", "_").lowercase(Locale.getDefault())}.name",
+            name
+        )
     }
 
-    public int getPosition() {
-        return position;
+    fun getActualName(): String = name
+
+    fun getDescription(): String {
+        return AddonLoader.getTextFor(
+            "origin.${addon.getNamespace()}.${name.replace(" ", "_").lowercase(Locale.getDefault())}.description",
+            description
+        )
     }
 
-    public String getName() {
-        return AddonLoader.getTextFor("origin." + addon.getNamespace() + "." + name.replace(" ", "_").toLowerCase() + ".name", name);
-    }
+//    fun getIcon(): ItemStack = icon
 
-    public String getActualName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return AddonLoader.getTextFor("origin." + addon.getNamespace() + "." + name.replace(" ", "_").toLowerCase() + ".description", description);
-    }
-
-    public ItemStack getIcon() {
-        return icon;
-    }
-
-    public String getResourceURL() {
-        String key = icon.getType().getKey().value();
-        return "https://assets.mcasset.cloud/1.20.4/assets/minecraft/textures/%s/%s.png".formatted(icon.getType().isBlock() ? "block" : "item", key);
+    fun getResourceURL(): String {
+        val keyValue = icon.type.key.value()
+        val folder = if (icon.type.isBlock) "block" else "item"
+        return "https://assets.mcasset.cloud/1.20.4/assets/minecraft/textures/$folder/$keyValue.png"
     }
 }

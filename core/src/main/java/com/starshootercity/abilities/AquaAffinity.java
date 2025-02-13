@@ -29,8 +29,8 @@ public class AquaAffinity implements VisibleAbility, BreakSpeedModifierAbility {
     public BlockMiningContext provideContextFor(Player player) {
         return new BlockMiningContext(
                 player.getInventory().getItemInMainHand(),
-                player.getPotionEffect(OriginsReborn.getNMSInvoker().getMiningFatigueEffect()),
                 player.getPotionEffect(OriginsReborn.getNMSInvoker().getHasteEffect()),
+                player.getPotionEffect(OriginsReborn.getNMSInvoker().getMiningFatigueEffect()),
                 player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
                 true,
                 true,

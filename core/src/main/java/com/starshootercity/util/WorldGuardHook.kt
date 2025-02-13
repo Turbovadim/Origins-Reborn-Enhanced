@@ -1,54 +1,55 @@
-package com.starshootercity.util;
+package com.starshootercity.util
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.flags.*;
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.starshootercity.abilities.Ability;
-import org.bukkit.Location;
+import com.sk89q.worldedit.bukkit.BukkitAdapter
+import com.sk89q.worldedit.math.BlockVector3
+import com.sk89q.worldguard.WorldGuard
+import com.sk89q.worldguard.protection.flags.StringFlag
+import com.sk89q.worldguard.protection.regions.RegionContainer
+import com.starshootercity.abilities.Ability
+import org.bukkit.Location
 
-public class WorldGuardHook {
-
-    private static RegionContainer rc;
+object WorldGuardHook {
+    private var rc: RegionContainer? = null
 
 
-    public static boolean isAbilityDisabled(Location location, Ability ability) {
+    @JvmStatic
+    fun isAbilityDisabled(location: Location, ability: Ability): Boolean {
         try {
-            RegionManager manager = rc.get(BukkitAdapter.adapt(location.getWorld()));
-            if (manager == null) return false;
-            ApplicableRegionSet set = manager.getApplicableRegions(new BlockVector3(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
-            for (ProtectedRegion r : set) {
-                String data = r.getFlag(flag);
+            val manager = rc!!.get(BukkitAdapter.adapt(location.getWorld()))
+            if (manager == null) return false
+            val set = manager.getApplicableRegions(
+                BlockVector3(
+                    location.blockX,
+                    location.blockY,
+                    location.blockZ
+                )
+            )
+            for (r in set) {
+                val data = r.getFlag<StringFlag?, String?>(flag)
                 if (data != null) {
-                    for (String s : data.split(",")) {
-                        if (s.equals(ability.getKey().toString())) return true;
+                    for (s in data.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
+                        if (s == ability.getKey().toString()) return true
                     }
                 }
             }
-            return false;
-        } catch (Throwable t) {
-            return false;
+            return false
+        } catch (t: Throwable) {
+            return false
         }
     }
 
-    private static StringFlag flag;
+    private var flag: StringFlag? = null
 
-    public static boolean tryInitialize() {
+    fun tryInitialize(): Boolean {
+        val registry = WorldGuard.getInstance().flagRegistry
 
-        FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
+        flag = StringFlag("origins-reborn:disabled-abilities")
+        registry.register(flag)
 
-        flag = new StringFlag("origins-reborn:disabled-abilities");
-        registry.register(flag);
-
-        return true;
+        return true
     }
 
-    public static void completeInitialize() {
-        rc = WorldGuard.getInstance().getPlatform().getRegionContainer();
+    fun completeInitialize() {
+        rc = WorldGuard.getInstance().platform.regionContainer
     }
 }

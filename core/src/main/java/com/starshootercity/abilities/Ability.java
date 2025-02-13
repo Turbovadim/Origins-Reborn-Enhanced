@@ -41,13 +41,14 @@ public interface Ability {
     default boolean hasAbility(Player player) {
         // Проверка переопределения способностей через аддоны
         for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
+            assert keyStateGetter != null;
             OriginsAddon.State state = keyStateGetter.get(player, getKey());
             if (state == OriginsAddon.State.DENY) return false;
             else if (state == OriginsAddon.State.ALLOW) return true;
         }
 
         // Проверка через WorldGuard
-        if (OriginsReborn.isWorldGuardHookInitialized()) {
+        if (OriginsReborn.Companion.isWorldGuardHookInitialized()) {
             if (WorldGuardHook.isAbilityDisabled(player.getLocation(), this)) return false;
 
             ConfigurationSection section = OriginsReborn.getInstance().getConfig()

@@ -1,96 +1,87 @@
-package com.starshootercity.events;
+package com.starshootercity.events
 
-import com.starshootercity.OriginsReborn;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.starshootercity.OriginsReborn.Companion.instance
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.HandlerList
+import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.player.PlayerDropItemEvent
+import org.bukkit.event.player.PlayerEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.ItemStack
 
-import java.util.HashMap;
-import java.util.Map;
+@Suppress("unused")
+class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent) : PlayerEvent(
+    playerInteractEvent.getPlayer()
+) {
+    val interactionPoint: Location?
+        get() = playerInteractEvent.interactionPoint
 
-@SuppressWarnings("unused")
-public class PlayerLeftClickEvent extends PlayerEvent {
-    private final PlayerInteractEvent playerInteractEvent;
-    public PlayerLeftClickEvent(PlayerInteractEvent event) {
-        super(event.getPlayer());
-        playerInteractEvent = event;
+    fun hasBlock(): Boolean {
+        return playerInteractEvent.hasBlock()
     }
 
-    public @Nullable Location getInteractionPoint() {
-        return playerInteractEvent.getInteractionPoint();
+    fun hasItem(): Boolean {
+        return playerInteractEvent.hasItem()
     }
 
-    public boolean hasBlock() {
-        return playerInteractEvent.hasBlock();
+    val item: ItemStack?
+        get() = playerInteractEvent.getItem()
+
+    val material: Material
+        get() = playerInteractEvent.getMaterial()
+
+    val clickedBlock: Block?
+        get() = playerInteractEvent.clickedBlock
+
+    val blockFace: BlockFace?
+        get() = playerInteractEvent.getBlockFace()
+
+    override fun getHandlers(): HandlerList {
+        return handlerList
     }
 
-    public boolean hasItem() {
-        return playerInteractEvent.hasItem();
-    }
-
-    public @Nullable ItemStack getItem() {
-        return playerInteractEvent.getItem();
-    }
-
-    public @NotNull Material getMaterial() {
-        return playerInteractEvent.getMaterial();
-    }
-
-    public @Nullable Block getClickedBlock() {
-        return playerInteractEvent.getClickedBlock();
-    }
-
-    public @Nullable BlockFace getBlockFace() {
-        return playerInteractEvent.getBlockFace();
-    }
-
-    private static final HandlerList HANDLERS = new HandlerList();
-
-    @Override
-    public @NotNull HandlerList getHandlers() {
-        return HANDLERS;
-    }
-
-    public static HandlerList getHandlerList() {
-        return HANDLERS;
-    }
-
-    public static class PlayerLeftClickEventListener implements Listener {
-        Map<Player, Integer> lastInteractionTickMap = new HashMap<>();
+    class PlayerLeftClickEventListener : Listener {
+        var lastInteractionTickMap: MutableMap<Player?, Int?> = HashMap<Player?, Int?>()
 
         @EventHandler
-        public void onPlayerInteract(PlayerInteractEvent event) {
-            if (!event.getAction().isLeftClick()) {
-                return;
+        fun onPlayerInteract(event: PlayerInteractEvent) {
+            if (!event.getAction().isLeftClick) {
+                return
             }
-            Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-                if (lastInteractionTickMap.getOrDefault(event.getPlayer(), -1) >= Bukkit.getCurrentTick()) return;
-                lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick());
-                new PlayerLeftClickEvent(event).callEvent();
-            });
+            Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
+                if (lastInteractionTickMap.getOrDefault(
+                        event.getPlayer(),
+                        -1
+                    )!! >= Bukkit.getCurrentTick()
+                ) return@Runnable
+                lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick())
+                PlayerLeftClickEvent(event).callEvent()
+            })
         }
 
         @EventHandler
-        public void onPlayerDropItem(PlayerDropItemEvent event) {
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick()+1);
+        fun onPlayerDropItem(event: PlayerDropItemEvent) {
+            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick() + 1)
         }
 
         @EventHandler
-        public void onBlockBreak(BlockBreakEvent event) {
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick()+1);
+        fun onBlockBreak(event: BlockBreakEvent) {
+            lastInteractionTickMap.put(event.player, Bukkit.getCurrentTick() + 1)
         }
     }
+
+    companion object {
+        private val handlerList: HandlerList = HandlerList()
+
+        @JvmStatic
+        fun getHandlerList(): HandlerList = handlerList
+    }
+
 }

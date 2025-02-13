@@ -1,82 +1,64 @@
-package com.starshootercity;
+package com.starshootercity
 
-import com.starshootercity.abilities.Ability;
-import com.starshootercity.abilities.AbilityRegister;
-import com.starshootercity.abilities.custom.ToggleableAbility;
-import com.starshootercity.events.PlayerSwapOriginEvent;
-import com.starshootercity.packetsenders.OriginsRebornResourcePackInfo;
-import net.kyori.adventure.key.Key;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.starshootercity.abilities.Ability
+import com.starshootercity.abilities.AbilityRegister
+import com.starshootercity.abilities.custom.ToggleableAbility
+import com.starshootercity.events.PlayerSwapOriginEvent
+import com.starshootercity.packetsenders.OriginsRebornResourcePackInfo
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.Player
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 
-import java.io.File;
-import java.util.List;
+abstract class OriginsAddon : JavaPlugin() {
 
-public abstract class OriginsAddon extends JavaPlugin {
-    private static OriginsAddon instance;
-
-    public static OriginsAddon getInstance() {
-        return instance;
+    companion object {
+        private lateinit var instance: OriginsAddon
+        fun getInstance(): OriginsAddon = instance
     }
 
-    public @Nullable SwapStateGetter shouldOpenSwapMenu() {
-        return null;
+    open fun shouldOpenSwapMenu(): SwapStateGetter? = null
+
+    open fun shouldAllowOriginSwapCommand(): SwapStateGetter? = null
+
+    open fun getAbilityOverride(): KeyStateGetter? = null
+
+    interface SwapStateGetter {
+        fun get(player: Player, reason: PlayerSwapOriginEvent.SwapReason): State
     }
 
-    public @Nullable SwapStateGetter shouldAllowOriginSwapCommand() {
-        return null;
+    interface KeyStateGetter {
+        fun get(player: Player, key: Key): State
     }
 
-    public @Nullable KeyStateGetter getAbilityOverride() {
-        return null;
-    }
-
-    public interface SwapStateGetter {
-        State get(Player player, PlayerSwapOriginEvent.SwapReason reason);
-    }
-
-    public interface KeyStateGetter {
-        State get(Player player, Key key);
-    }
-
-    @SuppressWarnings("unused")
-    public enum State {
+    @Suppress("unused")
+    enum class State {
         ALLOW,
         DEFAULT,
         DENY
     }
 
-    @Override
-    public final void onEnable() {
-        instance = this;
-        onRegister();
-        AddonLoader.register(this);
-        for (Ability ability : getAbilities()) {
-            if (ability instanceof ToggleableAbility toggleableAbility && !toggleableAbility.shouldRegister()) continue;
-            AbilityRegister.registerAbility(ability, this);
+    final override fun onEnable() {
+        instance = this
+        onRegister()
+        AddonLoader.register(this)
+        for (ability in getAbilities()) {
+            if (ability is ToggleableAbility && !ability.shouldRegister()) continue
+            AbilityRegister.registerAbility(ability, this)
         }
-        if (getResourcePackInfo() != null) PackApplier.addResourcePack(this, getResourcePackInfo());
-        afterRegister();
+        getResourcePackInfo()?.let { PackApplier.addResourcePack(this, it) }
+        afterRegister()
     }
 
-    public @Nullable OriginsRebornResourcePackInfo getResourcePackInfo() {
-        return null;
-    }
+    open fun getResourcePackInfo(): OriginsRebornResourcePackInfo? = null
 
-    @Override
-    public @NotNull File getFile() {
-        return super.getFile();
-    }
+    public override fun getFile(): File = super.getFile()
 
-    public void onRegister() {}
+    open fun onRegister() {}
 
-    public void afterRegister() {}
+    open fun afterRegister() {}
 
-    public abstract @NotNull String getNamespace();
+    abstract fun getNamespace(): String
 
-    public @NotNull List<Ability> getAbilities() {
-        return List.of();
-    }
+    open fun getAbilities(): List<Ability> = listOf()
 }

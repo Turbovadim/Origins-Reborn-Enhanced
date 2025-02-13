@@ -1,6 +1,6 @@
-package com.starshootercity;
+package com.starshootercity
 
-import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffect
 
-public record SavedPotionEffect(PotionEffect effect, int currentTime) {
-}
+@JvmRecord
+data class SavedPotionEffect(@JvmField val effect: PotionEffect?, @JvmField val currentTime: Int)

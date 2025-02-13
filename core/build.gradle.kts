@@ -68,3 +68,8 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all") // or "-Xjvm-default=all-compatibility"
+    }
+}

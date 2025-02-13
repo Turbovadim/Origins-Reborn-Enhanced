@@ -1,194 +1,105 @@
-package com.starshootercity;
-
-import org.bukkit.configuration.file.FileConfiguration;
-import java.util.List;
+package com.starshootercity
 
 /**
  * Класс для хранения и обновления значений опций из конфигурационного файла.
  * Реализован по паттерну Singleton — гарантируется наличие только одного экземпляра.
  */
-public class ConfigOptions {
+class ConfigOptions private constructor() {
+    // Поля настроек с не-null значениями
+    var defaultOrigin: String = "NONE"
+        private set
+    var isRandomOptionEnabled: Boolean = false
+        private set
+    var randomOptionExclude: MutableList<String> = mutableListOf()
+        private set
 
-    // Единственный экземпляр класса
-    private static ConfigOptions instance;
+    var isSwapCommandResetPlayer: Boolean = false
+        private set
+    var swapCommandVaultDefaultCost: Int = 1000
+        private set
+    var swapCommandVaultCost: Int = 1000
+        private set
+    var isSwapCommandVaultPermanentPurchases: Boolean = false
+        private set
+    var swapCommandVaultBypassPermission: String = "originsreborn.costbypass"
+        private set
+    var swapCommandVaultCurrencySymbol: String = "$"
+        private set
 
-    // Поля настроек
-    private String defaultOrigin; // "origin-selection.default_origin" (по умолчанию "NONE")
-    private boolean randomOptionEnabled; // "origin-selection.random-option.enabled"
-    private List<String> randomOptionExclude; // "origin-selection.random-option.exclude"
+    var screenTitleBackground: String = ""
+        private set
+    var screenTitlePrefix: String = ""
+        private set
+    var screenTitleSuffix: String = ""
+        private set
+    var originSelectionScrollAmount: Int = 1
+        private set
+    var originSelectionInvulnerableMode: String = "OFF"
+        private set
 
-    private boolean swapCommandResetPlayer;
-    private int swapCommandVaultDefaultCost; // "swap-command.vault.default-cost"
-    private int swapCommandVaultCost; // "swap-command.vault.cost"
-    private boolean swapCommandVaultPermanentPurchases; // "swap-command.vault.permanent-purchases"
-    private String swapCommandVaultBypassPermission; // "swap-command.vault.bypass-permission"
-    private String swapCommandVaultCurrencySymbol; // "swap-command.vault.currency-symbol"
+    var isOriginSelectionAutoSpawnTeleport: Boolean = false
+        private set
+    var isOriginSelectionDeathOriginChange: Boolean = false
+        private set
 
-    private String screenTitleBackground; // "origin-selection.screen-title.background"
-    private String screenTitlePrefix; // "origin-selection.screen-title.prefix"
-    private String screenTitleSuffix; // "origin-selection.screen-title.suffix"
-    private int originSelectionScrollAmount; // "origin-selection.scroll-amount"
-    private String originSelectionInvulnerableMode; // "origin-selection.invulnerable-mode"
+    var worldsWorld: String = "world"
+        private set
+    var worldsDisabledWorlds: MutableList<String> = mutableListOf()
+        private set
 
-    private boolean originSelectionAutoSpawnTeleport; // "origin-selection.auto-spawn-teleport"
-    private boolean originSelectionDeathOriginChange; // "origin-selection.death-origin-change"
+    var geyserJoinFormDelay: Int = 20
+        private set
+    var isMiscSettingsDisableFlightStuff: Boolean = false
+        private set
 
-    private String worldsWorld; // "worlds.world"
-    private List<String> worldsDisabledWorlds; // "worlds.disabled-worlds"
+    var originSelectionDelayBeforeRequired: Int = 0
+        private set
 
-    private int geyserJoinFormDelay; // "geyser.join-form-delay"
-    private boolean miscSettingsDisableFlightStuff; // "misc-settings.disable-flight-stuff"
-
-    // Новое поле: задержка перед обязательным выбором origin
-    private int originSelectionDelayBeforeRequired; // "origin-selection.delay-before-required"
-
-    private boolean orbOfOriginResetPlayer;
+    var isOrbOfOriginResetPlayer: Boolean = false
+        private set
 
     // Приватный конструктор предотвращает создание экземпляров извне
-    private ConfigOptions() {
-        update();
-    }
-
-    /**
-     * Возвращает единственный экземпляр ConfigOptions.
-     * Если экземпляр ещё не создан, он будет создан и инициализирован.
-     *
-     * @return экземпляр ConfigOptions
-     */
-    public static synchronized ConfigOptions getInstance() {
-        if (instance == null) {
-            instance = new ConfigOptions();
-        }
-        return instance;
+    init {
+        update()
     }
 
     /**
      * Обновляет все значения из конфигурации плагина.
      * Вызывайте этот метод при старте плагина и при перезагрузке конфигурации.
      */
-    public void update() {
-        FileConfiguration config = OriginsReborn.getInstance().getConfig();
+    fun update() {
+        val config = OriginsReborn.instance.getConfig()
 
-        defaultOrigin = config.getString("origin-selection.default_origin", "NONE");
-        randomOptionEnabled = config.getBoolean("origin-selection.random-option.enabled", false);
-        randomOptionExclude = config.getStringList("origin-selection.random-option.exclude");
+        defaultOrigin = config.getString("origin-selection.default_origin", "NONE") ?: "NONE"
+        isRandomOptionEnabled = config.getBoolean("origin-selection.random-option.enabled", false)
+        randomOptionExclude = config.getStringList("origin-selection.random-option.exclude").toMutableList()
 
-        swapCommandResetPlayer = config.getBoolean("swap-command.reset-player");
-        swapCommandVaultDefaultCost = config.getInt("swap-command.vault.default-cost", 1000);
-        swapCommandVaultCost = config.getInt("swap-command.vault.cost", 1000);
-        swapCommandVaultPermanentPurchases = config.getBoolean("swap-command.vault.permanent-purchases", false);
-        swapCommandVaultBypassPermission = config.getString("swap-command.vault.bypass-permission", "originsreborn.costbypass");
-        swapCommandVaultCurrencySymbol = config.getString("swap-command.vault.currency-symbol", "$");
+        isSwapCommandResetPlayer = config.getBoolean("swap-command.reset-player")
+        swapCommandVaultDefaultCost = config.getInt("swap-command.vault.default-cost", 1000)
+        swapCommandVaultCost = config.getInt("swap-command.vault.cost", 1000)
+        isSwapCommandVaultPermanentPurchases = config.getBoolean("swap-command.vault.permanent-purchases", false)
+        swapCommandVaultBypassPermission =
+            config.getString("swap-command.vault.bypass-permission", "originsreborn.costbypass") ?: "originsreborn.costbypass"
+        swapCommandVaultCurrencySymbol = config.getString("swap-command.vault.currency-symbol", "$") ?: "$"
 
-        screenTitleBackground = config.getString("origin-selection.screen-title.background", "");
-        screenTitlePrefix = config.getString("origin-selection.screen-title.prefix", "");
-        screenTitleSuffix = config.getString("origin-selection.screen-title.suffix", "");
-        originSelectionScrollAmount = config.getInt("origin-selection.scroll-amount", 1);
-        originSelectionInvulnerableMode = config.getString("origin-selection.invulnerable-mode", "OFF");
+        screenTitleBackground = config.getString("origin-selection.screen-title.background", "") ?: ""
+        screenTitlePrefix = config.getString("origin-selection.screen-title.prefix", "") ?: ""
+        screenTitleSuffix = config.getString("origin-selection.screen-title.suffix", "") ?: ""
+        originSelectionScrollAmount = config.getInt("origin-selection.scroll-amount", 1)
+        originSelectionInvulnerableMode = config.getString("origin-selection.invulnerable-mode", "OFF") ?: "OFF"
 
-        originSelectionAutoSpawnTeleport = config.getBoolean("origin-selection.auto-spawn-teleport", false);
-        originSelectionDeathOriginChange = config.getBoolean("origin-selection.death-origin-change", false);
+        isOriginSelectionAutoSpawnTeleport = config.getBoolean("origin-selection.auto-spawn-teleport", false)
+        isOriginSelectionDeathOriginChange = config.getBoolean("origin-selection.death-origin-change", false)
 
-        worldsWorld = config.getString("worlds.world", "world");
-        worldsDisabledWorlds = config.getStringList("worlds.disabled-worlds");
+        worldsWorld = config.getString("worlds.world", "world") ?: "world"
+        worldsDisabledWorlds = config.getStringList("worlds.disabled-worlds").toMutableList()
 
-        geyserJoinFormDelay = config.getInt("geyser.join-form-delay", 20);
-        miscSettingsDisableFlightStuff = config.getBoolean("misc-settings.disable-flight-stuff", false);
+        geyserJoinFormDelay = config.getInt("geyser.join-form-delay", 20)
+        isMiscSettingsDisableFlightStuff = config.getBoolean("misc-settings.disable-flight-stuff", false)
 
-        // Чтение задержки перед выбором origin
-        originSelectionDelayBeforeRequired = config.getInt("origin-selection.delay-before-required", 0);
+        originSelectionDelayBeforeRequired = config.getInt("origin-selection.delay-before-required", 0)
 
-        orbOfOriginResetPlayer = config.getBoolean("orb-of-origin.reset-player");
-    }
-
-    // Геттеры для доступа к настройкам
-
-    public String getDefaultOrigin() {
-        return defaultOrigin;
-    }
-
-    public boolean isRandomOptionEnabled() {
-        return randomOptionEnabled;
-    }
-
-    public List<String> getRandomOptionExclude() {
-        return randomOptionExclude;
-    }
-
-    public int getSwapCommandVaultDefaultCost() {
-        return swapCommandVaultDefaultCost;
-    }
-
-    public int getSwapCommandVaultCost() {
-        return swapCommandVaultCost;
-    }
-
-    public boolean isSwapCommandVaultPermanentPurchases() {
-        return swapCommandVaultPermanentPurchases;
-    }
-
-    public boolean isSwapCommandResetPlayer() {
-        return swapCommandResetPlayer;
-    }
-
-    public String getSwapCommandVaultBypassPermission() {
-        return swapCommandVaultBypassPermission;
-    }
-
-    public String getSwapCommandVaultCurrencySymbol() {
-        return swapCommandVaultCurrencySymbol;
-    }
-
-    public String getScreenTitleBackground() {
-        return screenTitleBackground;
-    }
-
-    public String getScreenTitlePrefix() {
-        return screenTitlePrefix;
-    }
-
-    public String getScreenTitleSuffix() {
-        return screenTitleSuffix;
-    }
-
-    public int getOriginSelectionScrollAmount() {
-        return originSelectionScrollAmount;
-    }
-
-    public String getOriginSelectionInvulnerableMode() {
-        return originSelectionInvulnerableMode;
-    }
-
-    public boolean isOriginSelectionAutoSpawnTeleport() {
-        return originSelectionAutoSpawnTeleport;
-    }
-
-    public boolean isOriginSelectionDeathOriginChange() {
-        return originSelectionDeathOriginChange;
-    }
-
-    public String getWorldsWorld() {
-        return worldsWorld;
-    }
-
-    public List<String> getWorldsDisabledWorlds() {
-        return worldsDisabledWorlds;
-    }
-
-    public int getGeyserJoinFormDelay() {
-        return geyserJoinFormDelay;
-    }
-
-    public boolean isMiscSettingsDisableFlightStuff() {
-        return miscSettingsDisableFlightStuff;
-    }
-
-    public int getOriginSelectionDelayBeforeRequired() {
-        return originSelectionDelayBeforeRequired;
-    }
-
-    public boolean isOrbOfOriginResetPlayer() {
-        return orbOfOriginResetPlayer;
+        isOrbOfOriginResetPlayer = config.getBoolean("orb-of-origin.reset-player")
     }
 
     /**
@@ -197,7 +108,13 @@ public class ConfigOptions {
      * @param layer название слоя (например, "origin")
      * @return true, если для данного слоя включена опция случайного выбора, иначе false.
      */
-    public boolean isOriginSelectionRandomise(String layer) {
-        return OriginsReborn.getInstance().getConfig().getBoolean("origin-selection.randomise." + layer, false);
+    fun isOriginSelectionRandomise(layer: String): Boolean {
+        return OriginsReborn.instance.getConfig().getBoolean("origin-selection.randomise.$layer", false)
+    }
+
+    companion object {
+        // Единственный экземпляр класса
+        @JvmStatic
+        val instance: ConfigOptions by lazy { ConfigOptions() }
     }
 }

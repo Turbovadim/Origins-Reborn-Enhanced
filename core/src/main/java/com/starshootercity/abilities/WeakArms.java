@@ -91,8 +91,8 @@ public class WeakArms implements VisibleAbility, Listener {
                         if (storedEffects.containsKey(player)) {
                             SavedPotionEffect effect = storedEffects.get(player);
                             storedEffects.remove(player);
-                            PotionEffect potionEffect = effect.effect();
-                            int time = potionEffect.getDuration() - (Bukkit.getCurrentTick() - effect.currentTime());
+                            PotionEffect potionEffect = effect.effect;
+                            int time = potionEffect.getDuration() - (Bukkit.getCurrentTick() - effect.currentTime);
                             if (time > 0) {
                                 player.addPotionEffect(new PotionEffect(
                                         potionEffect.getType(),

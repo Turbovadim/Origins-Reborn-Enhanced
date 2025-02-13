@@ -4,7 +4,8 @@ main: com.starshootercity.OriginsReborn
 description: Paper plugin inspired by the Origins mod by Apace
 api-version: '1.18'
 author: cometcake575
-
+depend:
+  - EnderaLib
 softdepend:
   - Geyser-Spigot
   - AuthMe

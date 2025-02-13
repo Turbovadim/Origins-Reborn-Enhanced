@@ -1,34 +1,36 @@
-package com.starshootercity.cooldowns;
+package com.starshootercity.cooldowns
 
-import com.starshootercity.OriginsReborn;
-import com.starshootercity.abilities.Ability;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Player;
+import com.starshootercity.OriginsReborn.Companion.getCooldowns
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.abilities.Ability
+import com.starshootercity.cooldowns.Cooldowns.CooldownInfo
+import org.bukkit.NamespacedKey
+import org.bukkit.entity.Player
 
-@SuppressWarnings("unused") // Some functions here are unused but are useful in addons
-public interface CooldownAbility extends Ability {
-    default NamespacedKey getCooldownKey() {
-        return new NamespacedKey(OriginsReborn.getInstance(), getKey().asString().replace(":", "-"));
+@JvmDefaultWithCompatibility
+@Suppress("unused") // Some functions here are unused but are useful in addons
+interface CooldownAbility : Ability {
+    val cooldownKey: NamespacedKey
+        get() = NamespacedKey(instance, getKey().asString().replace(":", "-"))
+
+    fun setCooldown(player: Player) {
+        if (instance.getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return
+        getCooldowns().setCooldown(player, cooldownKey)
     }
 
-    default void setCooldown(Player player) {
-        if (OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return;
-        OriginsReborn.getCooldowns().setCooldown(player, getCooldownKey());
+    fun setCooldown(player: Player, amount: Int) {
+        if (instance.getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return
+        getCooldowns().setCooldown(player, cooldownKey, amount, cooldownInfo.isStatic)
     }
 
-    default void setCooldown(Player player, int amount) {
-        if (OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return;
-        OriginsReborn.getCooldowns().setCooldown(player, getCooldownKey(), amount, getCooldownInfo().isStatic());
+    fun hasCooldown(player: Player): Boolean {
+        if (instance.getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return false
+        return getCooldowns().hasCooldown(player, cooldownKey)
     }
 
-    default boolean hasCooldown(Player player) {
-        if (OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return false;
-        return OriginsReborn.getCooldowns().hasCooldown(player, getCooldownKey());
+    fun getCooldown(player: Player): Long {
+        return getCooldowns().getCooldown(player, cooldownKey)
     }
 
-    default long getCooldown(Player player) {
-        return OriginsReborn.getCooldowns().getCooldown(player, getCooldownKey());
-    }
-
-    Cooldowns.CooldownInfo getCooldownInfo();
+    val cooldownInfo: CooldownInfo
 }

@@ -1,131 +1,116 @@
-package com.starshootercity.cooldowns;
+package com.starshootercity.cooldowns
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import com.starshootercity.ShortcutUtils;
-import com.starshootercity.events.PlayerSwapOriginEvent;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.intellij.lang.annotations.Subst;
-import org.jetbrains.annotations.Nullable;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper
+import com.starshootercity.OriginsReborn
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.ShortcutUtils.isBedrockPlayer
+import com.starshootercity.events.PlayerSwapOriginEvent
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextColor
+import org.bukkit.Bukkit
+import org.bukkit.NamespacedKey
+import org.bukkit.configuration.InvalidConfigurationException
+import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.persistence.PersistentDataContainer
+import org.bukkit.persistence.PersistentDataType
+import org.bukkit.plugin.java.JavaPlugin
+import org.intellij.lang.annotations.Subst
+import java.awt.image.BufferedImage
+import java.io.File
+import java.io.IOException
+import java.time.Instant
+import javax.imageio.ImageIO
+import kotlin.math.floor
+import kotlin.math.max
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.*;
+class Cooldowns : Listener {
+    private val registeredCooldowns: MutableMap<NamespacedKey?, CooldownInfo> = HashMap<NamespacedKey?, CooldownInfo>()
+    private val cooldownKey = NamespacedKey(instance, "cooldowns")
+    private val hasCooldownKey = NamespacedKey(instance, "has_cooldown")
 
-public class Cooldowns implements Listener {
-    private final Map<NamespacedKey, CooldownInfo> registeredCooldowns = new HashMap<>();
-    private final NamespacedKey cooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "cooldowns");
-    private final NamespacedKey hasCooldownKey = new NamespacedKey(OriginsReborn.getInstance(), "has_cooldown");
-
-    private int tickCounter = 0;
+    private var tickCounter = 0
 
     @EventHandler
-    public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
-        event.getPlayer().getPersistentDataContainer().remove(cooldownKey);
-    }
-
-    private static @Nullable String getTime(int cooldownTime) {
-        if (cooldownTime <= 0) return null;
-        String time;
-        if (Math.floorDiv(cooldownTime, 60) == 0) {
-            time = "%ss".formatted(cooldownTime);
-        } else {
-            time = "%sm %ss".formatted(Math.floorDiv(cooldownTime, 60), cooldownTime % 60);
-        }
-        return time;
+    fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
+        event.getPlayer().persistentDataContainer.remove(cooldownKey)
     }
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
-
-        tickCounter++;
+    fun onServerTickEnd(event: ServerTickEndEvent) {
+        tickCounter++
         if (tickCounter < 10) {
-            return;
+            return
         }
-        tickCounter = 0;
-        // Кэшируем текущее время (в миллисекундах)
-        long now = Instant.now().toEpochMilli();
+        tickCounter = 0
 
-        // Обрабатываем каждого игрока
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            // Получаем контейнер данных игрока и PDC для кулдаунов
-            PersistentDataContainer playerPDC = player.getPersistentDataContainer();
-            PersistentDataContainer cooldownPDC = playerPDC.getOrDefault(
-                    cooldownKey,
-                    PersistentDataType.TAG_CONTAINER,
-                    playerPDC.getAdapterContext().newPersistentDataContainer()
-            );
+        val now = Instant.now().toEpochMilli()
+        for (player in Bukkit.getOnlinePlayers()) {
+            val playerPDC = player.persistentDataContainer
+            val cooldownPDC = playerPDC.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+                cooldownKey,
+                PersistentDataType.TAG_CONTAINER,
+                playerPDC.adapterContext.newPersistentDataContainer()
+            )
 
-            // Получаем список активных кулдаунов для игрока (фильтруем неактуальные и незарегистрированные)
-            List<NamespacedKey> cooldownKeys = getActiveCooldownKeys(cooldownPDC, now);
+            val cooldownKeys = getActiveCooldownKeys(cooldownPDC, now)
             if (cooldownKeys.isEmpty()) {
-                // Если кулдаунов нет, удаляем флаг и переходим к следующему игроку
-                if (playerPDC.has(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-                    playerPDC.remove(hasCooldownKey);
+                if (playerPDC.has<Byte, Boolean>(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+                    playerPDC.remove(hasCooldownKey)
                 }
-                continue;
+                continue
             }
-            // Устанавливаем флаг наличия кулдауна
-            playerPDC.set(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
+            playerPDC.set<Byte, Boolean>(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
 
-            // Если игрок — Bedrock, формируем строку с оставшимся временем
-            if (ShortcutUtils.isBedrockPlayer(player.getUniqueId())) {
-                StringBuilder sb = new StringBuilder();
-                for (NamespacedKey key : cooldownKeys) {
-                    CooldownInfo info = registeredCooldowns.get(key);
-                    if (info == null || info.getIcon() == null) continue;
-                    // Вычисляем оставшееся время (в миллисекундах) для кулдауна
-                    long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
-                    int secondsRemaining = (int) (remaining / 50);
-                    String timeStr = getTime(secondsRemaining);
+            if (isBedrockPlayer(player.uniqueId)) {
+                val sb = StringBuilder()
+                for (key in cooldownKeys) {
+                    val info = registeredCooldowns[key]
+                    if (info == null || info.icon == null) continue
+                    val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+                        key,
+                        PersistentDataType.LONG,
+                        0L
+                    ) - (if (info.isStatic) 0 else now)
+                    val secondsRemaining = (remaining / 50).toInt()
+                    val timeStr: String? = getTime(secondsRemaining)
                     if (timeStr != null) {
-                        sb.append(timeStr).append(" ");
+                        sb.append(timeStr).append(" ")
                     }
                 }
-                player.sendActionBar(Component.text(sb.toString()));
+                player.sendActionBar(Component.text(sb.toString()))
             } else {
-                // Для обычных (Java) игроков формируем компонент с иконками и полосками
-                int heightOffset = computeHeightOffset(player);
-                Component message = Component.empty();
-                for (NamespacedKey key : cooldownKeys) {
-                    CooldownInfo info = registeredCooldowns.get(key);
-                    if (info == null || info.getIcon() == null) continue;
-                    long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
-                    // Вычисляем отношение оставшегося времени к полному кулдауну
-                    float ratio = remaining / (info.getCooldownTime() * 50f);
-                    if (!info.isReversed()) {
-                        ratio = 1 - ratio;
+                var heightOffset = computeHeightOffset(player)
+                var message: Component = Component.empty()
+                for (key in cooldownKeys) {
+                    val info = registeredCooldowns[key]
+                    if (info == null || info.icon == null) continue
+                    val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+                        key,
+                        PersistentDataType.LONG,
+                        0L
+                    ) - (if (info.isStatic) 0 else now)
+                    var ratio = remaining / (info.cooldownTime * 50f)
+                    if (!info.isReversed) {
+                        ratio = 1 - ratio
                     }
                     message = message
-                            .append(Component.text("\uF004"))
-                            .append(formCooldownBar(ratio, info, heightOffset));
-                    heightOffset++;
+                        .append(Component.text("\uF004"))
+                        .append(formCooldownBar(ratio, info, heightOffset))
+                    heightOffset++
                 }
-                Component prefix = OriginsReborn.getNMSInvoker().applyFont(
-                        Component.text("\uF003"),
-                        Key.key("minecraft:cooldown_bar/height_0")
-                );
-                player.sendActionBar(prefix.append(message));
+                val prefix = NMSInvoker.applyFont(
+                    Component.text("\uF003"),
+                    Key.key("minecraft:cooldown_bar/height_0")
+                )
+                player.sendActionBar(prefix.append(message))
             }
         }
     }
@@ -135,270 +120,283 @@ public class Cooldowns implements Listener {
      * Фильтруются ключи, для которых не зарегистрирован CooldownInfo,
      * либо оставшееся время <= 0 (если кулдаун не статичный).
      */
-    private List<NamespacedKey> getActiveCooldownKeys(PersistentDataContainer cooldownPDC, long now) {
-        List<NamespacedKey> keys = new ArrayList<>(cooldownPDC.getKeys());
-        keys.removeIf(key -> {
-            CooldownInfo info = registeredCooldowns.get(key);
-            if (info == null) return true;
-            long remaining = cooldownPDC.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now);
-            return remaining <= 0 && !info.isStatic();
-        });
-        return keys;
+    private fun getActiveCooldownKeys(cooldownPDC: PersistentDataContainer, now: Long): MutableList<NamespacedKey> {
+        val keys: MutableList<NamespacedKey> = ArrayList<NamespacedKey>(cooldownPDC.keys)
+        keys.removeIf { key: NamespacedKey? ->
+            val info = registeredCooldowns[key]
+            if (info == null) return@removeIf true
+            val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+                key!!,
+                PersistentDataType.LONG,
+                0L
+            ) - (if (info.isStatic) 0 else now)
+            remaining <= 0 && !info.isStatic
+        }
+        return keys
     }
 
     /**
      * Вычисляет смещение (offset) для отображения полос кулдауна.
      * Учитываются: наличие транспорта (и его здоровье) и состояние под водой.
      */
-    private int computeHeightOffset(Player player) {
-        int offset = 0;
-        Entity vehicle = player.getVehicle();
-        if (vehicle instanceof LivingEntity livingEntity) {
-            AttributeInstance instance = livingEntity.getAttribute(OriginsReborn.getNMSInvoker().getMaxHealthAttribute());
+    private fun computeHeightOffset(player: Player): Int {
+        var offset = 0
+        val vehicle = player.vehicle
+        if (vehicle is LivingEntity) {
+            val instance = vehicle.getAttribute(NMSInvoker.getMaxHealthAttribute())
             if (instance != null) {
-                offset += (int) (Math.floor((instance.getValue() - 1) / 10) - 1);
+                offset += (floor((instance.value - 1) / 10) - 1).toInt()
             }
         }
-        if (player.getRemainingAir() < player.getMaximumAir() || OriginsReborn.getNMSInvoker().isUnderWater(player)) {
-            offset++;
+        if (player.remainingAir < player.maximumAir || NMSInvoker.isUnderWater(player)) {
+            offset++
         }
-        return offset;
+        return offset
     }
 
     /**
      * Перегруженный метод getCooldown, использующий предварительно вычисленное время.
      */
-    public long getCooldown(Player player, NamespacedKey key, long now) {
-        PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(
-                cooldownKey,
-                PersistentDataType.TAG_CONTAINER,
-                player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer()
-        );
-        CooldownInfo info = registeredCooldowns.get(key);
-        if (info == null) return 0;
-        return Math.max(0, pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : now));
+    fun getCooldown(player: Player, key: NamespacedKey, now: Long): Long {
+        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+            cooldownKey,
+            PersistentDataType.TAG_CONTAINER,
+            player.persistentDataContainer.adapterContext.newPersistentDataContainer()
+        )
+        val info = registeredCooldowns[key]
+        if (info == null) return 0
+        return max(
+            0.0,
+            (pdc.getOrDefault<Long?, Long?>(
+                key,
+                PersistentDataType.LONG,
+                0L
+            ) - (if (info.isStatic) 0 else now)).toDouble()
+        ).toLong()
     }
 
 
-    public Component formCooldownBar(float percentage, CooldownInfo info, int height) {
-        return iconDataMap.get(info.getIcon()).assemble(percentage, height);
+    fun formCooldownBar(percentage: Float, info: CooldownInfo, height: Int): Component {
+        return iconDataMap[info.icon]!!.assemble(percentage, height)
     }
 
-    public long getCooldown(Player player, NamespacedKey key) {
-        PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
-        CooldownInfo info = registeredCooldowns.get(key);
-        if (info == null) return 0;
-        return Math.max(0, pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - (info.isStatic() ? 0 : Instant.now().toEpochMilli()));
+    fun getCooldown(player: Player, key: NamespacedKey): Long {
+        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+            cooldownKey,
+            PersistentDataType.TAG_CONTAINER,
+            player.persistentDataContainer.adapterContext.newPersistentDataContainer()
+        )
+        val info = registeredCooldowns[key]
+        if (info == null) return 0
+        return max(
+            0.0,
+            (pdc.getOrDefault<Long?, Long?>(key, PersistentDataType.LONG, 0L) - (if (info.isStatic) 0 else Instant.now()
+                .toEpochMilli())).toDouble()
+        ).toLong()
     }
 
-    public List<NamespacedKey> getCooldowns(Player player) {
-        PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
-        List<NamespacedKey> keys = new ArrayList<>(pdc.getKeys());
-        keys.removeIf(key -> !registeredCooldowns.containsKey(key) || (!hasCooldown(player, key) && !registeredCooldowns.get(key).isStatic()));
-        return keys;
+    fun getCooldowns(player: Player): MutableList<NamespacedKey?> {
+        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+            cooldownKey,
+            PersistentDataType.TAG_CONTAINER,
+            player.persistentDataContainer.adapterContext.newPersistentDataContainer()
+        )
+        val keys: MutableList<NamespacedKey?> = ArrayList<NamespacedKey?>(pdc.keys)
+        keys.removeIf { key: NamespacedKey? ->
+            !registeredCooldowns.containsKey(key) || (!hasCooldown(player, key!!) && !registeredCooldowns[key]!!.isStatic)
+        }
+        return keys
+
+
+
+
     }
 
-    public void resetCooldowns(Player player) {
-        player.getPersistentDataContainer().remove(cooldownKey);
+    fun resetCooldowns(player: Player) {
+        player.persistentDataContainer.remove(cooldownKey)
     }
 
-    public boolean hasCooldown(Player player, NamespacedKey key) {
-        return getCooldown(player, key) > 0;
+    fun hasCooldown(player: Player, key: NamespacedKey): Boolean {
+        return getCooldown(player, key) > 0
     }
 
-    public void setCooldown(Player player, NamespacedKey key, int cooldown, boolean isStatic) {
-        PersistentDataContainer pdc = player.getPersistentDataContainer().getOrDefault(cooldownKey, PersistentDataType.TAG_CONTAINER, player.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer());
-        pdc.set(key, PersistentDataType.LONG, isStatic ? cooldown * 50L : Instant.now().toEpochMilli() + (cooldown * 50L));
-        player.getPersistentDataContainer().set(cooldownKey, PersistentDataType.TAG_CONTAINER, pdc);
+    fun setCooldown(player: Player, key: NamespacedKey, cooldown: Int, isStatic: Boolean) {
+        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+            cooldownKey,
+            PersistentDataType.TAG_CONTAINER,
+            player.persistentDataContainer.adapterContext.newPersistentDataContainer()
+        )
+        pdc.set<Long?, Long?>(
+            key,
+            PersistentDataType.LONG,
+            if (isStatic) cooldown * 50L else Instant.now().toEpochMilli() + (cooldown * 50L)
+        )
+        player.persistentDataContainer
+            .set<PersistentDataContainer?, PersistentDataContainer?>(cooldownKey, PersistentDataType.TAG_CONTAINER, pdc)
     }
 
-    public void setCooldown(Player player, NamespacedKey key) {
-        CooldownInfo info = registeredCooldowns.get(key);
-        setCooldown(player, key, info.getCooldownTime(), info.isStatic());
+    fun setCooldown(player: Player, key: NamespacedKey) {
+        val info: CooldownInfo = registeredCooldowns.get(key)!!
+        setCooldown(player, key, info.cooldownTime, info.isStatic)
     }
 
-    public record CooldownIconData(List<Component> barPieces, Component icon) {
-        public Component assemble(float completion, int height) {
-            double num = Math.floor(barPieces.size() * completion);
-            Component result = icon.append(Component.text("\uF002"));
-            for (int i = 0; i < barPieces.size(); i++) {
-                result = result.append((i <= num ? barPieces : emptyBarPieces).get(i));
-                result = result.append(Component.text("\uF001"));
+    @JvmRecord
+    data class CooldownIconData(val barPieces: MutableList<Component?>?, val icon: Component?) {
+        fun assemble(completion: Float, height: Int): Component {
+            val num = floor((barPieces!!.size * completion).toDouble())
+            var result = icon!!.append(Component.text("\uF002"))
+            for (i in barPieces.indices) {
+                result = result.append((if (i <= num) barPieces else emptyBarPieces)[i]!!)
+                result = result.append(Component.text("\uF001"))
             }
-            @Subst("minecraft:cooldown_bar/height_0") String formatted = "minecraft:cooldown_bar/height_%s".formatted(height);
-            return OriginsReborn.getNMSInvoker().applyFont(result, Key.key(formatted));
+            @Subst("minecraft:cooldown_bar/height_0") val formatted =
+                "minecraft:cooldown_bar/height_$height"
+            return NMSInvoker.applyFont(result, Key.key(formatted))
         }
     }
 
-    public static List<Component> emptyBarPieces;
-
-    public CooldownIconData makeCID(File file) {
-        BufferedImage image;
+    fun makeCID(file: File): CooldownIconData {
+        val image: BufferedImage
         try {
-            image = ImageIO.read(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            image = ImageIO.read(file)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
         }
-        return new CooldownIconData(makeBarPieces(image), makeIcon(image));
+        return CooldownIconData(makeBarPieces(image), makeIcon(image))
     }
 
-    public Component makeIcon(BufferedImage image) {
-        BufferedImage iconImage = image.getSubimage(73, 0, 8, 8);
-        Component icon = Component.empty();
-        String pixels = "\uE000\uE001\uE002\uE003\uE004\uE005\uE006\uE007";
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                int col = iconImage.getRGB(x, y);
-                if (col == 0) {
-                    icon = icon.append(Component.text("\uF002"));
-                } else icon = icon.append(Component.text(pixels.charAt(y)).color(TextColor.color(col)));
-                icon = icon.append(Component.text(y == 7 ? "\uF001" : "\uF000"));
+    fun makeIcon(image: BufferedImage): Component {
+        val iconImage = image.getSubimage(73, 0, 8, 8)
+        var icon: Component = Component.empty()
+        val pixels = "\uE000\uE001\uE002\uE003\uE004\uE005\uE006\uE007"
+        for (x in 0..7) {
+            for (y in 0..7) {
+                val col = iconImage.getRGB(x, y)
+                icon = if (col == 0) {
+                    icon.append(Component.text("\uF002"))
+                } else icon.append(Component.text(pixels[y]).color(TextColor.color(col)))
+                icon = icon.append(Component.text(if (y == 7) "\uF001" else "\uF000"))
             }
         }
-        return icon;
+        return icon
     }
 
-    public List<Component> makeBarPieces(BufferedImage image) {
-        BufferedImage barImage = image.getSubimage(0, 2, 71, 5);
-        String pixels = "\uE002\uE003\uE004\uE005\uE006";
-        List<Component> result = new ArrayList<>();
-        for (int x = 0; x < 71; x++) {
-            Component c = Component.empty();
-            for (int y = 0; y < 5; y++) {
-                int col = barImage.getRGB(x, y);
-                if (col == 0) {
-                    c = c.append(Component.text("\uF002"));
-                } else c = c.append(Component.text(pixels.charAt(y)).color(TextColor.color(col)));
-                if (y != 4) c = c.append(Component.text("\uF000"));
+    fun makeBarPieces(image: BufferedImage): MutableList<Component?> {
+        val barImage = image.getSubimage(0, 2, 71, 5)
+        val pixels = "\uE002\uE003\uE004\uE005\uE006"
+        val result: MutableList<Component?> = ArrayList<Component?>()
+        for (x in 0..70) {
+            var c: Component = Component.empty()
+            for (y in 0..4) {
+                val col = barImage.getRGB(x, y)
+                c = if (col == 0) {
+                    c.append(Component.text("\uF002"))
+                } else c.append(Component.text(pixels[y]).color(TextColor.color(col)))
+                if (y != 4) c = c.append(Component.text("\uF000"))
             }
-            result.add(c);
+            result.add(c)
         }
-        return result;
+        return result
     }
 
-    public final Map<String, CooldownIconData> iconDataMap = new HashMap<>();
+    val iconDataMap: MutableMap<String?, CooldownIconData?> = HashMap<String?, CooldownIconData?>()
 
-    public NamespacedKey registerCooldown(JavaPlugin instance, NamespacedKey key, CooldownInfo info) {
-        if (OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return key;
+    fun registerCooldown(instance: JavaPlugin, key: NamespacedKey, info: CooldownInfo): NamespacedKey {
+        if (OriginsReborn.instance.getConfig().getBoolean("cooldowns.disable-all-cooldowns")) return key
 
-        if (info.getIcon() != null && OriginsReborn.getInstance().getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
-            File icon = new File(instance.getDataFolder(), "icons/%s.png".formatted(info.getIcon()));
+        if (info.icon != null && OriginsReborn.instance.getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
+            val icon = File(instance.dataFolder, "icons/${info.icon}.png")
             if (!icon.exists()) {
-                boolean ignored = icon.getParentFile().mkdirs();
-                instance.saveResource("icons/%s.png".formatted(info.getIcon()), false);
+                val ignored = icon.getParentFile().mkdirs()
+                instance.saveResource("icons/${info.icon}.png", false)
             }
-            CooldownIconData iconData = makeCID(icon);
-            iconDataMap.put(info.getIcon(), iconData);
+            val iconData = makeCID(icon)
+            iconDataMap.put(info.icon, iconData)
         }
         if (!fileConfiguration.contains(key.toString())) {
-            fileConfiguration.set(key.toString(), -1);
+            fileConfiguration.set(key.toString(), -1)
             try {
-                fileConfiguration.save(file);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                fileConfiguration.save(file)
+            } catch (e: IOException) {
+                throw RuntimeException(e)
             }
         }
-        int i = fileConfiguration.getInt(key.toString());
-        if (i != -1) info.setCooldownTime(i);
-        registeredCooldowns.put(key, info);
-        return key;
+        val i = fileConfiguration.getInt(key.toString())
+        if (i != -1) info.cooldownTime = i
+        registeredCooldowns.put(key, info)
+        return key
     }
 
-    private final File file;
+    private val file: File = File(instance.dataFolder, "cooldown-config.yml")
 
-    private final FileConfiguration fileConfiguration;
+    private val fileConfiguration: FileConfiguration
 
-    public Cooldowns() {
-        file = new File(OriginsReborn.getInstance().getDataFolder(), "cooldown-config.yml");
+    init {
         if (!file.exists()) {
-            boolean ignored = file.getParentFile().mkdirs();
-            OriginsReborn.getInstance().saveResource("cooldown-config.yml", false);
+            val ignored = file.getParentFile().mkdirs()
+            instance.saveResource("cooldown-config.yml", false)
         }
 
-        fileConfiguration = new YamlConfiguration();
+        fileConfiguration = YamlConfiguration()
 
         try {
-            fileConfiguration.load(file);
-        } catch (InvalidConfigurationException | IOException e) {
-            throw new RuntimeException(e);
+            fileConfiguration.load(file)
+        } catch (e: InvalidConfigurationException) {
+            throw RuntimeException(e)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
         }
 
-        File icon = new File(OriginsReborn.getInstance().getDataFolder(), "icons/empty_bar.png");
+        val icon = File(instance.dataFolder, "icons/empty_bar.png")
 
         if (!icon.exists()) {
-            boolean ignored = icon.getParentFile().mkdirs();
-            OriginsReborn.getInstance().saveResource("icons/empty_bar.png", false);
+            val ignored = icon.getParentFile().mkdirs()
+            instance.saveResource("icons/empty_bar.png", false)
         }
 
-        BufferedImage image;
+        val image: BufferedImage
         try {
-            image = ImageIO.read(icon);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            image = ImageIO.read(icon)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
         }
 
-        emptyBarPieces = makeBarPieces(image);
+        emptyBarPieces = makeBarPieces(image)
     }
 
-    @SuppressWarnings("unused")
-    public static class CooldownInfo {
-        private int cooldownTime;
-        private final boolean reversed;
-        private final @Nullable String icon;
-        private final boolean isStatic;
+    @Suppress("unused")
+    class CooldownInfo @JvmOverloads constructor(
+        var cooldownTime: Int,
+        val icon: String? = null,
+        val isReversed: Boolean = false,
+        val isStatic: Boolean = false
+    ) {
+        constructor(cooldownTime: Int, reversed: Boolean) : this(cooldownTime, null, reversed, false)
+    }
 
-        public CooldownInfo(int cooldownTime, @Nullable String icon, boolean reversed, boolean isStatic) {
-            this.cooldownTime = cooldownTime;
-            this.icon = icon;
-            this.reversed = reversed;
-            this.isStatic = isStatic;
+    fun resetFile() {
+        for (key in fileConfiguration.getKeys(false)) {
+            fileConfiguration.set(key, null)
         }
-
-        public boolean isStatic() {
-            return isStatic;
-        }
-
-        public boolean isReversed() {
-            return reversed;
-        }
-
-        public CooldownInfo(int cooldownTime, @Nullable String icon, boolean reversed) {
-            this(cooldownTime, icon, reversed, false);
-        }
-
-        public CooldownInfo(int cooldownTime, @Nullable String icon) {
-            this(cooldownTime, icon, false, false);
-        }
-
-        public CooldownInfo(int cooldownTime, boolean reversed) {
-            this(cooldownTime, null, reversed, false);
-        }
-
-        public CooldownInfo(int cooldownTime) {
-            this(cooldownTime, null, false, false);
-        }
-
-        public @Nullable String getIcon() {
-            return icon;
-        }
-
-        public void setCooldownTime(int cooldownTime) {
-            this.cooldownTime = cooldownTime;
-        }
-
-        public int getCooldownTime() {
-            return cooldownTime;
+        try {
+            fileConfiguration.save(file)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
         }
     }
 
-    public void resetFile() {
-        for (String key : fileConfiguration.getKeys(false)) {
-            fileConfiguration.set(key, null);
+    companion object {
+        private fun getTime(cooldownTime: Int): String? {
+            if (cooldownTime <= 0) return null
+            val minutes = cooldownTime / 60
+            val seconds = cooldownTime % 60
+            return if (minutes == 0) {
+                "${cooldownTime}s"
+            } else {
+                "${minutes}m ${seconds}s"
+            }
         }
-        try {
-            fileConfiguration.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        lateinit var emptyBarPieces: MutableList<Component?>
     }
 }

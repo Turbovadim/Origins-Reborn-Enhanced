@@ -1,4 +1,3 @@
-package com.starshootercity.util;
+package com.starshootercity.util
 
-public class EssentialsXFlightHook {
-}
+class EssentialsXFlightHook 

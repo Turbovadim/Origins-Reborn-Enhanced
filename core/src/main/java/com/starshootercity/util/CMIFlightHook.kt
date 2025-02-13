@@ -1,5 +1,3 @@
-package com.starshootercity.util;
+package com.starshootercity.util
 
-public class CMIFlightHook {
-
-}
+class CMIFlightHook 

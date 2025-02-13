@@ -1,62 +1,51 @@
-package com.starshootercity;
+package com.starshootercity
 
-import com.starshootercity.events.PlayerSwapOriginEvent;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.PrepareItemCraftEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.ShapedRecipe;
-import org.bukkit.inventory.meta.ItemMeta;
+import com.starshootercity.AddonLoader.getOrigins
+import com.starshootercity.AddonLoader.getTextFor
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.events.PlayerSwapOriginEvent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.PrepareItemCraftEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ShapedRecipe
 
-import java.util.List;
-
-public class OrbOfOrigin implements Listener {
-    public static NamespacedKey orbKey = new NamespacedKey(OriginsReborn.getInstance(), "orb-of-origin");
-    public static NamespacedKey updatedKey = new NamespacedKey(OriginsReborn.getInstance(), "updated-orb");
-
-    public static final ItemStack orb = new ItemStack(Material.NAUTILUS_SHELL) {{
-        ItemMeta meta = getItemMeta();
-        meta.getPersistentDataContainer().set(orbKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-        meta.getPersistentDataContainer().set(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-        meta = OriginsReborn.getNMSInvoker().setCustomModelData(meta, 1);
-        meta.displayName(
-                Component.text(AddonLoader.getTextFor("item.origins.orb_of_origin", "Orb of Origin"))
-                        .color(NamedTextColor.AQUA)
-                        .decoration(TextDecoration.ITALIC, false)
-        );
-        setItemMeta(meta);
-    }};
-
+class OrbOfOrigin : Listener {
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getCurrentItem() == null || event.getCurrentItem().getItemMeta() == null) return;
-        ItemMeta meta = event.getCurrentItem().getItemMeta();
-        if (meta.getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.getPersistentDataContainer().has(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-            event.getCurrentItem().setItemMeta(orb.getItemMeta());
+    fun onInventoryClick(event: InventoryClickEvent) {
+        if (event.getCurrentItem() == null || event.getCurrentItem()!!.itemMeta == null) return
+        val meta = event.getCurrentItem()!!.itemMeta
+        if (meta.persistentDataContainer
+                .has<Byte?, Boolean?>(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.persistentDataContainer
+                .has<Byte?, Boolean?>(
+                    updatedKey, OriginSwapper.BooleanPDT.BOOLEAN
+                )
+        ) {
+            event.getCurrentItem()!!.setItemMeta(orb.itemMeta)
         }
     }
 
-    @EventHandler
-    @SuppressWarnings("ConstantConditions") // itemStack is null on some versions
-    public void onPrepareItemCraft(PrepareItemCraftEvent event) {
-        Recipe recipe = event.getRecipe();
+    @EventHandler  // itemStack is null on some versions
+    fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
+        val recipe = event.recipe
         if (recipe != null) {
-            if (recipe.getResult().getType() == Material.CONDUIT) {
-                for (ItemStack itemStack : event.getInventory().getMatrix()) {
-                    if (itemStack != null && itemStack.getItemMeta() != null) {
-                        if (itemStack.getItemMeta().getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-                            event.getInventory().setResult(null);
+            if (recipe.result.type == Material.CONDUIT) {
+                for (itemStack in event.inventory.matrix) {
+                    if (itemStack.itemMeta != null) {
+                        if (itemStack.itemMeta.persistentDataContainer
+                                .has<Byte?, Boolean?>(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)
+                        ) {
+                            event.inventory.result = null
                         }
                     }
                 }
@@ -64,69 +53,126 @@ public class OrbOfOrigin implements Listener {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public OrbOfOrigin() {
-        Bukkit.removeRecipe(orbKey);
-        FileConfiguration config = OriginsReborn.getInstance().getConfig();
+    init {
+        Bukkit.removeRecipe(orbKey)
+        val config = instance.config
         if (config.getBoolean("orb-of-origin.enable-recipe")) {
-            ShapedRecipe shapedRecipe = new ShapedRecipe(orbKey, orb);
-            shapedRecipe.shape("012", "345", "678");
-            int i = 0;
-            List<?> recipeData = config.getList("orb-of-origin.recipe");
-            if (recipeData == null) return;
-            for (Object line : recipeData) {
-                for (String name : (List<String>) line) {
-                    Material material = Material.matchMaterial(name);
-                    if (material == null) material = Material.AIR;
-                    if (material == Material.AIR) {
-                        i++;
-                        continue;
-                    }
-                    shapedRecipe.setIngredient(String.valueOf(i).charAt(0), material);
-                    i++;
+            val shapedRecipe = ShapedRecipe(orbKey, orb).apply {
+                shape("012", "345", "678")
+            }
+
+            val recipeData: List<String> = config.getList("orb-of-origin.recipe")
+                ?.flatMap { row ->
+                    (row as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                } ?: emptyList()
+
+            recipeData.forEachIndexed { index, materialName ->
+                val material = Material.matchMaterial(materialName) ?: Material.AIR
+                if (material != Material.AIR) {
+                    shapedRecipe.setIngredient(index.toString()[0], material)
                 }
             }
-            Bukkit.addRecipe(shapedRecipe);
+            Bukkit.addRecipe(shapedRecipe)
         }
     }
 
+
     @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getClickedBlock() != null) {
-            if (event.getClickedBlock().getType().isInteractable()) return;
+    fun onPlayerInteract(event: PlayerInteractEvent) {
+        // Если блок, по которому кликнули, существует и интерактивный – выходим.
+        event.clickedBlock?.takeIf { it.type.isInteractable }?.let { return }
+
+        if (!event.action.isRightClick) return
+
+        val player = event.player
+        val item = event.item ?: return
+        val meta = item.itemMeta ?: return
+
+        // Если предмет не является Орбом Происхождения – выходим.
+        if (!meta.persistentDataContainer.has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) return
+
+        // Проверяем кулдаун
+        OriginSwapper.orbCooldown[player]?.let { lastUse ->
+            if (System.currentTimeMillis() - lastUse < 500) return
         }
-        if (!event.getAction().isRightClick()) return;
-        ItemStack item = event.getItem();
-        if (item == null) return;
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            if (meta.getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-                if (OriginSwapper.orbCooldown.containsKey(event.getPlayer())) {
-                    if (System.currentTimeMillis() - OriginSwapper.orbCooldown.get(event.getPlayer()) < 500) {
-                        return;
-                    }
+
+        // Определяем, в какой руке находится орб (если в основной руке тоже орб, считаем, что он там)
+        val hand = if (player.inventory.itemInMainHand.itemMeta
+                ?.persistentDataContainer
+                ?.has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) == true
+        ) EquipmentSlot.HAND else EquipmentSlot.OFF_HAND
+
+        when (hand) {
+            EquipmentSlot.HAND -> player.swingMainHand()
+            else -> player.swingOffHand()
+        }
+
+        // Если в настройках включено потребление орба, уменьшаем количество предметов
+        if (instance.config.getBoolean("orb-of-origin.consume")) {
+            item.amount--
+            player.inventory.setItemInMainHand(item)
+        }
+
+        var opened = false
+        for (layer in AddonLoader.layers) {
+            OriginSwapper.setOrigin(
+                player,
+                null,
+                PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                false,
+                layer!!
+            )
+            if (opened) continue
+
+            // Если для данного слоя настроен рандомный выбор, открываем окно с рандомной ориентацией
+            if (instance.config.getBoolean("orb-of-origin.random.$layer")) {
+                OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
+                val origin = OriginSwapper.getOrigin(player, layer)
+                val index = getOrigins(layer).indexOf(origin)
+                OriginSwapper.openOriginSwapper(
+                    player,
+                    PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                    index,
+                    0,
+                    false,
+                    true,
+                    layer
+                )
+            } else {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(instance) {
+                    OriginSwapper.openOriginSwapper(
+                        player,
+                        PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                        0,
+                        0,
+                        layer
+                    )
                 }
-                ItemMeta heldMeta = event.getPlayer().getInventory().getItemInMainHand().getItemMeta();
-                EquipmentSlot hand = EquipmentSlot.OFF_HAND;
-                if (heldMeta != null && heldMeta.getPersistentDataContainer().has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) hand = EquipmentSlot.HAND;
-                if (hand == EquipmentSlot.HAND) event.getPlayer().swingMainHand();
-                else event.getPlayer().swingOffHand();
-                if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.consume")) {
-                    item.setAmount(item.getAmount() - 1);
-                    event.getPlayer().getInventory().setItemInMainHand(item);
-                }
-                boolean opened = false;
-                for (String layer : AddonLoader.layers) {
-                    OriginSwapper.setOrigin(event.getPlayer(), null, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, false, layer);
-                    if (opened) continue;
-                    if (OriginsReborn.getInstance().getConfig().getBoolean("orb-of-origin.random.%s".formatted(layer))) {
-                        OriginSwapper.selectRandomOrigin(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer);
-                        OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, AddonLoader.getOrigins(layer).indexOf(OriginSwapper.getOrigin(event.getPlayer(), layer)), 0, false, true, layer);
-                    } else {
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> OriginSwapper.openOriginSwapper(event.getPlayer(), PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, 0, 0, layer));
-                    }
-                    opened = true;
-                }
+            }
+            opened = true
+        }
+    }
+
+
+    companion object {
+        @JvmField
+        var orbKey: NamespacedKey = NamespacedKey(instance, "orb-of-origin")
+        var updatedKey: NamespacedKey = NamespacedKey(instance, "updated-orb")
+
+        @JvmField
+        val orb: ItemStack = object : ItemStack(Material.NAUTILUS_SHELL) {
+            init {
+                var meta = itemMeta
+                meta.persistentDataContainer.set<Byte?, Boolean?>(orbKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                meta.persistentDataContainer
+                    .set<Byte?, Boolean?>(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                meta = NMSInvoker.setCustomModelData(meta, 1)
+                meta.displayName(
+                    Component.text(getTextFor("item.origins.orb_of_origin", "Orb of Origin"))
+                        .color(NamedTextColor.AQUA)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
+                setItemMeta(meta)
             }
         }
     }

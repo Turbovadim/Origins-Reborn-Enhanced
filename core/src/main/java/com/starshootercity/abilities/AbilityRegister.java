@@ -1,6 +1,7 @@
 package com.starshootercity.abilities;
 
-import com.starshootercity.*;
+import com.starshootercity.ConfigOptions;
+import com.starshootercity.OriginsReborn;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.cooldowns.CooldownAbility;
 import com.starshootercity.packetsenders.NMSInvoker;
@@ -22,10 +23,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AbilityRegister {
     public static Map<Key, Ability> abilityMap = new HashMap<>();
@@ -51,7 +49,7 @@ public class AbilityRegister {
 
         // Регистрируем способность с кулдауном
         if (ability instanceof CooldownAbility cooldownAbility) {
-            OriginsReborn.getCooldowns().registerCooldown(instance, cooldownAbility.getCooldownKey(), cooldownAbility.getCooldownInfo());
+            OriginsReborn.getCooldowns().registerCooldown(instance, cooldownAbility.getCooldownKey(), Objects.requireNonNull(cooldownAbility.getCooldownInfo()));
         }
 
         // Если способность также является Listener, регистрируем её для получения событий

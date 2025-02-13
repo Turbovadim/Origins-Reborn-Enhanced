@@ -1,48 +1,55 @@
-package com.starshootercity;
+package com.starshootercity
 
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.InvalidConfigurationException
+import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-
-public class WidthGetter {
-    public static int getWidth(char c) {
-        for (int i = 2; i < 8; i++) {
-            if (fileConfiguration.getString("character-widths.%s".formatted(i), "").contains(String.valueOf(c))) {
-                return i;
+object WidthGetter {
+    fun getWidth(c: Char): Int {
+        for (i in 2..7) {
+            val key = "character-widths.$i"
+            // Получаем значение по ключу; если fileConfiguration равен null, используем пустую строку
+            val widths = fileConfiguration?.getString(key, "") ?: ""
+            if (widths.contains(c)) {
+                return i
             }
         }
-//        System.out.println(c);
-        return 0;
+        return 0
     }
 
-    public static void initialize(JavaPlugin plugin) {
-        file = new File(plugin.getDataFolder(), "characters.yml");
 
-        if (!file.exists()) {
-            boolean ignored = file.getParentFile().mkdirs();
-            plugin.saveResource("characters.yml", false);
+    fun initialize(plugin: JavaPlugin) {
+        file = File(plugin.dataFolder, "characters.yml")
+
+        if (!file!!.exists()) {
+            val ignored = file!!.getParentFile().mkdirs()
+            plugin.saveResource("characters.yml", false)
         }
 
-        fileConfiguration = new YamlConfiguration();
+        fileConfiguration = YamlConfiguration()
         try {
-            fileConfiguration.load(file);
-        } catch (IOException | InvalidConfigurationException e) {
-            throw new RuntimeException(e);
+            fileConfiguration!!.load(file!!)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        } catch (e: InvalidConfigurationException) {
+            throw RuntimeException(e)
         }
     }
 
-    public static void reload() {
+    @JvmStatic
+    fun reload() {
         try {
-            fileConfiguration.load(file);
-        } catch (IOException | InvalidConfigurationException e) {
-            throw new RuntimeException(e);
+            fileConfiguration!!.load(file!!)
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        } catch (e: InvalidConfigurationException) {
+            throw RuntimeException(e)
         }
     }
 
-    private static File file;
-    private static FileConfiguration fileConfiguration;
+    private var file: File? = null
+    private var fileConfiguration: FileConfiguration? = null
 }

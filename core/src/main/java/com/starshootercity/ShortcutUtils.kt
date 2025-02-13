@@ -1,97 +1,115 @@
-package com.starshootercity;
+package com.starshootercity
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.geysermc.api.Geyser;
-import org.geysermc.floodgate.api.FloodgateApi;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextColor
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffect
+import org.geysermc.api.Geyser
+import org.geysermc.floodgate.api.FloodgateApi
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.File
+import java.io.IOException
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-@SuppressWarnings("unused")
-public class ShortcutUtils {
-    public static void giveItemWithDrops(Player player, ItemStack... itemStacks) {
-        for (ItemStack i : player.getInventory().addItem(itemStacks).values()) {
-            player.getWorld().dropItemNaturally(player.getLocation(), i);
+@Suppress("unused")
+object ShortcutUtils {
+    @JvmStatic
+    fun giveItemWithDrops(player: Player, vararg itemStacks: ItemStack?) {
+        // Фильтруем null-значения, чтобы избежать исключений
+        val validItems = itemStacks.filterNotNull().toTypedArray()
+        // Добавляем предметы в инвентарь и получаем оставшиеся, если не поместились
+        player.inventory.addItem(*validItems).values.forEach { leftover ->
+            player.world.dropItemNaturally(player.location, leftover)
         }
     }
 
-    public static @Nullable LivingEntity getLivingDamageSource(@NotNull EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof LivingEntity entity) return entity;
-        else if (event.getDamager() instanceof LivingEntity entity) return entity;
-        return null;
-    }
 
-    public static JSONObject openJSONFile(File file) {
-        try (Scanner scanner = new Scanner(file)) {
-            StringBuilder data = new StringBuilder();
-            while (scanner.hasNextLine()) {
-                data.append(scanner.nextLine());
-            }
-            try {
-                return new JSONObject(data.toString());
-            } catch (JSONException e) {
-                return new JSONObject();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    fun getLivingDamageSource(event: EntityDamageByEntityEvent): LivingEntity? {
+        val damageDealer = event.damager
+        return when (damageDealer) {
+            is Projectile -> damageDealer.shooter as? LivingEntity
+            is LivingEntity -> damageDealer
+            else -> null
         }
     }
 
-    public static boolean isBedrockPlayer(UUID uuid) {
+
+    fun openJSONFile(file: File): JSONObject {
         try {
-            return FloodgateApi.getInstance().isFloodgatePlayer(uuid);
-        } catch (NoClassDefFoundError e) {
+            Scanner(file).use { scanner ->
+                val data = StringBuilder()
+                while (scanner.hasNextLine()) {
+                    data.append(scanner.nextLine())
+                }
+                return try {
+                    JSONObject(data.toString())
+                } catch (e: JSONException) {
+                    JSONObject()
+                }
+            }
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+    }
+
+    @JvmStatic
+    fun isBedrockPlayer(uuid: UUID): Boolean {
+        return try {
+            FloodgateApi.getInstance().isFloodgatePlayer(uuid)
+        } catch (e: NoClassDefFoundError) {
             try {
-                return Geyser.api().isBedrockPlayer(uuid);
-            } catch (NoClassDefFoundError ex) {
-                return false;
+                Geyser.api().isBedrockPlayer(uuid)
+            } catch (ex: NoClassDefFoundError) {
+                false
             }
         }
     }
 
-    public static Component getColored(String f) {
-        Component component = Component.empty();
-        Iterator<String> iterator = substringsBetween(f, "<", ">").iterator();
-        for (String s : f.split("<#\\w{6}>")) {
-            if (s.isEmpty()) continue;
-            component = component.append(iterator.hasNext() ? Component.text(s).color(TextColor.fromHexString(iterator.next())) : Component.text(s));
+    fun getColored(f: String): Component {
+        var component: Component = Component.empty()
+        val iterator = substringsBetween(f, "<", ">").iterator()
+        for (s in f.split("<#\\w{6}>".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
+            if (s.isEmpty()) continue
+            component = component.append(
+                if (iterator.hasNext()) Component.text(s).color(
+                    TextColor.fromHexString(
+                        iterator.next()!!
+                    )
+                ) else Component.text(s)
+            )
         }
-        return component;
+        return component
     }
 
-    public static List<String> substringsBetween(String s, String start, String end) {
-        int starti = s.indexOf(start);
-        if (starti == -1) return List.of();
-        String startPart = s.substring(starti);
-        int endi = startPart.indexOf(end);
-        if (endi == -1) return List.of();
-        List<String> data = new ArrayList<>();
-        data.add(startPart.substring(0, endi));
-        data.addAll(substringsBetween(startPart.substring(endi), start, end));
-        return data;
+    fun substringsBetween(s: String, start: String, end: String): MutableList<String?> {
+        val starti = s.indexOf(start)
+        if (starti == -1) return mutableListOf<String?>()
+        val startPart = s.substring(starti)
+        val endi = startPart.indexOf(end)
+        if (endi == -1) return mutableListOf<String?>()
+        val data: MutableList<String?> = ArrayList<String?>()
+        data.add(startPart.substring(0, endi))
+        data.addAll(substringsBetween(startPart.substring(endi), start, end))
+        return data
     }
 
-    public static boolean isInfinite(PotionEffect effect) {
-        if (OriginsReborn.getNMSInvoker().supportsInfiniteDuration()) {
-            return (effect.getDuration() == -1);
-        } else return (effect.getDuration() >= 20000);
+    @JvmStatic
+    fun isInfinite(effect: PotionEffect): Boolean {
+        return if (NMSInvoker.supportsInfiniteDuration()) {
+            (effect.duration == -1)
+        } else (effect.duration >= 20000)
     }
 
-    public static int infiniteDuration() {
-        if (OriginsReborn.getNMSInvoker().supportsInfiniteDuration()) {
-            return -1;
-        } else return 50000;
+    @JvmStatic
+    fun infiniteDuration(): Int {
+        return if (NMSInvoker.supportsInfiniteDuration()) {
+            -1
+        } else 50000
     }
 }
