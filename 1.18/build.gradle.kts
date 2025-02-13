@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("io.papermc.paperweight.userdev")
+    kotlin("jvm") version "2.1.10"
 }
 
 repositories {
@@ -14,8 +15,12 @@ dependencies {
     implementation(project(":version"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
     paperweight.paperDevBundle("1.18-R0.1-SNAPSHOT")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(17)
 }
