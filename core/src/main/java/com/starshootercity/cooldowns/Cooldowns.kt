@@ -236,7 +236,7 @@ class Cooldowns : Listener {
     }
 
     fun setCooldown(player: Player, key: NamespacedKey) {
-        val info: CooldownInfo = registeredCooldowns.get(key)!!
+        val info: CooldownInfo = registeredCooldowns[key]!!
         setCooldown(player, key, info.cooldownTime, info.isStatic)
     }
 
@@ -249,8 +249,7 @@ class Cooldowns : Listener {
                 result = result.append((if (i <= num) barPieces else emptyBarPieces)[i]!!)
                 result = result.append(Component.text("\uF001"))
             }
-            @Subst("minecraft:cooldown_bar/height_0") val formatted =
-                "minecraft:cooldown_bar/height_$height"
+            @Subst("minecraft:cooldown_bar/height_0") val formatted = "minecraft:cooldown_bar/height_$height"
             return NMSInvoker.applyFont(result, Key.key(formatted))
         }
     }

@@ -8,16 +8,25 @@ import java.io.File
 import java.io.IOException
 
 object WidthGetter {
-    fun getWidth(c: Char): Int {
-        for (i in 2..7) {
-            val key = "character-widths.$i"
-            // Получаем значение по ключу; если fileConfiguration равен null, используем пустую строку
-            val widths = fileConfiguration?.getString(key, "") ?: ""
-            if (widths.contains(c)) {
-                return i
+    private val charWidthMap: Map<Char, Int> by lazy {
+        val map = mutableMapOf<Char, Int>()
+        // Предположим, что возможные ширины варьируются от 2 до 7.
+        for (width in 2..7) {
+            val key = "character-widths.$width"
+            val chars = fileConfiguration?.getString(key, "") ?: ""
+            chars.forEach { c ->
+                // Если символ уже встречался, можно решить, что брать — первый найденный или последний.
+                map[c] = width
             }
         }
-        return 0
+        map
+    }
+
+    fun getWidth(c: Char): Int {
+        // Если символ не найден в конфигурации, можно вернуть значение по умолчанию (например, 1).
+        println("$c -> ${charWidthMap['О']}")
+        print("ебу")
+        return charWidthMap[c] ?: 1
     }
 
 

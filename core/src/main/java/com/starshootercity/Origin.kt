@@ -119,7 +119,8 @@ class Origin(
         val originAbilities = mutableListOf<Ability>()
         for (key in abilities) {
             val a = AbilityRegister.abilityMap[key]
-            originAbilities.add(a!!)
+            if (a == null) continue
+            originAbilities.add(a)
             if (a is MultiAbility) originAbilities.addAll(a.getAbilities())
         }
         return originAbilities

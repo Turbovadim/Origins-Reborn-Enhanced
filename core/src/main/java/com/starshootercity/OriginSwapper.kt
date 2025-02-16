@@ -48,7 +48,6 @@ import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scheduler.BukkitRunnable
-import org.intellij.lang.annotations.Subst
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -69,7 +68,7 @@ class OriginSwapper : Listener {
             val layer = itemContainer.getOrDefault<String?, String>(layerKey, PersistentDataType.STRING, "origin")
             val player = event.whoClicked
             if (player is Player) {
-                val currentItem = event.getCurrentItem()
+                val currentItem = event.currentItem
                 if (currentItem == null || currentItem.itemMeta == null) return
                 val currentItemMeta = currentItem.itemMeta
                 val currentItemContainer = currentItemMeta.persistentDataContainer
@@ -155,7 +154,7 @@ class OriginSwapper : Listener {
         if (player.openInventory.type == InventoryType.CHEST) {
             return
         }
-        val config: FileConfiguration = origins.getConfig()
+        val config: FileConfiguration = origins.config
         for (layer in AddonLoader.layers) {
             val origin: Origin? = getOrigin(player, layer!!)
 
@@ -287,8 +286,8 @@ class OriginSwapper : Listener {
 
     private fun executeCommands(originName: String, player: Player) {
         val configPath = "commands-on-origin.$originName"
-        if (instance.getConfig().contains(configPath)) {
-            instance.getConfig().getStringList(configPath).forEach { command ->
+        if (instance.config.contains(configPath)) {
+            instance.config.getStringList(configPath).forEach { command ->
                 Bukkit.dispatchCommand(
                     Bukkit.getConsoleSender(),
                     command.replace("%player%", player.name)
@@ -306,7 +305,7 @@ class OriginSwapper : Listener {
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         if (nmsInvoker.getRespawnLocation(event.getPlayer()) == null) {
             val world: World = getRespawnWorld(getOrigins(event.getPlayer()))
-            event.setRespawnLocation(world.spawnLocation)
+            event.respawnLocation = world.spawnLocation
         }
 
         lastRespawnReasons.put(event.getPlayer(), event.respawnFlags)
@@ -318,7 +317,7 @@ class OriginSwapper : Listener {
         if (options.isOriginSelectionDeathOriginChange) {
             for (layer in AddonLoader.layers) {
                 setOrigin(event.getPlayer(), null, SwapReason.DIED, false, layer!!)
-                if (instance.getConfig().getBoolean("origin-selection.randomise.$layer")) {
+                if (instance.config.getBoolean("origin-selection.randomise.$layer")) {
                     selectRandomOrigin(event.getPlayer(), SwapReason.INITIAL, layer)
                 } else openOriginSwapper(event.getPlayer(), SwapReason.INITIAL, 0, 0, layer)
             }
@@ -332,7 +331,7 @@ class OriginSwapper : Listener {
         )
     }
 
-    private val invulnerableMode: String = instance.getConfig().getString("origin-selection.invulnerable-mode", "OFF")!!
+    private val invulnerableMode: String = instance.config.getString("origin-selection.invulnerable-mode", "OFF")!!
 
     init {
 
@@ -350,7 +349,7 @@ class OriginSwapper : Listener {
             throw RuntimeException(e)
         }
 
-        usedOriginFile = File(instance.getDataFolder(), "used-origins.yml")
+        usedOriginFile = File(instance.dataFolder, "used-origins.yml")
         if (!usedOriginFile.exists()) {
             val ignored: Boolean = usedOriginFile.getParentFile().mkdirs()
             instance.saveResource("used-origins.yml", false)
@@ -394,8 +393,8 @@ class OriginSwapper : Listener {
             }
 
             fun getComponent(lineNumber: Int): Component {
-                @Subst("minecraft:text_line_0")
-                val formatted = "minecraft:${if (type == LineType.DESCRIPTION) "" else "title_"}text_line_$lineNumber"
+                val prefix = if (type == LineType.DESCRIPTION) "" else "title_"
+                val formatted = "minecraft:${prefix}text_line_$lineNumber"
                 return applyFont(component, Key.key(formatted))
             }
         }
@@ -421,86 +420,92 @@ class OriginSwapper : Listener {
             this.rawLines = lines
         }
 
-        fun getLines(startingPoint: Int): MutableList<Component> {
-            val resultLines: MutableList<Component> = ArrayList<Component>()
-            var i = startingPoint
-            while (i < startingPoint + 6 && i < rawLines.size) {
-                resultLines.add(rawLines[i]!!.getComponent(i - startingPoint))
-                i++
+        fun getLines(startingPoint: Int): List<Component> {
+            val end = minOf(startingPoint + 6, rawLines.size)
+            return (startingPoint until end).map { index ->
+                rawLines[index]!!.getComponent(index - startingPoint)
             }
-            return resultLines
         }
 
         companion object {
             // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
             @JvmStatic
             fun makeLineFor(text: String, type: LineType?): MutableList<LineComponent?> {
-                val list: MutableList<LineComponent?> = ArrayList<LineComponent?>()
+                val resultList = mutableListOf<LineComponent?>()
 
-                val lines = text.split("\n".toRegex(), limit = 2).toTypedArray()
+                // Разбиваем текст на первую строку и остаток (если есть)
+                val lines = text.split("\n", limit = 2)
                 var firstLine = lines[0]
                 val otherPart = StringBuilder()
                 if (lines.size > 1) {
                     otherPart.append(lines[1])
                 }
 
-                if (firstLine.indexOf(' ') >= 0 && getWidth(firstLine) > 140) {
-                    val tokens: Array<String?> =
-                        firstLine.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                    val firstPart = StringBuilder(tokens[0])
-                    var currentWidth: Int = getWidth(firstPart.toString())
-                    val spaceWidth: Int = getWidth(" ")
-                    for (i in 1..<tokens.size) {
-                        val tokenWidth: Int = getWidth(tokens[i]!!)
+                // Если первая строка содержит пробелы и её ширина превышает 140,
+                // разбиваем строку по словам так, чтобы первая часть не превышала ширину 140
+                if (firstLine.contains(' ') && getWidth(firstLine) > 140) {
+                    val tokens = firstLine.split(" ")
+                    val firstPartBuilder = StringBuilder(tokens[0])
+                    var currentWidth = getWidth(firstPartBuilder.toString())
+                    val spaceWidth = getWidth(" ")
+
+                    // Перебираем оставшиеся слова
+                    for (i in 1 until tokens.size) {
+                        val token = tokens[i]
+                        val tokenWidth = getWidth(token)
                         if (currentWidth + spaceWidth + tokenWidth <= 140) {
-                            firstPart.append(' ').append(tokens[i])
+                            firstPartBuilder.append(' ').append(token)
                             currentWidth += spaceWidth + tokenWidth
                         } else {
-                            if (!otherPart.isEmpty()) {
+                            if (otherPart.isNotEmpty()) {
                                 otherPart.append(' ')
                             }
-                            otherPart.append(tokens[i])
+                            otherPart.append(token)
                         }
                     }
-                    firstLine = firstPart.toString()
+                    firstLine = firstPartBuilder.toString()
                 }
 
+                // Если тип строки DESCRIPTION, добавляем специальный символ в начало
                 if (type == LineType.DESCRIPTION) {
-                    firstLine = '\uF00A'.toString() + firstLine
+                    firstLine = '\uF00A' + firstLine
                 }
-                val result = StringBuilder()
-                val rawResult = StringBuilder()
-                var i = 0
-                val len = firstLine.length
-                while (i < len) {
-                    val c = firstLine[i]
-                    result.append(c)
-                    if (c != '\uF00A') {
-                        rawResult.append(c)
-                    }
-                    result.append('\uF000')
-                    i++
-                }
-                rawResult.append(' ')
 
-                // Собираем компонент с нужными цветом и текстом, добавляя к нему инвертированный текст
-                val finalText = firstLine
-                val comp: Component = Component.text(result.toString())
+                // Форматируем строку:
+                // между каждым символом вставляем символ '\uF000',
+                // а в "сырую" строку (raw) добавляем символы, кроме '\uF00A'
+                val formattedBuilder = StringBuilder()
+                val rawBuilder = StringBuilder()
+                for (char in firstLine) {
+                    formattedBuilder.append(char)
+                    if (char != '\uF00A') {
+                        rawBuilder.append(char)
+                    }
+                    formattedBuilder.append('\uF000')
+                }
+                rawBuilder.append(' ')
+
+                // Создаем компонент с нужным цветом
+                val comp = Component.text(formattedBuilder.toString())
                     .color(
                         if (type == LineType.TITLE)
                             NamedTextColor.WHITE
                         else
                             TextColor.fromHexString("#CACACA")
                     )
-                    .append(Component.text(getInverse(finalText)))
-                list.add(LineComponent(comp, type, rawResult.toString()))
+                    .append(Component.text(getInverse(firstLine)))
 
-                // Рекурсивно обрабатываем оставшуюся часть, если она не пуста
-                if (!otherPart.isEmpty()) {
-                    list.addAll(makeLineFor(otherPart.toString(), type))
+                resultList.add(LineComponent(comp, type, rawBuilder.toString()))
+
+                // Если осталась часть текста, обрабатываем её рекурсивно
+                if (otherPart.isNotEmpty()) {
+                    val trimmed = otherPart.toString().trimStart()  // убираем ведущие пробелы
+                    resultList.addAll(makeLineFor(trimmed, type))
                 }
-                return list
+
+                return resultList
             }
+
         }
     }
 
@@ -595,289 +600,271 @@ class OriginSwapper : Listener {
             displayOnly: Boolean,
             layer: String
         ) {
-            var slot = slot
+            var slotIndex = slot
+
+            // Если выбор заблокирован – выходим
             if (shouldDisallowSelection(player, reason)) return
+
+            // Если причина – INITIAL, пытаемся установить дефолтную опцию
             if (reason == SwapReason.INITIAL) {
-                val def: String? = options.defaultOrigin
-                val defaultOrigin = getOriginByFilename(def)
-                if (defaultOrigin != null) {
-                    setOrigin(player, defaultOrigin, reason, false, layer)
-                    return
+                options.defaultOrigin.let { def ->
+                    getOriginByFilename(def)?.let { defaultOrigin ->
+                        setOrigin(player, defaultOrigin, reason, false, layer)
+                        return
+                    }
                 }
             }
-            lastSwapReasons.put(player, reason)
-            val enableRandom: Boolean = options.isRandomOptionEnabled
 
-            if (GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly, layer)) {
-                if (getOrigins(layer).isEmpty()) return
-                val origins: MutableList<Origin> = ArrayList<Origin>(getOrigins(layer))
-                if (!displayOnly) origins.removeIf { origin: Origin? ->
-                    origin!!.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(
-                        origin.permission!!
-                    )
-                }
-                while (slot > origins.size || slot == origins.size && !enableRandom) {
-                    slot -= origins.size + (if (enableRandom) 1 else 0)
-                }
-                while (slot < 0) {
-                    slot += origins.size + (if (enableRandom) 1 else 0)
-                }
-                val icon: ItemStack?
-                val name: String?
-                val nameForDisplay: String?
-                val impact: Char
-                var amount: Int = options.swapCommandVaultDefaultCost
+            // Сохраняем последнюю причину свапа
+            lastSwapReasons[player] = reason
+            val enableRandom = options.isRandomOptionEnabled
 
-                val data: LineData?
-                if (slot == origins.size) {
-                    val excludedOrigins: MutableList<String> = options.randomOptionExclude
+            // Проверяем, можно ли открыть свапер для данного игрока
+            if (!GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly, layer)) return
+            val allOrigins = getOrigins(layer)
+            if (allOrigins.isEmpty()) return
 
-                    val excludedOriginNames: MutableList<String?> = ArrayList<String?>()
-                    for (s in excludedOrigins) {
-                        val origin = getOriginByFilename(s)
-                        if (origin == null) continue
-                        excludedOriginNames.add(
-                            getTextFor(
-                                "origin." + origin.addon.getNamespace() + "." + s.replace(" ", "_").lowercase(
-                                    Locale.getDefault()
-                                ) + ".name", origin.getName()
-                            )
+            // Отбираем только подходящие опции (если не displayOnly)
+            val origins = allOrigins.toMutableList()
+            if (!displayOnly) {
+                origins.removeIf { origin ->
+                    origin!!.isUnchoosable(player) ||
+                            (origin.hasPermission() && !player.hasPermission(origin.permission!!))
+                }
+            }
+
+            // Нормализуем индекс слота
+            while (slotIndex > origins.size || (slotIndex == origins.size && !enableRandom)) {
+                slotIndex -= origins.size + if (enableRandom) 1 else 0
+            }
+            while (slotIndex < 0) {
+                slotIndex += origins.size + if (enableRandom) 1 else 0
+            }
+
+            // Объявляем переменные для иконки, названия, эффекта (impact) и стоимости
+            val icon: ItemStack
+            val name: String
+            val nameForDisplay: String
+            val impact: Char
+            var costAmount = options.swapCommandVaultDefaultCost
+            val data: LineData
+
+            if (slotIndex == origins.size) {
+                // Режим «рандомной» опции
+                val excludedOriginNames = options.randomOptionExclude.mapNotNull { s ->
+                    getOriginByFilename(s)?.let { origin ->
+                        getTextFor(
+                            "origin.${origin.addon.getNamespace()}.${s.replace(" ", "_").lowercase(Locale.getDefault())}.name",
+                            origin.getName()
                         )
                     }
-                    icon = OrbOfOrigin.orb.clone()
-                    name = getTextFor("origin.origins.random.name", "Random")
-                    nameForDisplay = getTextFor("origin.origins.random.name", "Random")
-                    impact = '\uE002'
-                    val names = StringBuilder("${getTextFor("origin.origins.random.description", "You'll be assigned one of the following:")}\n\n")
+                }
+                icon = OrbOfOrigin.orb.clone()
+                name = getTextFor("origin.origins.random.name", "Random")
+                nameForDisplay = getTextFor("origin.origins.random.name", "Random")
+                impact = '\uE002'
 
-                    for (origin in origins) {
-                        if (!excludedOriginNames.contains(origin.getName())) {
-                            names.append(origin.getName()).append("\n")
-                        }
-                    }
-                    data = LineData(
-                        LineData.Companion.makeLineFor(
-                            names.toString(),
-                            LineType.DESCRIPTION
-                        )
-                    )
-                } else {
-                    val origin = origins[slot]
-                    icon = origin.icon
-                    name = origin.getName()
-                    nameForDisplay = origin.getNameForDisplay()
-                    impact = origin.impact
-                    data = LineData(origin)
-                    if (origin.cost != null) {
-                        amount = origin.cost
+                val descriptionText = StringBuilder(
+                    "${getTextFor("origin.origins.random.description", "You'll be assigned one of the following:")}\n\n"
+                )
+                origins.forEach { origin ->
+                    if (!excludedOriginNames.contains(origin!!.getName())) {
+                        descriptionText.append(origin.getName()).append("\n")
                     }
                 }
-                val compressedName = StringBuilder("\uF001")
-                for (c in nameForDisplay.toCharArray()) {
-                    compressedName.append(c)
-                    compressedName.append('\uF000')
+                data = LineData(LineData.makeLineFor(descriptionText.toString(), LineType.DESCRIPTION))
+            } else {
+                // Конкретная опция (по индексу)
+                val origin = origins[slotIndex]!!
+                icon = origin.icon
+                name = origin.getName()
+                nameForDisplay = origin.getNameForDisplay()
+                impact = origin.impact
+                data = LineData(origin)
+                origin.cost?.let { costAmount = it }
+            }
+
+            // Формируем «сжатое» название с разделяющим символом
+            val compressedName = buildString {
+                append("\uF001")
+                nameForDisplay.forEach { c ->
+                    append(c)
+                    append('\uF000')
                 }
-                val background: Component = applyFont(
-                    ShortcutUtils.getColored(options.screenTitleBackground),
-                    Key.key("minecraft:default")
-                )
-                var component: Component = applyFont(
-                    Component.text("\uF000\uE000\uF001\uE001\uF002" + impact),
-                    Key.key("minecraft:origin_selector")
-                )
+            }
+
+            // Создаём основное текстовое сообщение с применением шрифтов и специальных символов
+            val background = applyFont(ShortcutUtils.getColored(options.screenTitleBackground), Key.key("minecraft:default"))
+            var component = applyFont(
+                Component.text("\uF000\uE000\uF001\uE001\uF002$impact"),
+                Key.key("minecraft:origin_selector")
+            )
+                .color(NamedTextColor.WHITE)
+                .append(background)
+                .append(applyFont(Component.text(compressedName), Key.key("minecraft:origin_title_text")).color(NamedTextColor.WHITE))
+                .append(applyFont(Component.text(getInverse(nameForDisplay) + "\uF000"), Key.key("minecraft:reverse_text")).color(NamedTextColor.WHITE))
+            data.getLines(scrollAmount).forEach { line ->
+                component = component.append(line)
+            }
+
+            val prefix = applyFont(ShortcutUtils.getColored(options.screenTitlePrefix), Key.key("minecraft:default"))
+            val suffix = applyFont(ShortcutUtils.getColored(options.screenTitleSuffix), Key.key("minecraft:default"))
+            val swapperInventory = Bukkit.createInventory(null, 54, prefix.append(component).append(suffix))
+
+            // Настраиваем метаданные и сохраняем данные в persistentDataContainer
+            val meta = icon.itemMeta
+            val container = meta.persistentDataContainer
+            container.set(originKey, PersistentDataType.STRING, name.lowercase(Locale.getDefault()))
+            if (meta is SkullMeta) {
+                meta.owningPlayer = player
+            }
+            container.set(displayKey, BooleanPDT.BOOLEAN, true)
+            container.set(swapTypeKey, PersistentDataType.STRING, reason.reason)
+            container.set(layerKey, PersistentDataType.STRING, layer)
+            icon.itemMeta = meta
+            swapperInventory.setItem(1, icon)
+
+            // Создаём предметы для подтверждения и «невидимого» подтверждения
+            val confirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+            val invisibleConfirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+            var confirmMeta = confirm.itemMeta
+            val confirmContainer = confirmMeta.persistentDataContainer
+            var invisibleConfirmMeta = invisibleConfirm.itemMeta
+            val invisibleConfirmContainer = invisibleConfirmMeta.persistentDataContainer
+
+            confirmMeta.displayName(
+                Component.text("Confirm")
                     .color(NamedTextColor.WHITE)
-                    .append(background)
-                    .append(
-                        applyFont(
-                            Component.text(compressedName.toString()),
-                            Key.key("minecraft:origin_title_text")
-                        ).color(NamedTextColor.WHITE)
-                    )
-                    .append(
-                        applyFont(
-                            Component.text(getInverse(nameForDisplay) + "\uF000"),
-                            Key.key("minecraft:reverse_text")
-                        ).color(NamedTextColor.WHITE)
-                    )
-                for (c in data.getLines(scrollAmount)) {
-                    component = component.append(c)
-                }
-                val prefix: Component =
-                    applyFont(ShortcutUtils.getColored(options.screenTitlePrefix), Key.key("minecraft:default"))
-                val suffix: Component =
-                    applyFont(ShortcutUtils.getColored(options.screenTitleSuffix), Key.key("minecraft:default"))
-                val swapperInventory = Bukkit.createInventory(
-                    null, 54,
-                    prefix.append(component).append(suffix)
-                )
-                val meta = icon.itemMeta
-                val container = meta.persistentDataContainer
-                container.set<String?, String?>(
-                    originKey,
-                    PersistentDataType.STRING,
-                    name.lowercase(Locale.getDefault())
-                )
-                if (meta is SkullMeta) {
-                    meta.owningPlayer = player
-                }
-                container.set<Byte?, Boolean?>(displayKey, BooleanPDT.Companion.BOOLEAN, true)
-                container.set<String?, String?>(swapTypeKey, PersistentDataType.STRING, reason.reason)
-                container.set<String?, String?>(layerKey, PersistentDataType.STRING, layer)
-                icon.setItemMeta(meta)
-                swapperInventory.setItem(1, icon)
-                val confirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                val invisibleConfirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                var confirmMeta = confirm.itemMeta
-                val confirmContainer = confirmMeta.persistentDataContainer
-                var invisibleConfirmMeta = invisibleConfirm.itemMeta
-                val invisibleConfirmContainer = invisibleConfirmMeta.persistentDataContainer
-
-                confirmMeta.displayName(
-                    Component.text("Confirm")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                confirmMeta = nmsInvoker.setCustomModelData(confirmMeta, 5)
-                if (!displayOnly) confirmContainer.set<Byte?, Boolean?>(confirmKey, BooleanPDT.Companion.BOOLEAN, true)
-                else confirmContainer.set<Byte?, Boolean?>(closeKey, BooleanPDT.Companion.BOOLEAN, true)
-
-                invisibleConfirmMeta.displayName(
-                    Component.text("Confirm")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                invisibleConfirmMeta = nmsInvoker.setCustomModelData(invisibleConfirmMeta, 6)
-                if (!displayOnly) invisibleConfirmContainer.set<Byte?, Boolean?>(
-                    confirmKey,
-                    BooleanPDT.Companion.BOOLEAN,
-                    true
-                )
-                else invisibleConfirmContainer.set<Byte?, Boolean?>(closeKey, BooleanPDT.Companion.BOOLEAN, true)
-
-                if (amount != 0 && cost && !player.hasPermission(options.swapCommandVaultBypassPermission)) {
-                    var go = true
-                    if (instance.getConfig().getBoolean("swap-command.vault.permanent-purchases")) {
-                        go = !usedOriginFileConfiguration.getStringList(player.uniqueId.toString()).contains(name)
-                    }
-                    if (go) {
-                        val symbol: String? = options.swapCommandVaultCurrencySymbol
-                        val costsCurrency = listOf<Component?>(
-                            Component.text(
-                                (if (instance.economy!!.has(
-                                        player,
-                                        amount.toDouble()
-                                    )
-                                ) "This will cost $symbol$amount of your balance!" else "You need at least %s%s in your balance to do this!")
-                            )
-                        )
-                        confirmMeta.lore(costsCurrency)
-                        invisibleConfirmMeta.lore(costsCurrency)
-                        confirmContainer.set<Int?, Int?>(costsCurrencyKey, PersistentDataType.INTEGER, amount)
-                        invisibleConfirmContainer.set<Int?, Int?>(costsCurrencyKey, PersistentDataType.INTEGER, amount)
-                    }
-                }
-
-                val up = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                val down = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                var upMeta = up.itemMeta
-                val upContainer = upMeta.persistentDataContainer
-                var downMeta = down.itemMeta
-                val downContainer = downMeta.persistentDataContainer
-
-                val scrollSize: Int = options.originSelectionScrollAmount
-
-                upMeta.displayName(
-                    Component.text("Up")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                if (scrollAmount != 0) {
-                    upContainer.set(pageSetKey, PersistentDataType.INTEGER, slot)
-                    upContainer.set(
-                        pageScrollKey,
-                        PersistentDataType.INTEGER,
-                        max(scrollAmount - scrollSize, 0)
-                    )
-                }
-                upMeta = nmsInvoker.setCustomModelData(upMeta, 3 + (if (scrollAmount == 0) 6 else 0))
-                upContainer.set<Byte?, Boolean?>(costKey, BooleanPDT.Companion.BOOLEAN, cost)
-                upContainer.set<Byte?, Boolean?>(displayOnlyKey, BooleanPDT.Companion.BOOLEAN, displayOnly)
-
-
-                val size = data.rawLines.size - scrollAmount - 6
-                val canGoDown = size > 0
-
-                downMeta.displayName(
-                    Component.text("Down")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                if (canGoDown) {
-                    downContainer.set(pageSetKey, PersistentDataType.INTEGER, slot)
-                    downContainer.set(
-                        pageScrollKey,
-                        PersistentDataType.INTEGER,
-                        min(scrollAmount + scrollSize, scrollAmount + size)
-                    )
-                }
-                downMeta = nmsInvoker.setCustomModelData(downMeta, 4 + (if (!canGoDown) 6 else 0))
-                downContainer.set<Byte?, Boolean?>(costKey, BooleanPDT.Companion.BOOLEAN, cost)
-                downContainer.set<Byte?, Boolean?>(displayOnlyKey, BooleanPDT.Companion.BOOLEAN, displayOnly)
-
-
-                up.setItemMeta(upMeta)
-                down.setItemMeta(downMeta)
-                swapperInventory.setItem(52, up)
-                swapperInventory.setItem(53, down)
-
-
-                if (!displayOnly) {
-                    val left = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                    val right = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                    var leftMeta = left.itemMeta
-                    val leftContainer = leftMeta.persistentDataContainer
-                    var rightMeta = right.itemMeta
-                    val rightContainer = rightMeta.persistentDataContainer
-
-
-                    leftMeta.displayName(
-                        Component.text("Previous origin")
-                            .color(NamedTextColor.WHITE)
-                            .decoration(TextDecoration.ITALIC, false)
-                    )
-                    leftContainer.set<Int?, Int?>(pageSetKey, PersistentDataType.INTEGER, slot - 1)
-                    leftContainer.set<Int?, Int?>(pageScrollKey, PersistentDataType.INTEGER, 0)
-                    leftMeta = nmsInvoker.setCustomModelData(leftMeta, 1)
-                    leftContainer.set<Byte?, Boolean?>(costKey, BooleanPDT.Companion.BOOLEAN, cost)
-                    leftContainer.set<Byte?, Boolean?>(displayOnlyKey, BooleanPDT.Companion.BOOLEAN, false)
-
-                    rightMeta.displayName(
-                        Component.text("Next origin")
-                            .color(NamedTextColor.WHITE)
-                            .decoration(TextDecoration.ITALIC, false)
-                    )
-                    rightContainer.set<Int?, Int?>(pageSetKey, PersistentDataType.INTEGER, slot + 1)
-                    rightContainer.set<Int?, Int?>(pageScrollKey, PersistentDataType.INTEGER, 0)
-                    rightMeta = nmsInvoker.setCustomModelData(rightMeta, 2)
-                    rightContainer.set<Byte?, Boolean?>(costKey, BooleanPDT.Companion.BOOLEAN, cost)
-                    rightContainer.set<Byte?, Boolean?>(displayOnlyKey, BooleanPDT.Companion.BOOLEAN, false)
-
-
-                    left.setItemMeta(leftMeta)
-                    right.setItemMeta(rightMeta)
-
-                    swapperInventory.setItem(47, left)
-                    swapperInventory.setItem(51, right)
-                }
-
-                confirm.setItemMeta(confirmMeta)
-                invisibleConfirm.setItemMeta(invisibleConfirmMeta)
-                swapperInventory.setItem(48, confirm)
-                swapperInventory.setItem(49, invisibleConfirm)
-                swapperInventory.setItem(50, invisibleConfirm)
-                player.openInventory(swapperInventory)
+                    .decoration(TextDecoration.ITALIC, false)
+            )
+            confirmMeta = nmsInvoker.setCustomModelData(confirmMeta, 5)
+            if (!displayOnly) {
+                confirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true)
+            } else {
+                confirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true)
             }
+
+            invisibleConfirmMeta.displayName(
+                Component.text("Confirm")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false)
+            )
+            invisibleConfirmMeta = nmsInvoker.setCustomModelData(invisibleConfirmMeta, 6)
+            if (!displayOnly) {
+                invisibleConfirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true)
+            } else {
+                invisibleConfirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true)
+            }
+
+            // Если стоит опция стоимости – добавляем описание и сохраняем стоимость в метаданных
+            if (costAmount != 0 && cost && !player.hasPermission(options.swapCommandVaultBypassPermission)) {
+                var canPurchase = true
+                if (instance.config.getBoolean("swap-command.vault.permanent-purchases")) {
+                    canPurchase = !usedOriginFileConfiguration.getStringList(player.uniqueId.toString()).contains(name)
+                }
+                if (canPurchase) {
+                    val symbol = options.swapCommandVaultCurrencySymbol
+                    val costMessage = if (instance.economy!!.has(player, costAmount.toDouble()))
+                        "This will cost $symbol$costAmount of your balance!"
+                    else
+                        "You need at least %s%s in your balance to do this!"
+                    val costLore = listOf(Component.text(costMessage))
+                    confirmMeta.lore(costLore)
+                    invisibleConfirmMeta.lore(costLore)
+                    confirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
+                    invisibleConfirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
+                }
+            }
+
+            // Настраиваем кнопки прокрутки (Up и Down)
+            val up = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+            val down = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+            var upMeta = up.itemMeta
+            val upContainer = upMeta.persistentDataContainer
+            var downMeta = down.itemMeta
+            val downContainer = downMeta.persistentDataContainer
+
+            val scrollSize = options.originSelectionScrollAmount
+            upMeta.displayName(
+                Component.text("Up")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false)
+            )
+            if (scrollAmount != 0) {
+                upContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex)
+                upContainer.set(pageScrollKey, PersistentDataType.INTEGER, max(scrollAmount - scrollSize, 0))
+            }
+            upMeta = nmsInvoker.setCustomModelData(upMeta, 3 + if (scrollAmount == 0) 6 else 0)
+            upContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
+            upContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly)
+
+            val remainingSize = data.rawLines.size - scrollAmount - 6
+            val canGoDown = remainingSize > 0
+            downMeta.displayName(
+                Component.text("Down")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false)
+            )
+            if (canGoDown) {
+                downContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex)
+                downContainer.set(pageScrollKey, PersistentDataType.INTEGER, min(scrollAmount + scrollSize, scrollAmount + remainingSize))
+            }
+            downMeta = nmsInvoker.setCustomModelData(downMeta, 4 + if (!canGoDown) 6 else 0)
+            downContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
+            downContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly)
+
+            up.itemMeta = upMeta
+            down.itemMeta = downMeta
+            swapperInventory.setItem(52, up)
+            swapperInventory.setItem(53, down)
+
+            // Если не только для отображения, добавляем навигационные кнопки (предыдущая/следующая опция)
+            if (!displayOnly) {
+                val left = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+                val right = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+                var leftMeta = left.itemMeta
+                val leftContainer = leftMeta.persistentDataContainer
+                var rightMeta = right.itemMeta
+                val rightContainer = rightMeta.persistentDataContainer
+
+                leftMeta.displayName(
+                    Component.text("Previous origin")
+                        .color(NamedTextColor.WHITE)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
+                leftContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex - 1)
+                leftContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0)
+                leftMeta = nmsInvoker.setCustomModelData(leftMeta, 1)
+                leftContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
+                leftContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false)
+
+                rightMeta.displayName(
+                    Component.text("Next origin")
+                        .color(NamedTextColor.WHITE)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
+                rightContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex + 1)
+                rightContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0)
+                rightMeta = nmsInvoker.setCustomModelData(rightMeta, 2)
+                rightContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
+                rightContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false)
+
+                left.itemMeta = leftMeta
+                right.itemMeta = rightMeta
+                swapperInventory.setItem(47, left)
+                swapperInventory.setItem(51, right)
+            }
+
+            confirm.itemMeta = confirmMeta
+            invisibleConfirm.itemMeta = invisibleConfirmMeta
+            swapperInventory.setItem(48, confirm)
+            swapperInventory.setItem(49, invisibleConfirm)
+            swapperInventory.setItem(50, invisibleConfirm)
+
+            // Открываем инвентарь для игрока
+            player.openInventory(swapperInventory)
         }
+
 
         fun applyFont(component: Component?, font: Key?): Component {
             return nmsInvoker.applyFont(component, font)
@@ -893,15 +880,11 @@ class OriginSwapper : Listener {
         }
 
         fun getWidth(s: String): Int {
-            var result = 0
-            for (c in s.toCharArray()) {
-                result += WidthGetter.getWidth(c)
-            }
-            return result
+            return s.sumOf { WidthGetter.getWidth(it) }
         }
 
         fun getInverse(c: Char): String {
-            return when (WidthGetter.getWidth(c)) {
+            val sex = when (WidthGetter.getWidth(c)) {
                 0 -> ""
                 2 -> "\uF001"
                 3 -> "\uF002"
@@ -919,8 +902,9 @@ class OriginSwapper : Listener {
                 15 -> "\uF009\uF004"
                 16 -> "\uF009\uF005"
                 17 -> "\uF009\uF006"
-                else -> throw IllegalStateException("Unexpected value: $c")
+                else -> throw IllegalStateException("Unexpected value for character: $c")
             }
+            return sex
         }
 
         @JvmField
@@ -965,10 +949,10 @@ class OriginSwapper : Listener {
                     if (world != null) return world
                 }
             }
-            var overworld = instance.getConfig().getString("worlds.world")
+            var overworld = instance.config.getString("worlds.world")
             if (overworld == null) {
                 overworld = "world"
-                instance.getConfig().set("worlds.world", "world")
+                instance.config.set("worlds.world", "world")
                 instance.saveConfig()
             }
             val world = Bukkit.getWorld(overworld)
@@ -1083,7 +1067,7 @@ class OriginSwapper : Listener {
                 originKey, PersistentDataType.TAG_CONTAINER
             )
             if (pdc == null) return null
-            val name = pdc.get<String?, String?>(AddonLoader.layerKeys.get(layer)!!, PersistentDataType.STRING)
+            val name = pdc.get<String?, String?>(AddonLoader.layerKeys[layer]!!, PersistentDataType.STRING)
             if (name == null) return null
             return getOrigin(name)
         }
