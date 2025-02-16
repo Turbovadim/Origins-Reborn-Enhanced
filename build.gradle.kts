@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.11" apply false
+    kotlin("jvm") version "2.1.10"
 }
 
 group = "com.starshootercity"

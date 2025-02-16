@@ -41,7 +41,7 @@ public class LaunchIntoAir implements VisibleAbility, Listener, CooldownAbility 
     }
 
     @Override
-    public Cooldowns.CooldownInfo getCooldownInfo() {
+    public Cooldowns.@NotNull CooldownInfo getCooldownInfo() {
         return new Cooldowns.CooldownInfo(600, "launch");
     }
 }

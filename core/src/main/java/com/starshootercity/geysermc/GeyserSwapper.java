@@ -40,7 +40,12 @@ public class GeyserSwapper {
 
     public static void openOriginSwapper(Player player, PlayerSwapOriginEvent.SwapReason reason, boolean displayOnly, boolean cost, String layer) {
         List<Origin> origins = new ArrayList<>(AddonLoader.getOrigins(layer));
-        if (!displayOnly) origins.removeIf(origin -> origin.isUnchoosable(player) || origin.hasPermission() && !player.hasPermission(origin.getPermission()));
+        if (!displayOnly) {
+            origins.removeIf(origin ->
+                    origin.isUnchoosable(player)
+                            || (origin.hasPermission() && (origin.getPermission() == null || !player.hasPermission(origin.getPermission())))
+            );
+        }
         else {
             Origin origin = OriginSwapper.getOrigin(player, layer);
             if (origin != null) openOriginInfo(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, true, false, layer);
@@ -93,6 +98,7 @@ public class GeyserSwapper {
             int amount = OriginsReborn.getInstance().getConfig().getInt("swap-command.vault.cost", 1000);
             if (origin.getCost() != null) amount = origin.getCost();
             Economy economy = OriginsReborn.getInstance().getEconomy();
+            assert economy != null;
             if (economy.has(player, amount)) {
                 economy.withdrawPlayer(player, amount);
             } else {
@@ -147,12 +153,13 @@ public class GeyserSwapper {
         if (origin != null) {
             form.title(origin.getName());
             for (OriginSwapper.LineData.LineComponent line : new OriginSwapper.LineData(origin).getRawLines()) {
+                assert line != null;
                 if (line.isEmpty()) {
                     info.append("\n\n");
                 } else {
-                    info.append(line.getRawText());
+                    info.append(line.rawText);
                 }
-                if (line.getType() == OriginSwapper.LineData.LineComponent.LineType.TITLE) info.append("\n");
+                if (line.type == OriginSwapper.LineData.LineComponent.LineType.TITLE) info.append("\n");
             }
         } else {
             form.title("Random Origin");

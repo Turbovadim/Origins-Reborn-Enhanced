@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("io.papermc.paperweight.userdev")
+    kotlin("jvm") version "2.1.10"
 }
 
 repositories {
@@ -17,6 +18,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation(project(":version"))
     paperweight.paperDevBundle("1.20.6-R0.1-SNAPSHOT")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 java {

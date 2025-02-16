@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    kotlin("jvm") version "2.1.10"
 }
 
 repositories {
@@ -52,6 +53,7 @@ dependencies {
     compileOnly(project(":1.21.4"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks {
@@ -62,4 +64,12 @@ tasks {
 
 tasks.test {
     useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(17)
+}
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all") // or "-Xjvm-default=all-compatibility"
+    }
 }

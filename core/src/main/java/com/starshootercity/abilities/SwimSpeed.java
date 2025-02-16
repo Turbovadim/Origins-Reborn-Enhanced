@@ -50,8 +50,9 @@ public class SwimSpeed implements Listener, VisibleAbility {
                     if (storedEffects.containsKey(player)) {
                         SavedPotionEffect effect = storedEffects.get(player);
                         storedEffects.remove(player);
-                        PotionEffect potionEffect = effect.effect();
-                        int time = potionEffect.getDuration() - (Bukkit.getCurrentTick() - effect.currentTime());
+                        PotionEffect potionEffect = effect.effect;
+                        assert potionEffect != null;
+                        int time = potionEffect.getDuration() - (Bukkit.getCurrentTick() - effect.currentTime);
                         if (time > 0) {
                             player.addPotionEffect(new PotionEffect(
                                     potionEffect.getType(),
