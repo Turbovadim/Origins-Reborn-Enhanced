@@ -8,36 +8,16 @@ import java.io.File
 import java.io.IOException
 
 object WidthGetter {
-    private val charWidthMap: Map<Char, Int> by lazy {
-        val map = mutableMapOf<Char, Int>()
-        // Предположим, что возможные ширины варьируются от 2 до 7.
-        for (width in 2..7) {
-            val key = "character-widths.$width"
-            val chars = fileConfiguration?.getString(key, "") ?: ""
-            chars.forEach { c ->
-                // Если символ уже встречался, можно решить, что брать — первый найденный или последний.
-                map[c] = width
-            }
-        }
-        map
-    }
-
-    fun getWidth(c: Char): Int {
-        // Если символ не найден в конфигурации, можно вернуть значение по умолчанию (например, 1).
-        println("$c -> ${charWidthMap['О']}")
-        print("ебу")
-        return charWidthMap[c] ?: 1
-    }
-
+    private var charWidthMap: Map<Char, Int> = emptyMap()
+    private var file: File? = null
+    private var fileConfiguration: FileConfiguration? = null
 
     fun initialize(plugin: JavaPlugin) {
         file = File(plugin.dataFolder, "characters.yml")
-
         if (!file!!.exists()) {
-            val ignored = file!!.getParentFile().mkdirs()
+            file!!.parentFile.mkdirs()
             plugin.saveResource("characters.yml", false)
         }
-
         fileConfiguration = YamlConfiguration()
         try {
             fileConfiguration!!.load(file!!)
@@ -46,6 +26,8 @@ object WidthGetter {
         } catch (e: InvalidConfigurationException) {
             throw RuntimeException(e)
         }
+        // Инициализируем карту при первом запуске
+        charWidthMap = computeCharWidthMap()
     }
 
     @JvmStatic
@@ -57,8 +39,26 @@ object WidthGetter {
         } catch (e: InvalidConfigurationException) {
             throw RuntimeException(e)
         }
+        // Пересчитываем карту после перезагрузки конфига
+        charWidthMap = computeCharWidthMap()
     }
 
-    private var file: File? = null
-    private var fileConfiguration: FileConfiguration? = null
+    private fun computeCharWidthMap(): Map<Char, Int> {
+        val map = mutableMapOf<Char, Int>()
+        // Предположим, что возможные ширины варьируются от 2 до 9.
+        for (width in 2..9) {
+            val key = "character-widths.$width"
+            val chars = fileConfiguration?.getString(key, "") ?: ""
+            chars.forEach { c ->
+                // Если символ уже встречался, можно оставить первое найденное значение.
+                map.computeIfAbsent(c) { width }
+            }
+        }
+        return map
+    }
+
+    fun getWidth(c: Char): Int {
+        // Если символ не найден в конфигурации, возвращаем значение по умолчанию (например, 0).
+        return charWidthMap[c] ?: 0
+    }
 }

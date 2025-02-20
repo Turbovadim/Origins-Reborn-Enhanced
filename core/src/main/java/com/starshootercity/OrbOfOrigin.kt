@@ -23,15 +23,15 @@ import org.bukkit.inventory.ShapedRecipe
 class OrbOfOrigin : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
-        if (event.getCurrentItem() == null || event.getCurrentItem()!!.itemMeta == null) return
-        val meta = event.getCurrentItem()!!.itemMeta
+        if (event.currentItem == null || event.currentItem!!.itemMeta == null) return
+        val meta = event.currentItem!!.itemMeta
         if (meta.persistentDataContainer
                 .has<Byte?, Boolean?>(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.persistentDataContainer
                 .has<Byte?, Boolean?>(
                     updatedKey, OriginSwapper.BooleanPDT.BOOLEAN
                 )
         ) {
-            event.getCurrentItem()!!.setItemMeta(orb.itemMeta)
+            event.currentItem!!.setItemMeta(orb.itemMeta)
         }
     }
 

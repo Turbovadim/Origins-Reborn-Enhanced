@@ -73,7 +73,8 @@ object AddonLoader {
         }
         registeredAddons.add(addon)
         loadOriginsFor(addon)
-        //prepareLanguagesFor(addon);
+        // TODO() ПРОТЕСТИРОВАТЬ ЯЗЫК
+        prepareLanguagesFor(addon)
         if (addon.shouldAllowOriginSwapCommand() != null) allowOriginSwapChecks.add(addon.shouldAllowOriginSwapCommand()!!)
         if (addon.shouldOpenSwapMenu() != null) openSwapMenuChecks.add(addon.shouldOpenSwapMenu()!!)
         if (addon.getAbilityOverride() != null) abilityOverrideChecks.add(addon.getAbilityOverride())
@@ -98,7 +99,7 @@ object AddonLoader {
             else if (v == OriginsAddon.State.ALLOW) allowed = true
         }
         return allowed || player.hasPermission(
-            instance.getConfig().getString("swap-command.permission", "originsreborn.admin")!!
+            instance.config.getString("swap-command.permission", "originsreborn.admin")!!
         )
     }
 
@@ -110,15 +111,11 @@ object AddonLoader {
     private val languageData: MutableMap<String?, String?> = HashMap<String?, String?>()
 
     @JvmStatic
-    fun getTextFor(key: String?, fallback: String): String {
-        val result = languageData[key]
-        return result ?: fallback
-    }
+    fun getTextFor(key: String?, fallback: String) = languageData[key] ?: fallback
 
     @JvmStatic
-    fun getTextFor(key: String?): String? {
-        return languageData[key]
-    }
+    fun getTextFor(key: String?) = languageData[key]
+
 
     @JvmStatic
     fun reloadAddons() {
@@ -139,46 +136,67 @@ object AddonLoader {
 
     private const val BUFFER_SIZE = 4096
 
+    /**
+     * Извлекает файл из ZipInputStream по указанному пути.
+     * Перед созданием файла гарантируется, что его родительские директории существуют.
+     */
     @Throws(IOException::class)
     private fun extractFile(zipIn: ZipInputStream, filePath: String) {
-        val bos = BufferedOutputStream(FileOutputStream(filePath))
-        val bytesIn = ByteArray(BUFFER_SIZE)
-        var read: Int
-        while ((zipIn.read(bytesIn).also { read = it }) != -1) {
-            bos.write(bytesIn, 0, read)
+        val outFile = File(filePath)
+        // Создаём родительские директории, если их ещё нет
+        outFile.parentFile.mkdirs()
+        BufferedOutputStream(FileOutputStream(outFile)).use { bos ->
+            val bytesIn = ByteArray(BUFFER_SIZE)
+            var read: Int
+            while (zipIn.read(bytesIn).also { read = it } != -1) {
+                bos.write(bytesIn, 0, read)
+            }
         }
-        bos.close()
     }
 
-    @Suppress("unused")
+    /**
+     * Подготавливает языковые файлы для плагина.
+     * Из архива извлекаются файлы из папки lang с расширением .json,
+     * затем из них подгружается язык, указанный в конфигурации.
+     */
     private fun prepareLanguagesFor(addon: OriginsAddon) {
         val langFolder = File(addon.dataFolder, "lang")
-        val ignored = langFolder.mkdirs()
-        try {
-            ZipInputStream(FileInputStream(addon.getFile())).use { inputStream ->
-                var entry = inputStream.getNextEntry()
-                while (entry != null) {
-                    if (entry.getName().startsWith("lang/") && entry.getName().endsWith(".json")) {
-                        extractFile(inputStream, langFolder.getParentFile().absolutePath + "/" + entry.getName())
-                    }
-                    entry = inputStream.getNextEntry()
-                }
-            }
-        } catch (e: IOException) {
-            throw RuntimeException(e)
+        if (!langFolder.exists() && !langFolder.mkdirs()) {
+            instance.logger.warning("Не удалось создать папку с языковыми файлами: ${langFolder.absolutePath}")
+            return
         }
-        val lang: String = instance.getConfig().getString("display.language", "en_us")!!
-        val files = langFolder.listFiles()
-        if (files == null) return
-        for (file in files) {
-            if (file.getName() == "$lang.json") {
-                val `object` = ShortcutUtils.openJSONFile(file)
-                for (s in `object`.keySet()) {
-                    languageData.put(s, `object`.getString(s))
+        if (!langFolder.exists()) {
+            try {
+                ZipInputStream(FileInputStream(addon.getFile())).use { zipIn ->
+                    var entry = zipIn.nextEntry
+                    while (entry != null) {
+                        if (entry.name.startsWith("lang/") && entry.name.endsWith(".json")) {
+                            // Формируем корректный путь для извлечения файла
+                            val outputFile = File(langFolder.parentFile, entry.name)
+                            extractFile(zipIn, outputFile.absolutePath)
+                        }
+                        entry = zipIn.nextEntry
+                    }
+                }
+            } catch (e: IOException) {
+                throw RuntimeException("Ошибка при извлечении языковых файлов", e)
+            }
+        }
+
+
+        // Загружаем языковые данные для указанного языка
+        val lang = instance.config.getString("display.language", "en_us")!!
+        println(lang)
+        langFolder.listFiles()?.forEach { file ->
+            if (file.name.equals("$lang.json", ignoreCase = true)) {
+                val jsonObject = ShortcutUtils.openJSONFile(file)
+                jsonObject.keySet().forEach { key ->
+                    languageData[key] = jsonObject.getString(key)
                 }
             }
         }
     }
+
 
     private fun loadOriginsFor(addon: OriginsAddon) {
         val addonFiles: MutableList<File?> = ArrayList<File?>()
@@ -214,7 +232,7 @@ object AddonLoader {
     }
 
     private fun sortLayers() {
-        layers.sortBy { instance.getConfig().getInt("origin-selection.layers.$it") }
+        layers.sortBy { instance.config.getInt("origin-selection.layers.$it") }
     }
 
     fun registerLayer(layer: String, priority: Int, addon: OriginsAddon) {

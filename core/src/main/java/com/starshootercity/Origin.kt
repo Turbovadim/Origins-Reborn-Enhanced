@@ -92,19 +92,11 @@ class Origin(
         }
     }
 
-//    fun getPriority(): Int = priority
-
-//    fun getTeam(): Team? = team
-
-//    fun getPermission(): String? = permission
-//
     fun hasPermission(): Boolean = permission != null
 
-//    fun getLayer(): String = layer
 
     fun getNameForDisplay(): String = displayName
 
-//    fun getAddon(): OriginsAddon = addon
 
     fun getVisibleAbilities(): List<VisibleAbility> {
         val result = mutableListOf<VisibleAbility>()
@@ -133,10 +125,6 @@ class Origin(
         return abilities.contains(key)
     }
 
-//    fun getImpact(): Char = impact
-
-//    fun getPosition(): Int = position
-
     fun getName(): String {
         return AddonLoader.getTextFor(
             "origin.${addon.getNamespace()}.${name.replace(" ", "_").lowercase(Locale.getDefault())}.name",
@@ -152,8 +140,6 @@ class Origin(
             description
         )
     }
-
-//    fun getIcon(): ItemStack = icon
 
     fun getResourceURL(): String {
         val keyValue = icon.type.key.value()
