@@ -74,7 +74,7 @@ object AddonLoader {
         registeredAddons.add(addon)
         loadOriginsFor(addon)
         // TODO() ПРОТЕСТИРОВАТЬ ЯЗЫК
-        prepareLanguagesFor(addon)
+//        prepareLanguagesFor(addon)
         if (addon.shouldAllowOriginSwapCommand() != null) allowOriginSwapChecks.add(addon.shouldAllowOriginSwapCommand()!!)
         if (addon.shouldOpenSwapMenu() != null) openSwapMenuChecks.add(addon.shouldOpenSwapMenu()!!)
         if (addon.getAbilityOverride() != null) abilityOverrideChecks.add(addon.getAbilityOverride())
@@ -159,43 +159,43 @@ object AddonLoader {
      * Из архива извлекаются файлы из папки lang с расширением .json,
      * затем из них подгружается язык, указанный в конфигурации.
      */
-    private fun prepareLanguagesFor(addon: OriginsAddon) {
-        val langFolder = File(addon.dataFolder, "lang")
-        if (!langFolder.exists() && !langFolder.mkdirs()) {
-            instance.logger.warning("Не удалось создать папку с языковыми файлами: ${langFolder.absolutePath}")
-            return
-        }
-        if (!langFolder.exists()) {
-            try {
-                ZipInputStream(FileInputStream(addon.getFile())).use { zipIn ->
-                    var entry = zipIn.nextEntry
-                    while (entry != null) {
-                        if (entry.name.startsWith("lang/") && entry.name.endsWith(".json")) {
-                            // Формируем корректный путь для извлечения файла
-                            val outputFile = File(langFolder.parentFile, entry.name)
-                            extractFile(zipIn, outputFile.absolutePath)
-                        }
-                        entry = zipIn.nextEntry
-                    }
-                }
-            } catch (e: IOException) {
-                throw RuntimeException("Ошибка при извлечении языковых файлов", e)
-            }
-        }
-
-
-        // Загружаем языковые данные для указанного языка
-        val lang = instance.config.getString("display.language", "en_us")!!
-        println(lang)
-        langFolder.listFiles()?.forEach { file ->
-            if (file.name.equals("$lang.json", ignoreCase = true)) {
-                val jsonObject = ShortcutUtils.openJSONFile(file)
-                jsonObject.keySet().forEach { key ->
-                    languageData[key] = jsonObject.getString(key)
-                }
-            }
-        }
-    }
+//    private fun prepareLanguagesFor(addon: OriginsAddon) {
+//        val langFolder = File(addon.dataFolder, "lang")
+//        if (!langFolder.exists() && !langFolder.mkdirs()) {
+//            instance.logger.warning("Не удалось создать папку с языковыми файлами: ${langFolder.absolutePath}")
+//            return
+//        }
+//        if (!langFolder.exists()) {
+//            try {
+//                ZipInputStream(FileInputStream(addon.getFile())).use { zipIn ->
+//                    var entry = zipIn.nextEntry
+//                    while (entry != null) {
+//                        if (entry.name.startsWith("lang/") && entry.name.endsWith(".json")) {
+//                            // Формируем корректный путь для извлечения файла
+//                            val outputFile = File(langFolder.parentFile, entry.name)
+//                            extractFile(zipIn, outputFile.absolutePath)
+//                        }
+//                        entry = zipIn.nextEntry
+//                    }
+//                }
+//            } catch (e: IOException) {
+//                throw RuntimeException("Ошибка при извлечении языковых файлов", e)
+//            }
+//        }
+//
+//
+//        // Загружаем языковые данные для указанного языка
+//        val lang = instance.config.getString("display.language", "en_us")!!
+//        println(lang)
+//        langFolder.listFiles()?.forEach { file ->
+//            if (file.name.equals("$lang.json", ignoreCase = true)) {
+//                val jsonObject = ShortcutUtils.openJSONFile(file)
+//                jsonObject.keySet().forEach { key ->
+//                    languageData[key] = jsonObject.getString(key)
+//                }
+//            }
+//        }
+//    }
 
 
     private fun loadOriginsFor(addon: OriginsAddon) {
