@@ -89,14 +89,14 @@ class PumpkinHate : VisibleAbility, Listener {
 
     override fun getDescription(): MutableList<LineComponent?> {
         return makeLineFor(
-            "You are afraid of pumpkins. For a good reason.",
+            "Ты боишься тыкв. И на то есть веская причина.",
             LineComponent.LineType.DESCRIPTION
         )
     }
 
     override fun getTitle(): MutableList<LineComponent?> {
         return makeLineFor(
-            "Scared of Gourds",
+            "Боязнь тыкв",
             LineComponent.LineType.TITLE
         )
     }

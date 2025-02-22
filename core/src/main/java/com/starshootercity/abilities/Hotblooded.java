@@ -29,11 +29,11 @@ public class Hotblooded implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Due to your hot body, venoms burn up, making you immune to poison and hunger status effects.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Из-за вашего горячего тела яды сгорают, делая вас невосприимчивым к эффектам отравления и голода.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Hotblooded", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Горячая кровь", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

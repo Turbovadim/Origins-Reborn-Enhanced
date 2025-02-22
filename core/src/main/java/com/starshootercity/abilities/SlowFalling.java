@@ -29,11 +29,11 @@ public class SlowFalling implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You fall as gently to the ground as a feather would, unless you sneak.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы падаете на землю так же мягко, как перо, если только вы не приседаете.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Featherweight", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Перышко", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

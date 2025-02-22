@@ -30,12 +30,12 @@ public class ThrowEnderPearl implements VisibleAbility, Listener, CooldownAbilit
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Каждый раз, когда захочешь, ты можешь бросить жемчуг Эндера, который не наносит урона, позволяя тебе телепортироваться.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Teleportation", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Телепортация", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     private final NamespacedKey falseEnderPearlKey = new NamespacedKey(OriginsReborn.getInstance(), "false-ender-pearl");

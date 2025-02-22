@@ -82,11 +82,11 @@ public class WaterVision implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Your vision underwater is perfect.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы хорошо видите под водой", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Wet Eyes", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Влажные глаза", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

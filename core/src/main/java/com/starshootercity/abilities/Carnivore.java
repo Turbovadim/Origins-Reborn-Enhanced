@@ -51,7 +51,7 @@ public class Carnivore implements VisibleAbility, Listener {
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
         return OriginSwapper.LineData.makeLineFor(
-                "Your diet is restricted to meat, you can't eat vegetables.",
+                "Ваша диета ограничена мясом, вы не можете есть овощи.",
                 OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
         );
     }
@@ -59,7 +59,7 @@ public class Carnivore implements VisibleAbility, Listener {
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
         return OriginSwapper.LineData.makeLineFor(
-                "Carnivore",
+                "Мясоед",
                 OriginSwapper.LineData.LineComponent.LineType.TITLE
         );
     }

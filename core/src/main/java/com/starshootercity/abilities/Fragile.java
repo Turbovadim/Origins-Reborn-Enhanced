@@ -17,12 +17,12 @@ public class Fragile implements AttributeModifierAbility, VisibleAbility {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You have 3 less hearts of health than humans.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("У вас на 3 сердца меньше чем у людей", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Fragile", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Хрупкий", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     @Override

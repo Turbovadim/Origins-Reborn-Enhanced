@@ -91,12 +91,12 @@ public class Climbing implements FlightAllowingAbility, Listener, VisibleAbility
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You are able to climb up any kind of wall, not just ladders.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы можете взбираться на любые стены, а не только на лестницы.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Climbing", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Лазание", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     @Override

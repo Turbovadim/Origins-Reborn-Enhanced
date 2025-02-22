@@ -24,11 +24,11 @@ public class BurningWrath implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("When on fire, you deal additional damage with your attacks.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Когда вы в огне, вы наносите дополнительный урон своими атаками.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Burning Wrath", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Гнев огня", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

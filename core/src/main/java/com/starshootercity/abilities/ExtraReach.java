@@ -8,6 +8,7 @@ import org.bukkit.attribute.AttributeModifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ExtraReach implements VisibleAbility, MultiAbility {
     @Override
@@ -17,12 +18,12 @@ public class ExtraReach implements VisibleAbility, MultiAbility {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You can reach blocks and entities further away.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы можете достигать блоков и сущностей на большем расстоянии.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Slender Body", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Стройное тело", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class ExtraReach implements VisibleAbility, MultiAbility {
 
         @Override
         public @NotNull Attribute getAttribute() {
-            return OriginsReborn.getNMSInvoker().getEntityInteractionRangeAttribute();
+            return Objects.requireNonNull(OriginsReborn.getNMSInvoker().getEntityInteractionRangeAttribute());
         }
 
         @Override
@@ -59,7 +60,7 @@ public class ExtraReach implements VisibleAbility, MultiAbility {
 
         @Override
         public @NotNull Attribute getAttribute() {
-            return OriginsReborn.getNMSInvoker().getBlockInteractionRangeAttribute();
+            return Objects.requireNonNull(OriginsReborn.getNMSInvoker().getBlockInteractionRangeAttribute());
         }
 
         @Override

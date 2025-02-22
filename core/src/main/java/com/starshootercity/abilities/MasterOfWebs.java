@@ -164,12 +164,12 @@ public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Lis
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы идеально ориентируетесь в паутине и можете по ней лазить. Когда вы наносите удар в ближнем бою по врагу, он застревает в паутине на некоторое время. Не-артроподы, застрявшие в паутине, будут ощущаться вами. Вы можете крафтить паутину из нитей.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Master of Webs", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Мастер паутины", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     public boolean isInCobweb(Entity entity) {

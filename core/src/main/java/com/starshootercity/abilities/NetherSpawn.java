@@ -29,11 +29,11 @@ public class NetherSpawn implements DefaultSpawnAbility, VisibleAbility {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Your natural spawn will be in the Nether.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Ваш спавн будет в Нижнем мире.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Nether Inhabitant", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Обитатель Незера", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

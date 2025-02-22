@@ -62,11 +62,11 @@ public class LikeWater implements VisibleAbility, FlightAllowingAbility, Listene
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("When underwater, you do not sink to the ground unless you want to.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Под водой вы не тонете на дно, если только не хотите.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Like Water", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Подобно воде", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

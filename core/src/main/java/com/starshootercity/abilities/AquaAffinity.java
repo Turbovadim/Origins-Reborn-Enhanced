@@ -17,12 +17,12 @@ public class AquaAffinity implements VisibleAbility, BreakSpeedModifierAbility {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You may break blocks underwater as others do on land.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы можете ломать блоки под водой так же, как и на суше.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Aqua Affinity", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Родство с водой", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 
     @Override

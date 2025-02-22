@@ -48,14 +48,14 @@ public class Vegetarian implements VisibleAbility, Listener {
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
         return OriginSwapper.LineData.makeLineFor(
-                "You can't digest any meat.",
+                "Вы не можете переваривать мясо.",
                 OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
         return OriginSwapper.LineData.makeLineFor(
-                "Vegetarian",
+                "Вегетарианец",
                 OriginSwapper.LineData.LineComponent.LineType.TITLE
         );
     }

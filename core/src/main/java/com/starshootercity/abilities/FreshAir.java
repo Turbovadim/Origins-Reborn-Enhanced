@@ -40,7 +40,7 @@ public class FreshAir implements VisibleAbility, Listener {
                     if (event.getClickedBlock().getWorld().isDayTime() && event.getClickedBlock().getWorld().isClearWeather()) return;
                     event.setCancelled(true);
                     player.swingMainHand();
-                    player.sendActionBar(Component.text(AddonLoader.getTextFor("origins.avian_sleep_fail", "You need fresh air to sleep")));
+                    player.sendActionBar(Component.text(AddonLoader.getTextFor("origins.avian_sleep_fail", "Вам нужен свежий воздух, чтобы спать.")));
                 }
             });
         }
@@ -52,11 +52,11 @@ public class FreshAir implements VisibleAbility, Listener {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("When sleeping, your bed needs to be at an altitude of at least %s blocks, so you can breathe fresh air.".formatted(OriginsReborn.getInstance().getConfig().getInt("extra-settings.fresh-air-required-sleep-height", 86)), OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Во время сна ваша кровать должна находиться на высоте хотя бы %s блоков, чтобы вы могли дышать свежим воздухом.".formatted(OriginsReborn.getInstance().getConfig().getInt("extra-settings.fresh-air-required-sleep-height", 86)), OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Fresh Air", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Свежий Воздух", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }

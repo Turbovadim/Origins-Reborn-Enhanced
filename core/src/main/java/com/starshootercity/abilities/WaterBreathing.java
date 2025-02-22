@@ -99,7 +99,7 @@ public class WaterBreathing implements Listener, VisibleAbility {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (event.getPlayer().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, 0) >= Bukkit.getCurrentTick()) {
-            event.deathMessage(event.getPlayer().displayName().append(Component.text(" didn't manage to keep wet")));
+            event.deathMessage(event.getPlayer().displayName().append(Component.text(" не удалось остаться мокрым.")));
         }
     }
 
@@ -128,11 +128,11 @@ public class WaterBreathing implements Listener, VisibleAbility {
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You can breathe underwater, but not on land.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        return OriginSwapper.LineData.makeLineFor("Вы можете дышать под водой, но не на суше.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
     }
 
     @Override
     public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Gills", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+        return OriginSwapper.LineData.makeLineFor("Жабры", OriginSwapper.LineData.LineComponent.LineType.TITLE);
     }
 }
