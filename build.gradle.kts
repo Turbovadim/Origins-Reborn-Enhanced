@@ -44,6 +44,15 @@ tasks {
     }
 }
 
+tasks.shadowJar {
+    dependencies {
+        exclude(dependency("com.github.Turbovadim:EnderaLib:1.4.2"))
+        exclude {
+            it.moduleGroup == "org.jetbrains.kotlin"
+        }
+    }
+}
+
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }

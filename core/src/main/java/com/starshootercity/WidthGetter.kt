@@ -13,6 +13,7 @@ object WidthGetter {
     private var fileConfiguration: FileConfiguration? = null
 
     fun initialize(plugin: JavaPlugin) {
+
         file = File(plugin.dataFolder, "characters.yml")
         if (!file!!.exists()) {
             file!!.parentFile.mkdirs()

@@ -54,6 +54,9 @@ dependencies {
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
+    implementation("com.github.Turbovadim:EnderaLib:1.4.2") {
+        isTransitive = false
+    }
 }
 
 tasks {

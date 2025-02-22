@@ -13,6 +13,7 @@ import com.starshootercity.skript.SkriptInitializer
 import com.starshootercity.util.WorldGuardHook
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
+import org.endera.enderalib.bstats.MetricsLite
 import java.io.File
 
 class OriginsReborn : OriginsAddon() {
@@ -437,6 +438,9 @@ class OriginsReborn : OriginsAddon() {
         if (!getConfig().getBoolean("cooldowns.disable-all-cooldowns") && getConfig().getBoolean("cooldowns.show-cooldown-icons")) {
             Bukkit.getPluginManager().registerEvents(cooldowns!!, this)
         }
+
+        val metrics = MetricsLite(this, 24890)
+
         SkriptInitializer.initialize(this)
         updateConfig()
         val originSwapper = OriginSwapper()
