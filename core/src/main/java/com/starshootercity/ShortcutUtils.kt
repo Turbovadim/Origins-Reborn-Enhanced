@@ -19,39 +19,32 @@ import java.util.*
 
 @Suppress("unused")
 object ShortcutUtils {
+
+    private val colorCodeRegex = "<#\\w{6}>".toRegex()
+
     @JvmStatic
     fun giveItemWithDrops(player: Player, vararg itemStacks: ItemStack?) {
-        // Фильтруем null-значения, чтобы избежать исключений
         val validItems = itemStacks.filterNotNull().toTypedArray()
-        // Добавляем предметы в инвентарь и получаем оставшиеся, если не поместились
         player.inventory.addItem(*validItems).values.forEach { leftover ->
             player.world.dropItemNaturally(player.location, leftover)
         }
     }
 
-
     fun getLivingDamageSource(event: EntityDamageByEntityEvent): LivingEntity? {
-        val damageDealer = event.damager
-        return when (damageDealer) {
+        return when (val damageDealer = event.damager) {
             is Projectile -> damageDealer.shooter as? LivingEntity
             is LivingEntity -> damageDealer
             else -> null
         }
     }
 
-
     fun openJSONFile(file: File): JSONObject {
-        try {
-            Scanner(file).use { scanner ->
-                val data = StringBuilder()
-                while (scanner.hasNextLine()) {
-                    data.append(scanner.nextLine())
-                }
-                return try {
-                    JSONObject(data.toString())
-                } catch (e: JSONException) {
-                    JSONObject()
-                }
+        return try {
+            val data = file.readText()
+            try {
+                JSONObject(data)
+            } catch (e: JSONException) {
+                JSONObject()
             }
         } catch (e: IOException) {
             throw RuntimeException(e)
@@ -71,45 +64,44 @@ object ShortcutUtils {
         }
     }
 
-    fun getColored(f: String): Component {
-        var component: Component = Component.empty()
-        val iterator = substringsBetween(f, "<", ">").iterator()
-        for (s in f.split("<#\\w{6}>".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
-            if (s.isEmpty()) continue
-            component = component.append(
-                if (iterator.hasNext()) Component.text(s).color(
-                    TextColor.fromHexString(
-                        iterator.next()!!
-                    )
-                ) else Component.text(s)
-            )
+    fun getColored(text: String): Component {
+        val colors = substringsBetween(text, "<", ">")
+        val parts = text.split(colorCodeRegex).filter { it.isNotEmpty() }
+        var component = Component.empty()
+        parts.forEachIndexed { index, part ->
+            val coloredText = if (index < colors.size) {
+                Component.text(part).color(TextColor.fromHexString(colors[index]))
+            } else {
+                Component.text(part)
+            }
+            component = component.append(coloredText)
         }
         return component
     }
 
-    fun substringsBetween(s: String, start: String, end: String): MutableList<String?> {
-        val starti = s.indexOf(start)
-        if (starti == -1) return mutableListOf<String?>()
-        val startPart = s.substring(starti)
-        val endi = startPart.indexOf(end)
-        if (endi == -1) return mutableListOf<String?>()
-        val data: MutableList<String?> = ArrayList<String?>()
-        data.add(startPart.substring(0, endi))
-        data.addAll(substringsBetween(startPart.substring(endi), start, end))
-        return data
+    fun substringsBetween(s: String, start: String, end: String): List<String> {
+        val list = mutableListOf<String>()
+        var currentIndex = 0
+        while (true) {
+            val startIdx = s.indexOf(start, currentIndex)
+            if (startIdx == -1) break
+            val endIdx = s.indexOf(end, startIdx + start.length)
+            if (endIdx == -1) break
+            list.add(s.substring(startIdx + start.length, endIdx))
+            currentIndex = endIdx + end.length
+        }
+        return list
     }
 
     @JvmStatic
     fun isInfinite(effect: PotionEffect): Boolean {
         return if (NMSInvoker.supportsInfiniteDuration()) {
-            (effect.duration == -1)
-        } else (effect.duration >= 20000)
+            effect.duration == -1
+        } else effect.duration >= 20000
     }
 
     @JvmStatic
     fun infiniteDuration(): Int {
-        return if (NMSInvoker.supportsInfiniteDuration()) {
-            -1
-        } else 50000
+        return if (NMSInvoker.supportsInfiniteDuration()) -1 else 50000
     }
 }
