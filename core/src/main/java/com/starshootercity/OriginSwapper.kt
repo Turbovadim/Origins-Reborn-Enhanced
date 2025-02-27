@@ -442,12 +442,14 @@ class OriginSwapper : Listener {
                 }
 
                 // Если первая строка содержит пробелы и её ширина превышает 140,
-                // разбиваем строку по словам так, чтобы первая часть не превышала ширину 140
+                // разбиваем строку по словам так, чтобы первая часть не превышала ширину 140.
+                // Слова, которые не помещаются, собираем в отдельную строку (overflowLine)
                 if (firstLine.contains(' ') && getWidth(firstLine) > 140) {
                     val tokens = firstLine.split(" ")
                     val firstPartBuilder = StringBuilder(tokens[0])
                     var currentWidth = getWidth(firstPartBuilder.toString())
                     val spaceWidth = getWidth(" ")
+                    val overflowTokens = mutableListOf<String>()
 
                     // Перебираем оставшиеся слова
                     for (i in 1 until tokens.size) {
@@ -457,13 +459,17 @@ class OriginSwapper : Listener {
                             firstPartBuilder.append(' ').append(token)
                             currentWidth += spaceWidth + tokenWidth
                         } else {
-                            if (otherPart.isNotEmpty()) {
-                                otherPart.append(' ')
-                            }
-                            otherPart.append(token)
+                            overflowTokens.add(token)
                         }
                     }
                     firstLine = firstPartBuilder.toString()
+                    // Если есть слова, не поместившиеся в первую строку, формируем отдельную строку для переноса
+                    if (overflowTokens.isNotEmpty()) {
+                        val overflowLine = overflowTokens.joinToString(" ")
+                        // Вставляем строку переноса в начало остального текста,
+                        // чтобы она сразу шла после первой строки, а затем следовало остальное содержимое
+                        otherPart.insert(0, "$overflowLine\n")
+                    }
                 }
 
                 // Если тип строки DESCRIPTION, добавляем специальный символ в начало
@@ -471,7 +477,7 @@ class OriginSwapper : Listener {
                     firstLine = '\uF00A' + firstLine
                 }
 
-                // Форматируем строку:
+                // Форматирование строки:
                 // между каждым символом вставляем символ '\uF000',
                 // а в "сырую" строку (raw) добавляем символы, кроме '\uF00A'
                 val formattedBuilder = StringBuilder()
@@ -485,7 +491,7 @@ class OriginSwapper : Listener {
                 }
                 rawBuilder.append(' ')
 
-                // Создаем компонент с нужным цветом
+                // Создаём компонент с нужным цветом
                 val comp = Component.text(formattedBuilder.toString())
                     .color(
                         if (type == LineType.TITLE)
@@ -641,7 +647,6 @@ class OriginSwapper : Listener {
                 slotIndex += origins.size + if (enableRandom) 1 else 0
             }
 
-            // Объявляем переменные для иконки, названия, эффекта (impact) и стоимости
             val icon: ItemStack
             val name: String
             val nameForDisplay: String
@@ -650,7 +655,6 @@ class OriginSwapper : Listener {
             val data: LineData
 
             if (slotIndex == origins.size) {
-                // Режим «рандомной» опции
                 val excludedOriginNames = options.randomOptionExclude.mapNotNull { s ->
                     getOriginByFilename(s)?.let { origin ->
                         getTextFor(

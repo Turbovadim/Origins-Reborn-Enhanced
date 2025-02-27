@@ -46,7 +46,7 @@ tasks {
 
 tasks.shadowJar {
     dependencies {
-        exclude(dependency("com.github.Turbovadim:EnderaLib:1.4.2"))
+        exclude(dependency("com.github.Turbovadim:EnderaLib"))
         exclude {
             it.moduleGroup == "org.jetbrains.kotlin"
         }

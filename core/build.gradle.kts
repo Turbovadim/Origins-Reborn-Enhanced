@@ -20,8 +20,6 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     compileOnly("com.viaversion:viaversion-api:5.0.0")
     compileOnly("io.papermc.paper:paper-api:1.18-R0.1-SNAPSHOT") // Paper
-    //compileOnly("org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT") // Spigot
-    //implementation("net.kyori:adventure-platform-bukkit:4.3.3") // Spigot
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("com.github.aromaa:WorldGuardExtraFlags:v4.2.4")
     compileOnly("org.geysermc.geyser:api:2.2.0-SNAPSHOT")
