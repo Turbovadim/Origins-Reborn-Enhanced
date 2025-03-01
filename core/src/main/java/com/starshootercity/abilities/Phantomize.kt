@@ -55,6 +55,7 @@ class Phantomize : DependencyAbility, Listener {
         }
 
         companion object {
+            @JvmStatic
             val handlerList: HandlerList = HandlerList()
         }
     }
