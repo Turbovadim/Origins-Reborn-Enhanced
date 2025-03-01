@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.starshootercity"
-version = "2.4.9"
+version = "2.5.0"
 
 repositories {
     mavenCentral()
@@ -44,19 +44,34 @@ tasks {
     }
 }
 
-tasks.shadowJar {
-    dependencies {
-        exclude(dependency("com.github.Turbovadim:EnderaLib"))
-        exclude {
-            it.moduleGroup == "org.jetbrains.kotlin"
+allprojects {
+    tasks.withType<ProcessResources> {
+        inputs.property("version", rootProject.version)
+        filesMatching("**plugin.yml") {
+            expand("version" to rootProject.version)
         }
     }
 }
 
-java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+
+tasks {
+
+    shadowJar {
+        from(sourceSets.main.get().output)
+        dependencies {
+            exclude(dependency("com.github.Turbovadim:EnderaLib"))
+            exclude {
+                it.moduleGroup == "org.jetbrains.kotlin"
+            }
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
 }
 
-tasks.test {
-    useJUnitPlatform()
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
