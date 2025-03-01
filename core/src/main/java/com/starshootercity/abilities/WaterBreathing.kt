@@ -1,138 +1,168 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityAirChangeEvent;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityAirChangeEvent
+import org.bukkit.event.entity.EntityPotionEffectEvent
+import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.persistence.PersistentDataType
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
+import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
-import java.util.List;
-import java.util.Random;
-
-public class WaterBreathing implements Listener, VisibleAbility {
-    @EventHandler
-    public void onEntityAirChange(EntityAirChangeEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, OriginSwapper.BooleanPDT.BOOLEAN)))
-                return;
-            if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN)))
-                return;
-            if (player.getRemainingAir() - event.getAmount() > 0) {
-                if (!OriginsReborn.getNMSInvoker().isUnderWater(player) && !hasWaterBreathing(player)) return;
-            } else if (OriginsReborn.getNMSInvoker().isUnderWater(player) || hasWaterBreathing(player)) return;
-            event.setCancelled(true);
-        });
-    }
+class WaterBreathing : Listener, VisibleAbility {
 
     @EventHandler
-    public void onEntityPotionEffect(EntityPotionEffectEvent event) {
-        if (event.getCause() != EntityPotionEffectEvent.Cause.TURTLE_HELMET) return;
-        runForAbility(event.getEntity(), player -> event.setCancelled(true));
+    fun onEntityAirChange(event: EntityAirChangeEvent) {
+        runForAbility(event.entity, AbilityRunner { player ->
+            val pdc = player.persistentDataContainer
+            if (pdc.get(airKey, OriginSwapper.BooleanPDT.BOOLEAN) == true ||
+                pdc.get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
+                return@AbilityRunner
+            }
+
+            val underwater = NMSInvoker.isUnderWater(player)
+            val waterBreathing = hasWaterBreathing(player)
+
+            if (player.remainingAir - event.amount > 0) {
+                if (!underwater && !waterBreathing) return@AbilityRunner
+            } else if (underwater || waterBreathing) {
+                return@AbilityRunner
+            }
+
+            event.isCancelled = true
+        })
     }
 
-    public boolean hasWaterBreathing(Player player) {
-        return player.hasPotionEffect(PotionEffectType.CONDUIT_POWER) || player.hasPotionEffect(PotionEffectType.WATER_BREATHING);
-    }
-
-    NamespacedKey airKey = new NamespacedKey(OriginsReborn.getInstance(), "fullair");
-    NamespacedKey dehydrationKey = new NamespacedKey(OriginsReborn.getInstance(), "dehydrating");
-    NamespacedKey damageKey = new NamespacedKey(OriginsReborn.getInstance(), "ignore-item-damage");
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent ignored) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            runForAbility(p, player -> {
-                if (OriginsReborn.getNMSInvoker().isUnderWater(player) || hasWaterBreathing(player) || player.isInRain()) {
-                    ItemStack helmet = player.getInventory().getHelmet();
-                    if (helmet != null && OriginsReborn.getNMSInvoker().isUnderWater(player)) {
-                        if (helmet.getType() == Material.TURTLE_HELMET) {
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 200, 0, false, false, true));
+    fun onEntityPotionEffect(event: EntityPotionEffectEvent) {
+        if (event.cause != EntityPotionEffectEvent.Cause.TURTLE_HELMET) return
+        runForAbility(event.getEntity(), AbilityRunner { player: Player? -> event.isCancelled = true })
+    }
+
+    fun hasWaterBreathing(player: Player): Boolean {
+        return player.hasPotionEffect(PotionEffectType.CONDUIT_POWER) || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)
+    }
+
+    var airKey: NamespacedKey = NamespacedKey(instance, "fullair")
+    var dehydrationKey: NamespacedKey = NamespacedKey(instance, "dehydrating")
+    var damageKey: NamespacedKey = NamespacedKey(instance, "ignore-item-damage")
+
+    @EventHandler
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
+        Bukkit.getOnlinePlayers().forEach { player ->
+            runForAbility(
+                player,
+                AbilityRunner { player ->
+                    val underwater = NMSInvoker.isUnderWater(player)
+                    val waterBreathing = hasWaterBreathing(player)
+                    val inRain = player.isInRain
+
+                    if (underwater || waterBreathing || inRain) {
+                        player.inventory.helmet
+                            ?.takeIf { underwater && it.type == Material.TURTLE_HELMET }
+                            ?.let {
+                                player.addPotionEffect(
+                                    PotionEffect(
+                                        PotionEffectType.WATER_BREATHING,
+                                        200,
+                                        0,
+                                        false,
+                                        false,
+                                        true
+                                    )
+                                )
+                            }
+
+                        if (player.persistentDataContainer.get(airKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
+                            player.remainingAir = -50
+                            return@AbilityRunner
+                        }
+
+                        player.remainingAir = min(
+                            max((player.remainingAir + 4).toDouble(), 4.0),
+                            player.maximumAir.toDouble()
+                        ).toInt()
+
+                        if (player.remainingAir == player.maximumAir) {
+                            player.remainingAir = -50
+                            player.persistentDataContainer.set(airKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                        }
+                    } else {
+                        if (player.persistentDataContainer.get(airKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
+                            player.remainingAir = player.maximumAir
+                            player.persistentDataContainer.set(airKey, OriginSwapper.BooleanPDT.BOOLEAN, false)
+                        }
+                        decreaseAir(player)
+                        if (player.remainingAir < -25) {
+                            player.persistentDataContainer.set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                            player.remainingAir = -5
+                            player.persistentDataContainer.set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, false)
+                            player.persistentDataContainer.set(damageKey, PersistentDataType.INTEGER, Bukkit.getCurrentTick())
+                            NMSInvoker.dealDrowningDamage(player, 2)
                         }
                     }
-                    if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, OriginSwapper.BooleanPDT.BOOLEAN))) {
-                        player.setRemainingAir(-50);
-                        return;
-                    }
-                    player.setRemainingAir(Math.min(Math.max(player.getRemainingAir() + 4, 4), player.getMaximumAir()));
-                    if (player.getRemainingAir() == player.getMaximumAir()) {
-                        player.setRemainingAir(-50);
-                        player.getPersistentDataContainer().set(airKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-                    }
-                } else {
-                    if (Boolean.TRUE.equals(player.getPersistentDataContainer().get(airKey, OriginSwapper.BooleanPDT.BOOLEAN))) {
-                        player.setRemainingAir(player.getMaximumAir());
-                        player.getPersistentDataContainer().set(airKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
-                    }
-                    decreaseAir(player);
-                    if (player.getRemainingAir() < -25) {
-                        player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, true);
-                        player.setRemainingAir(-5);
-                        player.getPersistentDataContainer().set(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN, false);
-                        player.getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, Bukkit.getCurrentTick());
-                        OriginsReborn.getNMSInvoker().dealDrowningDamage(player, 2);
+                },
+                AbilityRunner { player ->
+                    if (player.persistentDataContainer.has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+                        player.remainingAir = player.maximumAir
+                        player.persistentDataContainer.remove(airKey)
                     }
                 }
-            }, player -> {
-                if (player.getPersistentDataContainer().has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-                    player.setRemainingAir(player.getMaximumAir());
-                    player.getPersistentDataContainer().remove(airKey);
-                }
-            });
+            )
         }
     }
+
 
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        if (event.getPlayer().getPersistentDataContainer().getOrDefault(damageKey, PersistentDataType.INTEGER, 0) >= Bukkit.getCurrentTick()) {
-            event.deathMessage(event.getPlayer().displayName().append(Component.text(" didn't manage to keep wet")));
+    fun onPlayerDeath(event: PlayerDeathEvent) {
+        if (event.player.persistentDataContainer.getOrDefault(damageKey, PersistentDataType.INTEGER, 0) >= Bukkit.getCurrentTick()) {
+            event.deathMessage(event.player.displayName().append(Component.text(" didn't manage to keep wet")))
         }
     }
 
-    private final Random random = new Random();
+    private val random = Random()
 
-    public void decreaseAir(Player player) {
-        ItemStack helmet = player.getInventory().getHelmet();
-        if (helmet != null && helmet.getItemMeta() != null) {
-            int respirationLevel = helmet.getItemMeta().getEnchantLevel(OriginsReborn.getNMSInvoker().getRespirationEnchantment());
-            if (respirationLevel > 0) {
-                if (random.nextInt(respirationLevel + 1) > 0) return;
-            }
-        }
-        player.setRemainingAir(player.getRemainingAir() - 1);
+    fun decreaseAir(player: Player) {
+        val respirationLevel = player.inventory.helmet
+            ?.itemMeta
+            ?.getEnchantLevel(NMSInvoker.getRespirationEnchantment()) ?: 0
+        if (respirationLevel > 0 && random.nextInt(respirationLevel + 1) > 0) return
+        player.remainingAir--
     }
+
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        event.getPlayer().getPersistentDataContainer().set(damageKey, PersistentDataType.INTEGER, -1);
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        event.getPlayer().persistentDataContainer.set<Int?, Int?>(damageKey, PersistentDataType.INTEGER, -1)
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:water_breathing");
+    override fun getKey(): Key {
+        return Key.key("origins:water_breathing")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You can breathe underwater, but not on land.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Gills", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Gills", LineComponent.LineType.TITLE)
     }
 }

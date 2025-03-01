@@ -1,92 +1,92 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import com.starshootercity.SavedPotionEffect;
-import com.starshootercity.ShortcutUtils;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.SavedPotionEffect
+import com.starshootercity.ShortcutUtils.infiniteDuration
+import com.starshootercity.ShortcutUtils.isInfinite
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerItemConsumeEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+class WaterVision : VisibleAbility, Listener {
 
-public class WaterVision implements VisibleAbility, Listener {
-    Map<Player, SavedPotionEffect> storedEffects = new HashMap<>();
+    var storedEffects: MutableMap<Player, SavedPotionEffect> = HashMap()
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            runForAbility(p, player -> {
-                if (OriginsReborn.getNMSInvoker().isUnderWater(player)) {
-                    PotionEffect effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
-                    boolean ambient = false;
-                    boolean showParticles = false;
-                    if (effect != null) {
-                        ambient = effect.isAmbient();
-                        showParticles = effect.hasParticles();
-                        if (!ShortcutUtils.isInfinite(effect)) {
-                            storedEffects.put(player, new SavedPotionEffect(effect, Bukkit.getCurrentTick()));
-                            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-                        }
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
+        val currentTick = Bukkit.getCurrentTick()
+        Bukkit.getOnlinePlayers().forEach { player ->
+            runForAbility(player, AbilityRunner { player ->
+                if (NMSInvoker.isUnderWater(player)) {
+                    val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
+                    val ambient = currentEffect?.isAmbient == true
+                    val showParticles = currentEffect?.hasParticles() == true
+
+                    if (currentEffect != null && !isInfinite(currentEffect)) {
+                        storedEffects[player] = SavedPotionEffect(currentEffect, currentTick)
+                        player.removePotionEffect(PotionEffectType.NIGHT_VISION)
                     }
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, ShortcutUtils.infiniteDuration(), -1, ambient, showParticles));
+                    player.addPotionEffect(
+                        PotionEffect(
+                            PotionEffectType.NIGHT_VISION,
+                            infiniteDuration(),
+                            -1,
+                            ambient,
+                            showParticles
+                        )
+                    )
                 } else {
-                    if (player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
-                        PotionEffect effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
-                        if (effect != null) {
-                            if (ShortcutUtils.isInfinite(effect)) player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                    player.getPotionEffect(PotionEffectType.NIGHT_VISION)?.let { effect ->
+                        if (isInfinite(effect)) {
+                            player.removePotionEffect(PotionEffectType.NIGHT_VISION)
                         }
                     }
-                    if (storedEffects.containsKey(player)) {
-                        SavedPotionEffect effect = storedEffects.get(player);
-                        storedEffects.remove(player);
-                        PotionEffect potionEffect = effect.effect;
-                        assert potionEffect != null;
-                        int time = potionEffect.getDuration() - (Bukkit.getCurrentTick() - effect.currentTime);
-                        if (time > 0) {
-                            player.addPotionEffect(new PotionEffect(
-                                    potionEffect.getType(),
-                                    time,
-                                    potionEffect.getAmplifier(),
-                                    potionEffect.isAmbient(),
+                    storedEffects.remove(player)?.let { saved ->
+                        val potionEffect = saved.effect ?: return@let
+                        val remainingDuration = potionEffect.duration - (currentTick - saved.currentTime)
+                        if (remainingDuration > 0) {
+                            player.addPotionEffect(
+                                PotionEffect(
+                                    potionEffect.type,
+                                    remainingDuration,
+                                    potionEffect.amplifier,
+                                    potionEffect.isAmbient,
                                     potionEffect.hasParticles()
-                            ));
+                                )
+                            )
                         }
                     }
                 }
-            });
+            })
         }
     }
 
     @EventHandler
-    public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        if (event.getItem().getType() == Material.MILK_BUCKET) {
-            storedEffects.remove(event.getPlayer());
+    fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
+        if (event.item.type == Material.MILK_BUCKET) {
+            storedEffects.remove(event.getPlayer())
         }
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:water_vision");
+    override fun getKey(): Key {
+        return Key.key("origins:water_vision")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Your vision underwater is perfect.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("Your vision underwater is perfect.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Wet Eyes", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Wet Eyes", LineComponent.LineType.TITLE)
     }
 }

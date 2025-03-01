@@ -1,42 +1,43 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.potion.PotionEffect;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.potion.PotionEffect
 
-import java.util.List;
+class SprintJump : VisibleAbility, Listener {
 
-public class SprintJump implements VisibleAbility, Listener {
+    private val potionEffect = PotionEffect(NMSInvoker.getJumpBoostEffect(), 5, 1, false, false)
+
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            runForAbility(p,
-                    player -> {
-                        if (player.isSprinting()) {
-                            player.addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getJumpBoostEffect(), 5, 1, false, false));
-                        }
-                    });
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
+        for (p in Bukkit.getOnlinePlayers()) {
+            runForAbility(p) { player: Player ->
+                if (player.isSprinting) {
+                    player.addPotionEffect(potionEffect)
+                }
+            }
         }
     }
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:sprint_jump");
+
+    override fun getKey(): Key {
+        return Key.key("origins:sprint_jump")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You are able to jump higher by jumping while sprinting.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You are able to jump higher by jumping while sprinting.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Strong Ankles", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Strong Ankles", LineComponent.LineType.TITLE)
     }
 }

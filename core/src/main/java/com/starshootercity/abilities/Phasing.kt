@@ -1,103 +1,108 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.abilities.BreakSpeedModifierAbility.BlockMiningContext
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.GameMode
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
+import org.bukkit.entity.Entity
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
+import java.util.function.Predicate
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-
-public class Phasing implements DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSpeedModifierAbility, Listener {
-
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:phasing");
+class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSpeedModifierAbility, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:phasing")
     }
 
-    @Override
-    public @NotNull Key getDependencyKey() {
-        return Key.key("origins:phantomize");
+    override fun getDependencyKey(): Key {
+        return Key.key("origins:phantomize")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("While phantomized, you can walk through solid material, except Obsidian.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "While phantomized, you can walk through solid material, except Obsidian.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Phasing", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Phasing", LineComponent.LineType.TITLE)
     }
 
     @EventHandler
-    @SuppressWarnings("deprecation")
-    public void onServerTick(ServerTickEndEvent event) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            runForAbility(p, player -> {
-                boolean isInBlock = isInBlock(player);
-                setPhasing(player, (player.isOnGround() && player.isSneaking() && !UNPHASEABLE.contains(player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType())) || (isInBlock));
-                OriginsReborn.getNMSInvoker().setNoPhysics(player, player.getGameMode() == GameMode.SPECTATOR || isPhasing.getOrDefault(player, false));
-                if (isPhasing.getOrDefault(player, false)) {
-                    player.setFallDistance(0);
-                    if (player.getAllowFlight()) player.setFlying(true);
-                }
-            }, player -> {
-                if (isPhasing.getOrDefault(player, false)) setPhasing(player, false);
-            });
-        }
-    }
+    fun onServerTick(event: ServerTickEndEvent?) {
+        Bukkit.getOnlinePlayers().forEach { player ->
+            runForAbility(player,
+                AbilityRunner { player ->
+                    val inBlock = isInBlock(player)
+                    val blockBelowType = player.location.block.getRelative(BlockFace.DOWN).type
+                    val shouldPhase = (player.isOnGround && player.isSneaking && !unphasable.contains(blockBelowType)) || inBlock
+                    setPhasing(player, shouldPhase)
 
-    @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        if (isPhasing.getOrDefault(event.getPlayer(), false) && (isInBlock(event.getTo(), block -> UNPHASEABLE.contains(block.getType())))) {
-            event.setCancelled(true);
-        }
-    }
+                    val phasingActive = isPhasing.getOrDefault(player, false)!!
+                    NMSInvoker.setNoPhysics(player, player.gameMode == GameMode.SPECTATOR || phasingActive)
 
-    private final List<Material> UNPHASEABLE = List.of(Material.OBSIDIAN, Material.BEDROCK);
-
-    public boolean isInBlock(Entity entity) {
-        return isInBlock(entity.getLocation(), block -> block.getType().isSolid() && !UNPHASEABLE.contains(block.getType()));
-    }
-    public boolean isInBlock(Location location, Predicate<Block> predicate) {
-        boolean isInsideBlock = false;
-        for (Location currentLocation : List.of(location.clone().add(0, 1, 0), location.clone())) {
-            List<Double> values = List.of(0.4, -0.4);
-            for (double x : values) {
-                for (double z : values) {
-                    if (predicate.test(currentLocation.clone().add(x, 0, z).getBlock())) {
-                        isInsideBlock = true;
-                        break;
+                    if (phasingActive) {
+                        player.fallDistance = 0f
+                        if (player.allowFlight) {
+                            player.isFlying = true
+                        }
+                    }
+                },
+                AbilityRunner { player ->
+                    if (isPhasing.getOrDefault(player, false)!!) {
+                        setPhasing(player, false)
                     }
                 }
-                if (isInsideBlock) break;
-            }
-            if (isInsideBlock) break;
+            )
         }
-        return isInsideBlock;
     }
 
-    private final Map<Player, Boolean> isPhasing = new HashMap<>();
+    @EventHandler
+    fun onPlayerMove(event: PlayerMoveEvent) {
+        val player = event.player
+        if (isPhasing[player] == true && isInBlock(event.to) { block -> block?.type in unphasable }) {
+            event.isCancelled = true
+        }
+    }
+
+    private val unphasable = listOf(Material.OBSIDIAN, Material.BEDROCK)
+
+    fun isInBlock(entity: Entity): Boolean =
+        isInBlock(entity.location) { block ->
+            block?.let { it.type.isSolid() && it.type !in unphasable } == true
+        }
+
+
+    fun isInBlock(location: Location, predicate: Predicate<Block?>): Boolean {
+        val offsets = listOf(0.4, -0.4)
+        return listOf(location.clone().add(0.0, 1.0, 0.0), location.clone())
+            .any { base ->
+                offsets.any { dx ->
+                    offsets.any { dz ->
+                        predicate.test(base.clone().add(dx, 0.0, dz).block)
+                    }
+                }
+            }
+    }
+
+
+    private val isPhasing: MutableMap<Player?, Boolean?> = HashMap<Player?, Boolean?>()
 
     /*
     @EventHandler
@@ -107,62 +112,61 @@ public class Phasing implements DependantAbility, VisibleAbility, FlightAllowing
     }
 
      */
-
-    @Override
-    public boolean canFly(Player player) {
-        return getDependency().isEnabled(player) && isPhasing.getOrDefault(player, false);
+    override fun canFly(player: Player?): Boolean {
+        return dependency.isEnabled(player) && isPhasing.getOrDefault(player, false) == true
     }
 
     @EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (event.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION) {
-                event.setCancelled(true);
+    fun onEntityDamage(event: EntityDamageEvent) {
+        runForAbility(event.getEntity(), AbilityRunner { player: Player? ->
+            if (event.cause == EntityDamageEvent.DamageCause.SUFFOCATION) {
+                event.isCancelled = true
             }
-        });
+        })
     }
 
-    @Override
-    public float getFlightSpeed(Player player) {
-        return 0.1f;
+    override fun getFlightSpeed(player: Player?): Float {
+        return 0.1f
     }
 
-    @Override
-    public BlockMiningContext provideContextFor(Player player) {
-        ItemStack helmet = player.getInventory().getHelmet();
-        boolean aquaAffinity = false;
+    override fun provideContextFor(player: Player): BlockMiningContext {
+        val helmet = player.inventory.helmet
+        var aquaAffinity = false
         if (helmet != null) {
-            aquaAffinity = helmet.containsEnchantment(OriginsReborn.getNMSInvoker().getAquaAffinityEnchantment());
+            aquaAffinity = helmet.containsEnchantment(NMSInvoker.getAquaAffinityEnchantment())
         }
-        return new BlockMiningContext(
-                player.getInventory().getItemInMainHand(),
-                player.getPotionEffect(OriginsReborn.getNMSInvoker().getHasteEffect()),
-                player.getPotionEffect(OriginsReborn.getNMSInvoker().getMiningFatigueEffect()),
-                player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
-                OriginsReborn.getNMSInvoker().isUnderWater(player),
-                aquaAffinity,
-                true
-        );
+        return BlockMiningContext(
+            player.inventory.itemInMainHand,
+            player.getPotionEffect(NMSInvoker.getHasteEffect()),
+            player.getPotionEffect(NMSInvoker.getMiningFatigueEffect()),
+            player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
+            NMSInvoker.isUnderWater(player),
+            aquaAffinity,
+            true
+        )
     }
 
-    @Override
-    public boolean shouldActivate(Player player) {
-        return getDependency().isEnabled(player) && isPhasing.getOrDefault(player, false);
+    override fun shouldActivate(player: Player?): Boolean {
+        return dependency.isEnabled(player) && isPhasing.getOrDefault(player, false) == true
     }
 
-    private void setPhasing(Player player, boolean enabled) {
-        enabled = hasAbility(player) && enabled;
-        Block block = player.getEyeLocation().getBlock();
-        if (block.getType().isCollidable() && enabled) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false));
+    private fun setPhasing(player: Player, enabled: Boolean) {
+        val effectiveEnabled = hasAbility(player) && enabled
+        val block = player.eyeLocation.block
+
+        if (block.type.isCollidable && effectiveEnabled) {
+            player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false))
         } else {
-            player.removePotionEffect(PotionEffectType.BLINDNESS);
+            player.removePotionEffect(PotionEffectType.BLINDNESS)
         }
-        if (isPhasing.getOrDefault(player, false) == enabled) return;
-        Vector vector = player.getVelocity();
-        GameMode gameMode = enabled ? GameMode.SPECTATOR : player.getGameMode();
-        OriginsReborn.getNMSInvoker().sendPhasingGamemodeUpdate(player, gameMode);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> player.setVelocity(vector));
-        isPhasing.put(player, enabled);
+
+        if (isPhasing.getOrDefault(player, false) == effectiveEnabled) return
+
+        val currentVelocity = player.velocity
+        val gameMode = if (effectiveEnabled) GameMode.SPECTATOR else player.gameMode
+        NMSInvoker.sendPhasingGamemodeUpdate(player, gameMode)
+        Bukkit.getScheduler().scheduleSyncDelayedTask(instance) { player.velocity = currentVelocity }
+        isPhasing[player] = effectiveEnabled
     }
+
 }

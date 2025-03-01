@@ -22,34 +22,29 @@ import org.bukkit.potion.PotionEffectType
 
 class PumpkinHate : VisibleAbility, Listener {
 
-    // Using a non-nullable mutable map for fast lookup
     private val ignoringPlayers = mutableMapOf<Player, MutableSet<Player>>()
-    private var tickCounter = 0
 
     @EventHandler
-    fun onServerTickEnd(event: ServerTickEndEvent?) {
-        tickCounter++
-        if (tickCounter < 10) return
-        tickCounter = 0
+    fun onServerTickEnd(event: ServerTickEndEvent) {
+        if (event.tickNumber % 10 != 0) return
 
-        val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+        val onlinePlayers = Bukkit.getOnlinePlayers()
+        val pumpkinWearers = onlinePlayers.filter { it.inventory.helmet?.type == Material.CARVED_PUMPKIN }.toSet()
+        val nonPumpkinWearers = onlinePlayers.filter { it !in pumpkinWearers }
 
         onlinePlayers.forEach { pumpkinHater ->
             runForAbility(pumpkinHater, AbilityRunner { hater ->
-                // Compute the ignored set only once per hater
                 val ignoredSet = ignoringPlayers.getOrPut(hater) { mutableSetOf() }
-                onlinePlayers.filter { it != hater }.forEach { pumpkinWearer ->
-                    val isWearingPumpkin = pumpkinWearer.inventory.helmet?.type == Material.CARVED_PUMPKIN
-                    if (isWearingPumpkin) {
-                        ignoredSet.add(pumpkinWearer)
-                        nmsInvoker.sendEntityData(hater, pumpkinWearer, getData(pumpkinWearer))
-                        hater.hidePlayer(origins, pumpkinWearer)
-                        hater.sendEquipmentChange(pumpkinWearer, EquipmentSlot.HEAD, AIR_ITEMSTACK)
-                    } else {
-                        ignoredSet.remove(pumpkinWearer)
-                        hater.showPlayer(origins, pumpkinWearer)
-                        AbilityRegister.updateEntity(hater, pumpkinWearer)
-                    }
+                pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
+                    ignoredSet.add(pumpkinWearer)
+                    nmsInvoker.sendEntityData(hater, pumpkinWearer, getData(pumpkinWearer))
+                    hater.hidePlayer(origins, pumpkinWearer)
+                    hater.sendEquipmentChange(pumpkinWearer, EquipmentSlot.HEAD, AIR_ITEMSTACK)
+                }
+                nonPumpkinWearers.filter { it != hater }.forEach { other ->
+                    ignoredSet.remove(other)
+                    hater.showPlayer(origins, other)
+                    AbilityRegister.updateEntity(hater, other)
                 }
             })
         }

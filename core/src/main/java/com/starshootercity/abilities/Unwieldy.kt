@@ -1,36 +1,40 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
 
-import java.util.List;
+class Unwieldy : VisibleAbility, Listener {
 
-public class Unwieldy implements VisibleAbility, Listener {
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            runForAbility(p, player -> player.setCooldown(Material.SHIELD, 1000));
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
+        val shieldAbility = AbilityRunner { player ->
+            player.setCooldown(Material.SHIELD, 1000)
+        }
+        Bukkit.getOnlinePlayers().forEach { player ->
+            runForAbility(player, shieldAbility)
         }
     }
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:no_shield");
+
+
+    override fun getKey(): Key {
+        return Key.key("origins:no_shield")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("The way your hands are formed provide no way of holding a shield upright.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "The way your hands are formed provide no way of holding a shield upright.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Unwieldy", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Unwieldy", LineComponent.LineType.TITLE)
     }
 }

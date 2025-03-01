@@ -35,47 +35,40 @@ public class AbilityRegister {
     public static NMSInvoker nmsInvoker = OriginsReborn.getNMSInvoker();
 
     public static void registerAbility(Ability ability, JavaPlugin instance) {
-        // Регистрируем способность-зависимость, если она реализует DependencyAbility
         if (ability instanceof DependencyAbility dependencyAbility) {
             dependencyAbilityMap.put(ability.getKey(), dependencyAbility);
         }
 
-        // Регистрируем мультиспособности, используя computeIfAbsent для оптимизации работы с картой
         if (ability instanceof MultiAbility multiAbility) {
             for (Ability a : multiAbility.getAbilities()) {
                 multiAbilityMap.computeIfAbsent(a.getKey(), k -> new ArrayList<>()).add(multiAbility);
             }
         }
 
-        // Регистрируем способность с кулдауном
         if (ability instanceof CooldownAbility cooldownAbility) {
             OriginsReborn.getCooldowns().registerCooldown(instance, cooldownAbility.getCooldownKey(), Objects.requireNonNull(cooldownAbility.getCooldownInfo()));
         }
 
-        // Если способность также является Listener, регистрируем её для получения событий
         if (ability instanceof Listener listener) {
             Bukkit.getPluginManager().registerEvents(listener, instance);
         }
 
-        // Если способность изменяет атрибуты, проверяем конфигурационный файл и обновляем его при необходимости
         if (ability instanceof AttributeModifierAbility ama) {
-            // Формируем ключи для value и operation
             String formattedValueKey = "%s.value".formatted(ama.getKey());
             String formattedOperationKey = "%s.operation".formatted(ama.getKey());
             boolean changed = false;
 
-            // Если конфигурация не содержит запись по ключу (используем toString() для сравнения), задаём значения по умолчанию
             if (!attributeModifierAbilityFileConfig.contains(ama.getKey().toString())) {
                 attributeModifierAbilityFileConfig.set(formattedValueKey, "x");
                 attributeModifierAbilityFileConfig.set(formattedOperationKey, "default");
                 changed = true;
             }
-            // Если по сформированному ключу значение равно "default", обновляем его
+
             if ("default".equals(attributeModifierAbilityFileConfig.get(formattedValueKey, "default"))) {
                 attributeModifierAbilityFileConfig.set(formattedValueKey, "x");
                 changed = true;
             }
-            // Если в конфигурации произошли изменения, сохраняем файл один раз
+
             if (changed) {
                 try {
                     attributeModifierAbilityFileConfig.save(attributeModifierAbilityFile);

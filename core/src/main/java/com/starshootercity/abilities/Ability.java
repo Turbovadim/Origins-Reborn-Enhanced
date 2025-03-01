@@ -47,7 +47,6 @@ public interface Ability {
             else if (state == OriginsAddon.State.ALLOW) return true;
         }
 
-        // Проверка через WorldGuard
         if (OriginsReborn.Companion.isWorldGuardHookInitialized()) {
             if (WorldGuardHook.isAbilityDisabled(player.getLocation(), this)) return false;
 

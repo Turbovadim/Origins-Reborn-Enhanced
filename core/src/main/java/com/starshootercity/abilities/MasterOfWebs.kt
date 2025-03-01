@@ -1,206 +1,202 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import com.starshootercity.cooldowns.CooldownAbility;
-import com.starshootercity.cooldowns.Cooldowns;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockDropItemEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.inventory.PrepareItemCraftEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ShapelessRecipe;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.cooldowns.CooldownAbility
+import com.starshootercity.cooldowns.Cooldowns.CooldownInfo
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
+import org.bukkit.entity.Entity
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockDropItemEvent
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.inventory.PrepareItemCraftEvent
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ShapelessRecipe
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAbility {
+    private val glowingEntities: MutableMap<Player?, MutableList<Entity?>?> = HashMap<Player?, MutableList<Entity?>?>()
 
-public class MasterOfWebs implements CooldownAbility, FlightAllowingAbility, Listener, VisibleAbility {
-    private final Map<Player, List<Entity>> glowingEntities = new HashMap<>();
-
-    private final List<Location> temporaryCobwebs = new ArrayList<>();
+    private val temporaryCobwebs: MutableList<Location?> = ArrayList<Location?>()
 
     @EventHandler
-    public void onBlockDropItem(BlockDropItemEvent event) {
-        if (temporaryCobwebs.contains(event.getBlock().getLocation())) {
-            event.setCancelled(true);
-            temporaryCobwebs.remove(event.getBlock().getLocation());
+    fun onBlockDropItem(event: BlockDropItemEvent) {
+        if (temporaryCobwebs.contains(event.getBlock().location)) {
+            event.isCancelled = true
+            temporaryCobwebs.remove(event.getBlock().location)
         }
     }
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        runForAbility(event.getDamager(), player -> {
-            if (hasCooldown(player)) return;
-            if (!event.getEntity().getLocation().getBlock().isSolid()) {
-                setCooldown(player);
-                Location location = event.getEntity().getLocation().getBlock().getLocation();
-                temporaryCobwebs.add(location);
-                location.getBlock().setType(Material.COBWEB);
-                Bukkit.getScheduler().scheduleSyncDelayedTask(OriginsReborn.getInstance(), () -> {
-                    if (location.getBlock().getType() == Material.COBWEB && temporaryCobwebs.contains(location)) {
-                        temporaryCobwebs.remove(location);
-                        location.getBlock().setType(Material.AIR);
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        runForAbility(event.damager, AbilityRunner { player: Player? ->
+            if (hasCooldown(player!!)) return@AbilityRunner
+            if (!event.getEntity().location.block.isSolid) {
+                setCooldown(player)
+                val location = event.getEntity().location.block.location
+                temporaryCobwebs.add(location)
+                location.block.type = Material.COBWEB
+                Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
+                    if (location.block.type == Material.COBWEB && temporaryCobwebs.contains(location)) {
+                        temporaryCobwebs.remove(location)
+                        location.block.type = Material.AIR
                     }
-                }, 60);
+                }, 60)
             }
-        });
+        })
     }
 
 
-    private void setCanFly(Player player, boolean setFly) {
-        if (setFly) player.setAllowFlight(true);
-        canFly.put(player, setFly);
+    private fun setCanFly(player: Player, setFly: Boolean) {
+        if (setFly) player.allowFlight = true
+        canFly.put(player, setFly)
     }
 
-    private final Map<Player, Boolean> canFly = new HashMap<>();
+    private val canFly: MutableMap<Player?, Boolean?> = HashMap<Player?, Boolean?>()
 
 
     @EventHandler
-    public void onServerTickEnd(ServerTickEndEvent event) {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            runForAbility(player, webMaster -> {
-                if (isInCobweb(webMaster)) {
-                    setCanFly(webMaster, true);
-                    webMaster.setFlying(true);
-                } else {
-                    setCanFly(webMaster, false);
-                }
-                List<Entity> entities = webMaster.getNearbyEntities(16, 16, 16);
-                entities.removeIf(entity -> !(entity instanceof LivingEntity));
-                if (entities.size() > 16) entities = entities.subList(0, 16);
-                entities.addAll(Bukkit.getOnlinePlayers());
-                entities.removeIf(entity -> entity.getWorld() != webMaster.getWorld());
-                entities.removeIf(entity -> entity.getLocation().distance(webMaster.getLocation()) > 16);
-                for (Entity entity : entities) {
-                    runForAbility(entity, null, webStuck -> {
-                        if (webStuck != webMaster) {
-                            if (!glowingEntities.containsKey(webMaster)) {
-                                glowingEntities.put(webMaster, new ArrayList<>());
-                            }
-                            if (isInCobweb(webStuck)) {
-                                if (!glowingEntities.get(webMaster).contains(webStuck)) {
-                                    glowingEntities.get(webMaster).add(webStuck);
-                                }
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
+        val onlinePlayers = Bukkit.getOnlinePlayers()
 
-                                byte data = getData(webStuck);
-                                OriginsReborn.getNMSInvoker().sendEntityData(webMaster, webStuck, data);
+        for (player in onlinePlayers) {
+            runForAbility(player, AbilityRunner { webMaster: Player ->
+                val inCobweb = isInCobweb(webMaster)
+                setCanFly(webMaster, inCobweb)
+                if (inCobweb) webMaster.isFlying = true
+
+                val entities = (webMaster.getNearbyEntities(16.0, 16.0, 16.0)
+                    .filterIsInstance<LivingEntity>()
+                    .take(16) + onlinePlayers)
+                    .distinct()
+                    .filter { it.world == webMaster.world && it.location.distance(webMaster.location) <= 16 }
+
+                for (entity in entities) {
+                    runForAbility(entity, null) { webStuck: Player ->
+                        if (webStuck !== webMaster) {
+                            val masterEntities = glowingEntities.getOrPut(webMaster) { ArrayList() }!!
+                            if (isInCobweb(webStuck)) {
+                                if (!masterEntities.contains(webStuck)) {
+                                    masterEntities.add(webStuck)
+                                }
+                                NMSInvoker.sendEntityData(webMaster, webStuck, getData(webStuck))
                             } else {
-                                glowingEntities.get(webMaster).remove(webStuck);
-                                AbilityRegister.updateEntity(webMaster, webStuck);
+                                masterEntities.remove(webStuck)
+                                AbilityRegister.updateEntity(webMaster, webStuck)
                             }
                         }
-                    });
+                    }
                 }
-            });
+            })
         }
     }
 
-    private static byte getData(Entity webStuck) {
-        byte data = 0x40;
-        if (webStuck.getFireTicks() > 0) {
-            data += 0x01;
-        }
-        if (webStuck instanceof LivingEntity entity) {
-            if (entity.isInvisible()) data += 0x20;
-        }
-        if (webStuck instanceof Player stuckPlayer) {
-            if (stuckPlayer.isSneaking()) {
-                data += 0x02;
-            }
-            if (stuckPlayer.isSprinting()) {
-                data += 0x08;
-            }
-            if (stuckPlayer.isSwimming()) {
-                data += 0x10;
-            }
-            if (stuckPlayer.isGliding()) {
-                data += (byte) 0x80;
-            }
-        }
-        return data;
-    }
 
-    public MasterOfWebs() {
-        NamespacedKey recipeKey = new NamespacedKey(OriginsReborn.getInstance(), "web-recipe");
-        ShapelessRecipe webRecipe = new ShapelessRecipe(recipeKey, new ItemStack(Material.COBWEB));
+    init {
+        val recipeKey = NamespacedKey(instance, "web-recipe")
+        val webRecipe = ShapelessRecipe(recipeKey, ItemStack(Material.COBWEB))
         if (Bukkit.getRecipe(recipeKey) == null) {
-            webRecipe.addIngredient(Material.STRING);
-            webRecipe.addIngredient(Material.STRING);
-            Bukkit.addRecipe(webRecipe);
+            webRecipe.addIngredient(Material.STRING)
+            webRecipe.addIngredient(Material.STRING)
+            Bukkit.addRecipe(webRecipe)
         }
     }
 
     @EventHandler
-    public void onPrepareItemCraft(PrepareItemCraftEvent event) {
-        if (event.getRecipe() != null) {
-            if (event.getRecipe().getResult().getType() == Material.COBWEB) {
-                for (HumanEntity entity : event.getInventory().getViewers()) {
-                    runForAbility(entity, null, player -> event.getInventory().setResult(null));
+    fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
+        if (event.recipe != null) {
+            if (event.recipe!!.result.type == Material.COBWEB) {
+                for (entity in event.inventory.viewers) {
+                    runForAbility(
+                        entity,
+                        null,
+                        AbilityRunner { player: Player? -> event.inventory.result = null })
                 }
             }
         }
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:master_of_webs");
+    override fun getKey(): Key {
+        return Key.key("origins:master_of_webs")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Master of Webs", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Master of Webs", LineComponent.LineType.TITLE)
     }
 
-    public boolean isInCobweb(Entity entity) {
-        for (Block start : new ArrayList<Block>() {{
-            add(entity.getLocation().getBlock());
-            add(entity.getLocation().getBlock().getRelative(BlockFace.UP));
-        }}) {
-            if (start.getType() == Material.COBWEB) return true;
-            for (BlockFace face : BlockFace.values()) {
-                Block block = start.getRelative(face);
-                if (block.getType() != Material.COBWEB) continue;
-                if (entity.getBoundingBox().overlaps(block.getBoundingBox())) {
-                    return true;
+    fun isInCobweb(entity: Entity): Boolean {
+        for (start in object : ArrayList<Block?>() {
+            init {
+                add(entity.location.block)
+                add(entity.location.block.getRelative(BlockFace.UP))
+            }
+        }) {
+            if (start!!.type == Material.COBWEB) return true
+            for (face in BlockFace.entries) {
+                val block = start.getRelative(face)
+                if (block.type != Material.COBWEB) continue
+                if (entity.boundingBox.overlaps(block.boundingBox)) {
+                    return true
                 }
             }
         }
-        return false;
+        return false
     }
 
-    @Override
-    public boolean canFly(Player player) {
-        return canFly.getOrDefault(player, false);
+    override fun canFly(player: Player?): Boolean {
+        return canFly.getOrDefault(player, false)!!
     }
 
-    @Override
-    public float getFlightSpeed(Player player) {
-        return 0.04f;
+    override fun getFlightSpeed(player: Player?): Float {
+        return 0.04f
     }
 
-    @Override
-    public Cooldowns.CooldownInfo getCooldownInfo() {
-        return new Cooldowns.CooldownInfo(120, "web");
+    override val cooldownInfo: CooldownInfo
+        get() = CooldownInfo(120, "web")
+
+    companion object {
+        private fun getData(webStuck: Entity): Byte {
+            var data: Byte = 0x40
+            if (webStuck.fireTicks > 0) {
+                data = (data + 0x01).toByte()
+            }
+            if (webStuck is LivingEntity) {
+                if (webStuck.isInvisible) data = (data + 0x20).toByte()
+            }
+            if (webStuck is Player) {
+                if (webStuck.isSneaking) {
+                    data = (data + 0x02).toByte()
+                }
+                if (webStuck.isSprinting) {
+                    data = (data + 0x08).toByte()
+                }
+                if (webStuck.isSwimming) {
+                    data = (data + 0x10).toByte()
+                }
+                if (webStuck.isGliding) {
+                    data = (data + 0x80.toByte()).toByte()
+                }
+            }
+            return data
+        }
     }
 }
