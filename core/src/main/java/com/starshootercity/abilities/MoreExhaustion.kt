@@ -1,32 +1,32 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityExhaustionEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import net.kyori.adventure.key.Key
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityExhaustionEvent
 
-import java.util.List;
-
-public class MoreExhaustion implements VisibleAbility, Listener {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:more_exhaustion");
+class MoreExhaustion : VisibleAbility, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:more_exhaustion")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You exhaust much quicker than others, thus requiring you to eat more.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You exhaust much quicker than others, thus requiring you to eat more.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Large Appetite", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Large Appetite", LineComponent.LineType.TITLE)
     }
 
     @EventHandler
-    public void onEntityExhaustion(EntityExhaustionEvent event) {
-        runForAbility(event.getEntity(), player -> event.setExhaustion(event.getExhaustion() * 1.6f));
+    fun onEntityExhaustion(event: EntityExhaustionEvent) {
+        runForAbility(event.getEntity()) { player ->
+            event.exhaustion = event.exhaustion * 1.6f
+        }
     }
 }

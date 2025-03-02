@@ -1,7 +1,6 @@
 package com.starshootercity.abilities
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
-import com.starshootercity.abilities.Ability.AbilityRunner
 import com.starshootercity.events.PlayerLeftClickEvent
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
@@ -11,52 +10,58 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerEvent
+import org.jetbrains.annotations.NotNull
 import java.util.*
 
 class Phantomize : DependencyAbility, Listener {
 
+    private val phantomizedPlayers: MutableMap<UUID, Boolean> = HashMap()
+
     @EventHandler
-    fun onServerTickEnd(event: ServerTickEndEvent?) {
-        Bukkit.getOnlinePlayers().forEach { player ->
+    fun onServerTickEnd(event: ServerTickEndEvent) {
+        for (player in Bukkit.getOnlinePlayers()) {
             if (isEnabled(player) && player.foodLevel <= 6) {
                 phantomizedPlayers[player.uniqueId] = false
-                PhantomizeToggleEvent(player, false).callEvent()
+                val phantomizeToggleEvent = PhantomizeToggleEvent(player, false)
+                phantomizeToggleEvent.callEvent()
             }
         }
     }
 
-
-    private val phantomizedPlayers: MutableMap<UUID?, Boolean?> = HashMap<UUID?, Boolean?>()
-
-    override fun getKey(): Key {
+    override fun getKey(): @NotNull Key {
         return Key.key("origins:phantomize")
     }
 
     override fun isEnabled(player: Player): Boolean {
-        return phantomizedPlayers.getOrDefault(player.uniqueId, false)!!
+        return phantomizedPlayers.getOrDefault(player.uniqueId, false)
     }
 
     @EventHandler
     fun onLeftClick(event: PlayerLeftClickEvent) {
-        val player = event.player
-        if (event.hasBlock() || player.foodLevel <= 6 || player.inventory.itemInMainHand.type != Material.AIR) return
-        runForAbility(player, AbilityRunner { p ->
-            val enabling = phantomizedPlayers.getOrDefault(p.uniqueId, false)!!
-            phantomizedPlayers[p.uniqueId] = enabling
-            PhantomizeToggleEvent(p, enabling).callEvent()
-        })
+        if (event.hasBlock()) return
+        if (event.player.foodLevel <= 6) return
+        if (event.player.inventory.itemInMainHand.type != Material.AIR) return
+
+        runForAbility(event.player) { player ->
+            val enabling = !phantomizedPlayers.getOrDefault(player.uniqueId, false)
+            phantomizedPlayers[player.uniqueId] = enabling
+            val phantomizeToggleEvent = PhantomizeToggleEvent(player, enabling)
+            phantomizeToggleEvent.callEvent()
+        }
     }
 
+    class PhantomizeToggleEvent(who: Player, private val enabling: Boolean) : PlayerEvent(who) {
+        fun isEnabling(): Boolean = enabling
 
-    @Suppress("unused")
-    class PhantomizeToggleEvent(who: Player, val isEnabling: Boolean) : PlayerEvent(who) {
         override fun getHandlers(): HandlerList {
-            return handlerList
+            return HANDLERS
         }
 
         companion object {
+            private val HANDLERS = HandlerList()
+
             @JvmStatic
-            val handlerList: HandlerList = HandlerList()
+            fun getHandlerList(): HandlerList = HANDLERS
         }
     }
 }

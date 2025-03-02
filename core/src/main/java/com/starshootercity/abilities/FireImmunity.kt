@@ -1,42 +1,40 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageEvent
 
-import java.util.List;
-import java.util.Set;
+class FireImmunity : VisibleAbility, Listener {
 
-public class FireImmunity implements VisibleAbility, Listener {
     @EventHandler
-    public void onEntityDamageEvent(EntityDamageEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (Set.of(
-                    EntityDamageEvent.DamageCause.FIRE,
-                    EntityDamageEvent.DamageCause.FIRE_TICK,
-                    EntityDamageEvent.DamageCause.LAVA,
-                    EntityDamageEvent.DamageCause.HOT_FLOOR
-            ).contains(event.getCause())) {
-                event.setCancelled(true);
-            }
-        });
+    fun onEntityDamageEvent(event: EntityDamageEvent) {
+        val fireCauses = setOf(
+            EntityDamageEvent.DamageCause.FIRE,
+            EntityDamageEvent.DamageCause.FIRE_TICK,
+            EntityDamageEvent.DamageCause.LAVA,
+            EntityDamageEvent.DamageCause.HOT_FLOOR
+        )
+
+        if (event.cause in fireCauses) {
+            runForAbility(event.entity, AbilityRunner { _ ->
+                event.isCancelled = true
+            })
+        }
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:fire_immunity");
+    override fun getKey(): Key {
+        return Key.key("origins:fire_immunity")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You are immune to all types of fire damage.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("You are immune to all types of fire damage.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Fire Immunity", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Fire Immunity", LineComponent.LineType.TITLE)
     }
 }

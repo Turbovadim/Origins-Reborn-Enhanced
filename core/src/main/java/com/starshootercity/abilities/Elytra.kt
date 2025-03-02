@@ -1,67 +1,62 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.commands.FlightToggleCommand;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.util.TriState;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.player.PlayerToggleFlightEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.commands.FlightToggleCommand
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.util.TriState
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.player.PlayerToggleFlightEvent
 
-import java.util.List;
-
-public class Elytra implements VisibleAbility, FlightAllowingAbility, Listener {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:elytra");
+class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:elytra")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You have Elytra wings without needing to equip any.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("You have Elytra wings without needing to equip any.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Winged", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Winged", LineComponent.LineType.TITLE)
     }
 
     @EventHandler
-    @SuppressWarnings("deprecation")
-    public void onEntityToggleGlide(EntityToggleGlideEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (!player.isOnGround() && !event.isGliding()) {
-                event.setCancelled(true);
+    fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
+        runForAbility(event.entity, AbilityRunner { player ->
+            if (!player.isOnGround && !event.isGliding) {
+                event.isCancelled = true
             }
-        });
+        })
     }
 
-    @Override
-    public boolean canFly(Player player) {
-        return true;
+
+    override fun canFly(player: Player?): Boolean {
+        return true
     }
 
-    @Override
-    public float getFlightSpeed(Player player) {
-        return player.getFlySpeed();
+    override fun getFlightSpeed(player: Player): Float {
+        return player.flySpeed
     }
 
     @EventHandler
-    public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
-        if (FlightToggleCommand.canFly(event.getPlayer())) return;
-        runForAbility(event.getPlayer(), player -> {
-            if (event.isFlying()) {
-                event.setCancelled(true);
-                player.setGliding(!player.isGliding());
+    fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
+        val player = event.player
+        if (FlightToggleCommand.canFly(player)) return
+
+        runForAbility(player, AbilityRunner { p ->
+            if (event.isFlying) {
+                event.isCancelled = true
+                p.isGliding = !p.isGliding
             }
-        });
+        })
     }
 
-    @Override
-    public @NotNull TriState getFlyingFallDamage(Player player) {
-        return TriState.TRUE;
+    override fun getFlyingFallDamage(player: Player?): TriState {
+        return TriState.TRUE
     }
 }

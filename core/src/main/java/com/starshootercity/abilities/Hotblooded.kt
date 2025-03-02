@@ -1,39 +1,39 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityPotionEffectEvent
+import org.bukkit.potion.PotionEffectType
 
-import java.util.List;
+class Hotblooded : VisibleAbility, Listener {
 
-public class Hotblooded implements VisibleAbility, Listener {
     @EventHandler
-    public void onEntityPotionEffect(EntityPotionEffectEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (event.getNewEffect() != null) {
-                if (event.getNewEffect().getType().equals(PotionEffectType.POISON) || event.getNewEffect().getType().equals(PotionEffectType.HUNGER)) {
-                    event.setCancelled(true);
+    fun onEntityPotionEffect(event: EntityPotionEffectEvent) {
+        runForAbility(event.entity, AbilityRunner { player ->
+            event.newEffect?.let { effect ->
+                if (effect.type == PotionEffectType.POISON || effect.type == PotionEffectType.HUNGER) {
+                    event.isCancelled = true
                 }
             }
-        });
+        })
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:hotblooded");
+    override fun getKey(): Key {
+        return Key.key("origins:hotblooded")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Due to your hot body, venoms burn up, making you immune to poison and hunger status effects.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Due to your hot body, venoms burn up, making you immune to poison and hunger status effects.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Hotblooded", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Hotblooded", LineComponent.LineType.TITLE)
     }
 }

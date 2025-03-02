@@ -1,39 +1,32 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.instance
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.World
 
-import java.util.List;
-
-public class NetherSpawn implements DefaultSpawnAbility, VisibleAbility {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:nether_spawn");
+class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
+    override fun getKey(): Key {
+        return Key.key("origins:nether_spawn")
     }
 
-    @Override
-    public @Nullable World getWorld() {
-        String nether = OriginsReborn.getInstance().getConfig().getString("worlds.world_nether");
-        if (nether == null) {
-            nether = "world_nether";
-            OriginsReborn.getInstance().getConfig().set("worlds.world_nether", "world_nether");
-            OriginsReborn.getInstance().saveConfig();
+    override fun getWorld(): World? {
+        val config = instance.getConfig()
+        val nether = config.getString("worlds.world_nether") ?: "world_nether".also {
+            config.set("worlds.world_nether", it)
+            instance.saveConfig()
         }
-        return Bukkit.getWorld(nether);
+        return Bukkit.getWorld(nether)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Your natural spawn will be in the Nether.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("Your natural spawn will be in the Nether.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Nether Inhabitant", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Nether Inhabitant", LineComponent.LineType.TITLE)
     }
 }

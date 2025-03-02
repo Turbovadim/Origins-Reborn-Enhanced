@@ -1,42 +1,34 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import net.kyori.adventure.key.Key
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 
-import java.util.List;
-
-public class Fragile implements AttributeModifierAbility, VisibleAbility {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:fragile");
+class Fragile : AttributeModifierAbility, VisibleAbility {
+    override fun getKey(): Key {
+        return Key.key("origins:fragile")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You have 3 less hearts of health than humans.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("You have 3 less hearts of health than humans.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Fragile", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Fragile", LineComponent.LineType.TITLE)
     }
 
-    @Override
-    public @NotNull Attribute getAttribute() {
-        return OriginsReborn.getNMSInvoker().getMaxHealthAttribute();
+    override fun getAttribute(): Attribute {
+        return NMSInvoker.getMaxHealthAttribute()
     }
 
-    @Override
-    public double getAmount() {
-        return -6;
+    override fun getAmount(): Double {
+        return -6.0
     }
 
-    @Override
-    public AttributeModifier.@NotNull Operation getOperation() {
-        return AttributeModifier.Operation.ADD_NUMBER;
+    override fun getOperation(): AttributeModifier.Operation {
+        return AttributeModifier.Operation.ADD_NUMBER
     }
 }

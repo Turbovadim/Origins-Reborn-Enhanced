@@ -1,29 +1,29 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import net.kyori.adventure.key.Key;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Trident;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Trident
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 
-public class Aquatic implements Ability, Listener {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:aquatic");
+class Aquatic : Ability, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:aquatic")
     }
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        runForAbility(event.getEntity(), player -> {
-            if (event.getDamager() instanceof Trident trident) {
-                event.setDamage(event.getDamage() + trident.getItem().getEnchantmentLevel(Enchantment.IMPALING) * 2.5);
-            } else if (event.getDamager() instanceof LivingEntity entity) {
-                if (entity.getEquipment() == null) return;
-                event.setDamage(event.getDamage() + entity.getEquipment().getItemInMainHand().getEnchantmentLevel(Enchantment.IMPALING) * 2.5);
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        runForAbility(event.entity, AbilityRunner { player ->
+            val impalingLevel = when (val damager = event.damager) {
+                is Trident -> damager.item.getEnchantmentLevel(Enchantment.IMPALING)
+                is LivingEntity -> damager.equipment?.itemInMainHand?.getEnchantmentLevel(Enchantment.IMPALING)
+                    ?: return@AbilityRunner
+                else -> return@AbilityRunner
             }
-        });
+            event.setDamage(event.damage + impalingLevel * 2.5)
+        })
     }
 }

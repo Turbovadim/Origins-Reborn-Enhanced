@@ -1,34 +1,34 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 
-import java.util.List;
-
-public class AerialCombatant implements VisibleAbility, Listener {
+class AerialCombatant : VisibleAbility, Listener {
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        runForAbility(event.getDamager(), player -> {
-            if (player.isGliding()) event.setDamage(event.getDamage() * 2);
-        });
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        runForAbility(event.damager, AbilityRunner { player: Player ->
+            if (player.isGliding) event.setDamage(event.damage * 2)
+        })
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:aerial_combatant");
+    override fun getKey(): Key {
+        return Key.key("origins:aerial_combatant")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You deal substantially more damage while in Elytra flight.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You deal substantially more damage while in Elytra flight.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Aerial Combatant", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Aerial Combatant", LineComponent.LineType.TITLE)
     }
 }

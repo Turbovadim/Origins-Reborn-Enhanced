@@ -1,78 +1,81 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import com.starshootercity.cooldowns.CooldownAbility;
-import com.starshootercity.cooldowns.Cooldowns;
-import com.starshootercity.events.PlayerLeftClickEvent;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.EnderPearl;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.instance
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.cooldowns.CooldownAbility
+import com.starshootercity.cooldowns.Cooldowns.CooldownInfo
+import com.starshootercity.events.PlayerLeftClickEvent
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.entity.EnderPearl
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.ProjectileHitEvent
+import org.bukkit.persistence.PersistentDataType
+import org.bukkit.util.Vector
 
-import java.util.List;
-
-public class ThrowEnderPearl implements VisibleAbility, Listener, CooldownAbility {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:throw_ender_pearl");
+class ThrowEnderPearl : VisibleAbility, Listener, CooldownAbility {
+    override fun getKey(): Key {
+        return Key.key("origins:throw_ender_pearl")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Teleportation", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Teleportation", LineComponent.LineType.TITLE)
     }
 
-    private final NamespacedKey falseEnderPearlKey = new NamespacedKey(OriginsReborn.getInstance(), "false-ender-pearl");
+    private val falseEnderPearlKey = NamespacedKey(instance, "false-ender-pearl")
 
     @EventHandler
-    public void onPlayerLeftClick(PlayerLeftClickEvent event) {
-        if (event.hasBlock()) return;
-        runForAbility(event.getPlayer(), player -> {
-            if (player.getTargetBlock(6) != null) return;
-            if (player.getInventory().getItemInMainHand().getType() != Material.AIR) return;
-            if (hasCooldown(player)) return;
-            setCooldown(player);
-            Projectile projectile = player.launchProjectile(EnderPearl.class);
-            projectile.getPersistentDataContainer().set(falseEnderPearlKey, PersistentDataType.STRING, player.getName());
-        });
+    fun onPlayerLeftClick(event: PlayerLeftClickEvent) {
+        if (event.hasBlock()) return
+
+        val player = event.player
+        runForAbility(player, AbilityRunner { p ->
+            if (p.getTargetBlock(6) != null) return@AbilityRunner
+
+            if (p.inventory.itemInMainHand.type != Material.AIR) return@AbilityRunner
+
+            if (hasCooldown(p)) return@AbilityRunner
+
+            setCooldown(p)
+            val projectile = p.launchProjectile(EnderPearl::class.java)
+            projectile.persistentDataContainer.set(falseEnderPearlKey, PersistentDataType.STRING, p.name)
+        })
     }
 
     @EventHandler
-    public void onProjectileHit(ProjectileHitEvent event) {
-        if (event.getEntity().getPersistentDataContainer().has(falseEnderPearlKey, PersistentDataType.STRING)) {
-            event.setCancelled(true);
-            String name = event.getEntity().getPersistentDataContainer().get(falseEnderPearlKey, PersistentDataType.STRING);
-            if (name == null) return;
-            Player player = Bukkit.getPlayer(name);
-            if (player == null) return;
-            Location loc = event.getEntity().getLocation();
-            loc.setPitch(player.getLocation().getPitch());
-            loc.setYaw(player.getLocation().getYaw());
-            player.setFallDistance(0);
-            player.setVelocity(new Vector());
-            player.teleport(loc);
-            event.getEntity().remove();
+    fun onProjectileHit(event: ProjectileHitEvent) {
+        val projectile = event.entity
+        if (!projectile.persistentDataContainer.has(falseEnderPearlKey, PersistentDataType.STRING)) return
+
+        event.isCancelled = true
+
+        val name = projectile.persistentDataContainer.get(falseEnderPearlKey, PersistentDataType.STRING) ?: return
+        val player = Bukkit.getPlayer(name) ?: return
+
+        val loc = projectile.location.apply {
+            pitch = player.location.pitch
+            yaw = player.location.yaw
         }
+
+        player.fallDistance = 0f
+        player.velocity = Vector()
+        player.teleport(loc)
+        projectile.remove()
     }
 
-    @Override
-    public Cooldowns.CooldownInfo getCooldownInfo() {
-        return new Cooldowns.CooldownInfo(30, "ender_pearl");
-    }
+
+    override val cooldownInfo: CooldownInfo
+        get() = CooldownInfo(30, "ender_pearl")
 }

@@ -1,39 +1,49 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.ShortcutUtils;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.ShortcutUtils.infiniteDuration
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
-import java.util.List;
+class SlowFalling : VisibleAbility, Listener {
 
-public class SlowFalling implements VisibleAbility, Listener {
+    val potionEffect = PotionEffect(
+        PotionEffectType.SLOW_FALLING,
+        infiniteDuration(),
+        0,
+        false,
+        false
+    )
+
     @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        runForAbility(event.getPlayer(), player -> {
-            if (player.isSneaking()) {
-                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
-            } else player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, ShortcutUtils.infiniteDuration(), 0, false, false));
-        });
+    fun onPlayerMove(event: PlayerMoveEvent) {
+        runForAbility(event.player, AbilityRunner { player ->
+            if (player.isSneaking) {
+                player.removePotionEffect(PotionEffectType.SLOW_FALLING)
+            } else {
+                player.addPotionEffect(potionEffect)
+            }
+        })
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:slow_falling");
+    override fun getKey(): Key {
+        return Key.key("origins:slow_falling")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You fall as gently to the ground as a feather would, unless you sneak.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You fall as gently to the ground as a feather would, unless you sneak.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Featherweight", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Featherweight", LineComponent.LineType.TITLE)
     }
 }

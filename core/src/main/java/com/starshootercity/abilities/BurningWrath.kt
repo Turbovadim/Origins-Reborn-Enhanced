@@ -1,34 +1,35 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 
-import java.util.List;
+class BurningWrath : VisibleAbility, Listener {
 
-public class BurningWrath implements VisibleAbility, Listener {
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        runForAbility(event.getDamager(), player -> {
-            if (player.getFireTicks() > 0) event.setDamage(event.getDamage() + 3);
-        });
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        runForAbility(event.damager, AbilityRunner { player: Player ->
+            if (player.fireTicks > 0) event.setDamage(event.damage + 3)
+        })
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:burning_wrath");
+    override fun getKey(): Key {
+        return Key.key("origins:burning_wrath")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("When on fire, you deal additional damage with your attacks.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "When on fire, you deal additional damage with your attacks.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Burning Wrath", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Burning Wrath", LineComponent.LineType.TITLE)
     }
 }

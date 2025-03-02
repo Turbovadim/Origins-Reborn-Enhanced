@@ -1,46 +1,46 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.world.TimeSkipEvent;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.Sound
+import org.bukkit.SoundCategory
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.world.TimeSkipEvent
+import org.bukkit.inventory.ItemStack
 
-import java.util.List;
+class LayEggs : VisibleAbility, Listener {
 
-public class LayEggs implements VisibleAbility, Listener {
     @EventHandler
-    public void onTimeSkip(TimeSkipEvent event) {
-        if (event.getSkipReason() == TimeSkipEvent.SkipReason.NIGHT_SKIP) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                runForAbility(p, player -> {
-                    if (player.isDeeplySleeping()) {
-                        player.getWorld().dropItem(player.getLocation(), new ItemStack(Material.EGG));
-                        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, SoundCategory.PLAYERS, 1, 1);
-                    }
-                });
+    fun onTimeSkip(event: TimeSkipEvent) {
+        if (event.skipReason != TimeSkipEvent.SkipReason.NIGHT_SKIP) return
+
+        Bukkit.getOnlinePlayers()
+            .filter { it.isDeeplySleeping }
+            .forEach { player ->
+                runForAbility(player, AbilityRunner {
+                    player.world.dropItem(player.location, ItemStack(Material.EGG))
+                    player.world.playSound(player.location, Sound.ENTITY_CHICKEN_EGG, SoundCategory.PLAYERS, 1f, 1f)
+                })
             }
-        }
-    }
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:lay_eggs");
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("Whenever you wake up in the morning, you will lay an egg.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getKey(): Key {
+        return Key.key("origins:lay_eggs")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Oviparous", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Whenever you wake up in the morning, you will lay an egg.",
+            LineComponent.LineType.DESCRIPTION
+        )
+    }
+
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Oviparous", LineComponent.LineType.TITLE)
     }
 }

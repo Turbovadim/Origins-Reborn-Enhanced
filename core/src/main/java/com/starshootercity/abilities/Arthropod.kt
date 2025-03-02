@@ -1,35 +1,45 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.potion.PotionEffect;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.LivingEntity
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.potion.PotionEffect
+import java.util.*
 
-import java.util.Random;
-
-public class Arthropod implements Ability, Listener {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:arthropod");
+class Arthropod : Ability, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:arthropod")
     }
 
-    private final Random random = new Random();
+    private val random = Random()
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof LivingEntity entity) {
-            if (entity.getEquipment() == null) return;
-            if (entity.getEquipment().getItemInMainHand().containsEnchantment(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment())) {
-                runForAbility(event.getEntity(), player -> {
-                    int level = entity.getEquipment().getItemInMainHand().getEnchantmentLevel(OriginsReborn.getNMSInvoker().getBaneOfArthropodsEnchantment());
-                    event.setDamage(event.getDamage() + 1.25 * level);
-                    player.addPotionEffect(new PotionEffect(OriginsReborn.getNMSInvoker().getSlownessEffect(), (int) (20 * random.nextDouble(1, 1 + (0.5 * level))), 3, false, true));
-                });
-            }
-        }
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        val damager = event.damager as? LivingEntity ?: return
+        val equipment = damager.equipment ?: return
+        val mainHand = equipment.itemInMainHand
+        val baneEnchantment = NMSInvoker.getBaneOfArthropodsEnchantment()
+
+        if (!mainHand.containsEnchantment(baneEnchantment)) return
+
+        runForAbility(event.entity, AbilityRunner { player ->
+            val level = mainHand.getEnchantmentLevel(baneEnchantment)
+            event.damage += 1.25 * level
+            val duration = (20 * random.nextDouble(1.0, 1 + (0.5 * level))).toInt()
+            player?.addPotionEffect(
+                PotionEffect(
+                    NMSInvoker.getSlownessEffect(),
+                    duration,
+                    3,
+                    false,
+                    true
+                )
+            )
+        })
     }
+
 }

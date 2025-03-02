@@ -1,71 +1,72 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Material;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.abilities.Ability.AbilityRunner
+import net.kyori.adventure.key.Key
+import org.bukkit.Material
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerItemConsumeEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Carnivore implements VisibleAbility, Listener {
-    List<Material> meat = new ArrayList<>() {{
-        add(Material.PORKCHOP);
-        add(Material.COOKED_PORKCHOP);
-        add(Material.BEEF);
-        add(Material.COOKED_BEEF);
-        add(Material.CHICKEN);
-        add(Material.COOKED_CHICKEN);
-        add(Material.RABBIT);
-        add(Material.COOKED_RABBIT);
-        add(Material.MUTTON);
-        add(Material.COOKED_MUTTON);
-        add(Material.RABBIT_STEW);
-        add(Material.COD);
-        add(Material.COOKED_COD);
-        add(Material.TROPICAL_FISH);
-        add(Material.SALMON);
-        add(Material.COOKED_SALMON);
-        add(Material.PUFFERFISH);
-        if (OriginsReborn.getNMSInvoker().getOminousBottle() != null) add(OriginsReborn.getNMSInvoker().getOminousBottle());
-    }};
+class Carnivore : VisibleAbility, Listener {
+    var meat: MutableList<Material?> = object : ArrayList<Material?>() {
+        init {
+            add(Material.PORKCHOP)
+            add(Material.COOKED_PORKCHOP)
+            add(Material.BEEF)
+            add(Material.COOKED_BEEF)
+            add(Material.CHICKEN)
+            add(Material.COOKED_CHICKEN)
+            add(Material.RABBIT)
+            add(Material.COOKED_RABBIT)
+            add(Material.MUTTON)
+            add(Material.COOKED_MUTTON)
+            add(Material.RABBIT_STEW)
+            add(Material.COD)
+            add(Material.COOKED_COD)
+            add(Material.TROPICAL_FISH)
+            add(Material.SALMON)
+            add(Material.COOKED_SALMON)
+            add(Material.PUFFERFISH)
+            if (NMSInvoker.ominousBottle != null) add(NMSInvoker.ominousBottle)
+        }
+    }
 
     @EventHandler
-    public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        if (event.getItem().getType() == Material.POTION) return;
-        runForAbility(event.getPlayer(), player -> {
-            if (!meat.contains(event.getItem().getType())) {
-                event.setCancelled(true);
-                event.getItem().setAmount(event.getItem().getAmount() - 1);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 1, false, true));
+    fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
+        if (event.item.type == Material.POTION) return
+
+        runForAbility(event.player, AbilityRunner { player ->
+            if (event.item.type !in meat) {
+                event.isCancelled = true
+                event.item.amount--
+                player.addPotionEffect(
+                    PotionEffect(PotionEffectType.POISON, 300, 1, false, true)
+                )
             }
-        });
+        })
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor(
-                "Your diet is restricted to meat, you can't eat vegetables.",
-                OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        );
+
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Your diet is restricted to meat, you can't eat vegetables.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor(
-                "Carnivore",
-                OriginSwapper.LineData.LineComponent.LineType.TITLE
-        );
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Carnivore",
+            LineComponent.LineType.TITLE
+        )
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:carnivore");
+    override fun getKey(): Key {
+        return Key.key("origins:carnivore")
     }
 }

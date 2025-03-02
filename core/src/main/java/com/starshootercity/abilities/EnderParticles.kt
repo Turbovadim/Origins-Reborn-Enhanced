@@ -1,22 +1,18 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import net.kyori.adventure.key.Key;
-import org.bukkit.Particle;
-import org.jetbrains.annotations.NotNull;
+import net.kyori.adventure.key.Key
+import org.bukkit.Particle
 
-public class EnderParticles implements ParticleAbility {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:ender_particles");
+class EnderParticles : ParticleAbility {
+    override fun getKey(): Key {
+        return Key.key("origins:ender_particles")
     }
 
-    @Override
-    public Particle getParticle() {
-        return Particle.PORTAL;
+    override fun getParticle(): Particle {
+        return Particle.PORTAL
     }
 
-    @Override
-    public int getFrequency() {
-        return 4;
+    override fun getFrequency(): Int {
+        return 4
     }
 }

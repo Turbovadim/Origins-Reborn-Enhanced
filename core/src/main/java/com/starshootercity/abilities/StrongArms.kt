@@ -1,134 +1,138 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.MaterialTags;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.FluidCollisionMode;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.MaterialTags
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.abilities.BreakSpeedModifierAbility.BlockMiningContext
+import com.starshootercity.abilities.StrongArms.StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent
+import net.kyori.adventure.key.Key
+import org.bukkit.FluidCollisionMode
+import org.bukkit.Material
+import org.bukkit.block.Block
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
+import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffectType
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class StrongArms implements MultiAbility, VisibleAbility, Listener {
-
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:strong_arms");
+class StrongArms : MultiAbility, VisibleAbility, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:strong_arms")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You are strong enough to break natural stones without using a pickaxe.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You are strong enough to break natural stones without using a pickaxe.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Strong Arms", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Strong Arms", LineComponent.LineType.TITLE)
     }
 
-    @Override
-    public List<Ability> getAbilities() {
-        return List.of(StrongArmsDrops.strongArmsDrops, StrongArmsBreakSpeed.strongArmsBreakSpeed);
+    override fun getAbilities(): MutableList<Ability?> {
+        return mutableListOf(
+            StrongArmsDrops.Companion.strongArmsDrops,
+            StrongArmsBreakSpeed.Companion.strongArmsBreakSpeed
+        )
     }
 
-    public static class StrongArmsDrops implements Ability, Listener {
-        public static StrongArmsDrops strongArmsDrops = new StrongArmsDrops();
-
-        private static final List<Material> naturalStones = new ArrayList<>() {{
-            add(Material.STONE);
-            add(Material.TUFF);
-            add(Material.GRANITE);
-            add(Material.DIORITE);
-            add(Material.ANDESITE);
-            add(Material.SANDSTONE);
-            add(Material.SMOOTH_SANDSTONE);
-            add(Material.RED_SANDSTONE);
-            add(Material.SMOOTH_RED_SANDSTONE);
-            add(Material.DEEPSLATE);
-            add(Material.BLACKSTONE);
-            add(Material.NETHERRACK);
-        }};
+    class StrongArmsDrops : Ability, Listener {
 
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-        public void onBlockBreak(BlockBreakEvent event) {
-            runForAbility(event.getPlayer(), player -> {
-                if (naturalStones.contains(event.getBlock().getType())) {
-                    if (!MaterialTags.PICKAXES.isTagged(player.getInventory().getItemInMainHand().getType())) {
-                        event.setCancelled(true);
-                        ItemStack item = new ItemStack(Material.IRON_PICKAXE);
-                        item.addUnsafeEnchantments(player.getInventory().getItemInMainHand().getEnchantments());
-                        event.getBlock().breakNaturally(item, event instanceof StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent);
+        fun onBlockBreak(event: BlockBreakEvent) {
+            runForAbility(event.player, AbilityRunner { player ->
+                if (event.block.type in naturalStones &&
+                    !MaterialTags.PICKAXES.isTagged(player.inventory.itemInMainHand.type)
+                ) {
+                    event.isCancelled = true
+                    val pickaxe = ItemStack(Material.IRON_PICKAXE).apply {
+                        addUnsafeEnchantments(player.inventory.itemInMainHand.enchantments)
                     }
+                    event.block.breakNaturally(pickaxe, event is StrongArmsFastBlockBreakEvent)
                 }
-            });
+            })
         }
 
-        @Override
-        public @NotNull Key getKey() {
-            return Key.key("origins:strong_arms_drops");
+
+        override fun getKey(): Key {
+            return Key.key("origins:strong_arms_drops")
+        }
+
+        companion object {
+            var strongArmsDrops: StrongArmsDrops = StrongArmsDrops()
+
+            private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
+                init {
+                    add(Material.STONE)
+                    add(Material.TUFF)
+                    add(Material.GRANITE)
+                    add(Material.DIORITE)
+                    add(Material.ANDESITE)
+                    add(Material.SANDSTONE)
+                    add(Material.SMOOTH_SANDSTONE)
+                    add(Material.RED_SANDSTONE)
+                    add(Material.SMOOTH_RED_SANDSTONE)
+                    add(Material.DEEPSLATE)
+                    add(Material.BLACKSTONE)
+                    add(Material.NETHERRACK)
+                }
+            }
         }
     }
 
-    public static class StrongArmsBreakSpeed implements BreakSpeedModifierAbility, Listener {
-        public static StrongArmsBreakSpeed strongArmsBreakSpeed = new StrongArmsBreakSpeed();
-
-        private static final List<Material> naturalStones = new ArrayList<>() {{
-            add(Material.STONE);
-            add(Material.TUFF);
-            add(Material.GRANITE);
-            add(Material.DIORITE);
-            add(Material.ANDESITE);
-            add(Material.SANDSTONE);
-            add(Material.SMOOTH_SANDSTONE);
-            add(Material.RED_SANDSTONE);
-            add(Material.SMOOTH_RED_SANDSTONE);
-            add(Material.DEEPSLATE);
-            add(Material.BLACKSTONE);
-            add(Material.NETHERRACK);
-        }};
-        @Override
-        public @NotNull Key getKey() {
-            return Key.key("origins:strong_arms_break_speed");
+    class StrongArmsBreakSpeed : BreakSpeedModifierAbility, Listener {
+        override fun getKey(): Key {
+            return Key.key("origins:strong_arms_break_speed")
         }
 
-        @Override
-        @SuppressWarnings("deprecation")
-        public BlockMiningContext provideContextFor(Player player) {
-            boolean aquaAffinity = false;
-            ItemStack helmet = player.getInventory().getHelmet();
+        override fun provideContextFor(player: Player): BlockMiningContext {
+            var aquaAffinity = false
+            val helmet = player.inventory.helmet
             if (helmet != null) {
-                if (helmet.containsEnchantment(OriginsReborn.getNMSInvoker().getAquaAffinityEnchantment())) aquaAffinity = true;
+                if (helmet.containsEnchantment(NMSInvoker.getAquaAffinityEnchantment())) aquaAffinity = true
             }
-            return new BlockMiningContext(
-                    new ItemStack(Material.IRON_PICKAXE),
-                    player.getPotionEffect(OriginsReborn.getNMSInvoker().getMiningFatigueEffect()),
-                    player.getPotionEffect(OriginsReborn.getNMSInvoker().getHasteEffect()),
-                    player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
-                    OriginsReborn.getNMSInvoker().isUnderWater(player),
-                    aquaAffinity,
-                    player.isOnGround()
-            );
+            return BlockMiningContext(
+                ItemStack(Material.IRON_PICKAXE),
+                player.getPotionEffect(NMSInvoker.getMiningFatigueEffect()),
+                player.getPotionEffect(NMSInvoker.getHasteEffect()),
+                player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
+                NMSInvoker.isUnderWater(player),
+                aquaAffinity,
+                player.isOnGround
+            )
         }
 
-        @Override
-        public boolean shouldActivate(Player player) {
-            Block target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER);
-            return !MaterialTags.PICKAXES.isTagged(player.getInventory().getItemInMainHand().getType()) && target != null && naturalStones.contains(target.getType());
+        override fun shouldActivate(player: Player): Boolean {
+            if (MaterialTags.PICKAXES.isTagged(player.inventory.itemInMainHand.type)) return false
+            val target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER) ?: return false
+            return target.type in naturalStones
         }
 
-        public static class StrongArmsFastBlockBreakEvent extends BlockBreakEvent {
-            public StrongArmsFastBlockBreakEvent(@NotNull Block theBlock, @NotNull Player player) {
-                super(theBlock, player);
+        class StrongArmsFastBlockBreakEvent(theBlock: Block, player: Player) : BlockBreakEvent(theBlock, player)
+        companion object {
+            var strongArmsBreakSpeed: StrongArmsBreakSpeed = StrongArmsBreakSpeed()
+
+            private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
+                init {
+                    add(Material.STONE)
+                    add(Material.TUFF)
+                    add(Material.GRANITE)
+                    add(Material.DIORITE)
+                    add(Material.ANDESITE)
+                    add(Material.SANDSTONE)
+                    add(Material.SMOOTH_SANDSTONE)
+                    add(Material.RED_SANDSTONE)
+                    add(Material.SMOOTH_RED_SANDSTONE)
+                    add(Material.DEEPSLATE)
+                    add(Material.BLACKSTONE)
+                    add(Material.NETHERRACK)
+                }
             }
         }
     }

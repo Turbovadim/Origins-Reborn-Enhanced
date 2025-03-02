@@ -1,80 +1,73 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.OriginsReborn;
-import net.kyori.adventure.key.Key;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import net.kyori.adventure.key.Key
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 
-import java.util.List;
-
-public class ExtraReach implements VisibleAbility, MultiAbility {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:extra_reach");
+class ExtraReach : VisibleAbility, MultiAbility {
+    override fun getKey(): Key {
+        return Key.key("origins:extra_reach")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You can reach blocks and entities further away.", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor("You can reach blocks and entities further away.", LineComponent.LineType.DESCRIPTION)
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Slender Body", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Slender Body", LineComponent.LineType.TITLE)
     }
 
-    @Override
-    public List<Ability> getAbilities() {
-        return List.of(ExtraReachBlocks.extraReachBlocks, ExtraReachEntities.extraReachEntities);
+    override fun getAbilities(): MutableList<Ability> {
+        return listOf<Ability>(
+            ExtraReachBlocks.Companion.extraReachBlocks,
+            ExtraReachEntities.Companion.extraReachEntities
+        ).toMutableList()
     }
 
-    public static class ExtraReachEntities implements AttributeModifierAbility {
-        public static ExtraReachEntities extraReachEntities = new ExtraReachEntities();
-
-        @Override
-        public @NotNull Attribute getAttribute() {
-            return OriginsReborn.getNMSInvoker().getEntityInteractionRangeAttribute();
+    class ExtraReachEntities : AttributeModifierAbility {
+        override fun getAttribute(): Attribute {
+            return NMSInvoker.getEntityInteractionRangeAttribute()!!
         }
 
-        @Override
-        public double getAmount() {
-            return 1.5;
+        override fun getAmount(): Double {
+            return 1.5
         }
 
-        @Override
-        public AttributeModifier.@NotNull Operation getOperation() {
-            return AttributeModifier.Operation.ADD_NUMBER;
+        override fun getOperation(): AttributeModifier.Operation {
+            return AttributeModifier.Operation.ADD_NUMBER
         }
 
-        @Override
-        public @NotNull Key getKey() {
-            return Key.key("origins:extra_reach_entities");
+        override fun getKey(): Key {
+            return Key.key("origins:extra_reach_entities")
+        }
+
+        companion object {
+            var extraReachEntities: ExtraReachEntities = ExtraReachEntities()
         }
     }
 
-    public static class ExtraReachBlocks implements AttributeModifierAbility {
-        public static ExtraReachBlocks extraReachBlocks = new ExtraReachBlocks();
-
-        @Override
-        public @NotNull Attribute getAttribute() {
-            return OriginsReborn.getNMSInvoker().getBlockInteractionRangeAttribute();
+    class ExtraReachBlocks : AttributeModifierAbility {
+        override fun getAttribute(): Attribute {
+            return NMSInvoker.getBlockInteractionRangeAttribute()!!
         }
 
-        @Override
-        public double getAmount() {
-            return 1.5;
+        override fun getAmount(): Double {
+            return 1.5
         }
 
-        @Override
-        public AttributeModifier.@NotNull Operation getOperation() {
-            return AttributeModifier.Operation.ADD_NUMBER;
+        override fun getOperation(): AttributeModifier.Operation {
+            return AttributeModifier.Operation.ADD_NUMBER
         }
 
-        @Override
-        public @NotNull Key getKey() {
-            return Key.key("origins:extra_reach_blocks");
+        override fun getKey(): Key {
+            return Key.key("origins:extra_reach_blocks")
+        }
+
+        companion object {
+            var extraReachBlocks: ExtraReachBlocks = ExtraReachBlocks()
         }
     }
 }

@@ -1,67 +1,66 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.OriginSwapper;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Material;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import net.kyori.adventure.key.Key
+import org.bukkit.Material
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerItemConsumeEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
-import java.util.ArrayList;
-import java.util.List;
+class Vegetarian : VisibleAbility, Listener {
 
-public class Vegetarian implements VisibleAbility, Listener {
-    List<Material> meat = new ArrayList<>() {{
-        add(Material.PORKCHOP);
-        add(Material.COOKED_PORKCHOP);
-        add(Material.BEEF);
-        add(Material.COOKED_BEEF);
-        add(Material.CHICKEN);
-        add(Material.COOKED_CHICKEN);
-        add(Material.RABBIT);
-        add(Material.COOKED_RABBIT);
-        add(Material.MUTTON);
-        add(Material.COOKED_MUTTON);
-        add(Material.RABBIT_STEW);
-        add(Material.COD);
-        add(Material.COOKED_COD);
-        add(Material.TROPICAL_FISH);
-        add(Material.SALMON);
-        add(Material.COOKED_SALMON);
-        add(Material.PUFFERFISH);
-    }};
+    var meat: MutableList<Material> = mutableListOf(
+        Material.PORKCHOP,
+        Material.COOKED_PORKCHOP,
+        Material.BEEF,
+        Material.COOKED_BEEF,
+        Material.CHICKEN,
+        Material.COOKED_CHICKEN,
+        Material.RABBIT,
+        Material.COOKED_RABBIT,
+        Material.MUTTON,
+        Material.COOKED_MUTTON,
+        Material.RABBIT_STEW,
+        Material.COD,
+        Material.COOKED_COD,
+        Material.TROPICAL_FISH,
+        Material.SALMON,
+        Material.COOKED_SALMON,
+        Material.PUFFERFISH
+    )
 
     @EventHandler
-    public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
-        if (event.getItem().getType() == Material.POTION) return;
-        runForAbility(event.getPlayer(), player -> {
-            if (meat.contains(event.getItem().getType())) {
-                event.setCancelled(true);
-                event.getItem().setAmount(event.getItem().getAmount() - 1);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 1, false, true));
+    fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
+        if (event.item.type == Material.POTION) return
+
+        val player = event.player
+        runForAbility(player) { p ->
+            if (meat.contains(event.item.type)) {
+                event.isCancelled = true
+                event.item.amount -= 1
+                p.addPotionEffect(PotionEffect(PotionEffectType.POISON, 300, 1, false, true))
             }
-        });
-    }
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor(
-                "You can't digest any meat.",
-                OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+        }
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor(
-                "Vegetarian",
-                OriginSwapper.LineData.LineComponent.LineType.TITLE
-        );
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You can't digest any meat.",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:vegetarian");
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "Vegetarian",
+            LineComponent.LineType.TITLE
+        )
+    }
+
+    override fun getKey(): Key {
+        return Key.key("origins:vegetarian")
     }
 }

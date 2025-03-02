@@ -1,40 +1,39 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.MaterialTags;
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.ShortcutUtils;
-import com.starshootercity.events.PlayerSwapOriginEvent;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockDispenseArmorEvent;
-import org.bukkit.event.inventory.*;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import com.destroystokyo.paper.MaterialTags
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.ShortcutUtils.giveItemWithDrops
+import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.events.PlayerSwapOriginEvent
+import net.kyori.adventure.key.Key
+import org.bukkit.Material
+import org.bukkit.entity.Player
+import org.bukkit.event.Cancellable
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockDispenseArmorEvent
+import org.bukkit.event.inventory.*
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.ItemStack
 
-import java.util.List;
-
-public class LightArmor implements VisibleAbility, Listener {
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:light_armor");
+class LightArmor : VisibleAbility, Listener {
+    override fun getKey(): Key {
+        return Key.key("origins:light_armor")
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor("You can not wear any heavy armor (armor with protection values higher than chainmail).", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
+    override fun getDescription(): MutableList<LineComponent?> {
+        return makeLineFor(
+            "You can not wear any heavy armor (armor with protection values higher than chainmail).",
+            LineComponent.LineType.DESCRIPTION
+        )
     }
 
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor("Need for Mobility", OriginSwapper.LineData.LineComponent.LineType.TITLE);
+    override fun getTitle(): MutableList<LineComponent?> {
+        return makeLineFor("Need for Mobility", LineComponent.LineType.TITLE)
     }
 
-    private final List<Material> allowedTypes = List.of(
+    private val allowedTypes = listOf<Material>(
         Material.CHAINMAIL_HELMET,
         Material.CHAINMAIL_CHESTPLATE,
         Material.CHAINMAIL_LEGGINGS,
@@ -47,122 +46,125 @@ public class LightArmor implements VisibleAbility, Listener {
         Material.GOLDEN_CHESTPLATE,
         Material.GOLDEN_LEGGINGS,
         Material.GOLDEN_BOOTS
-    );
+    ).toMutableList()
 
     @EventHandler
-    public void onPlayerSwapOrigin(PlayerSwapOriginEvent event) {
-        if (event.newOrigin == null) return;
-        if (event.newOrigin.hasAbility(getKey())) {
-            ItemStack helmet = event.getPlayer().getInventory().getHelmet();
-            ItemStack chestplate = event.getPlayer().getInventory().getChestplate();
-            ItemStack leggings = event.getPlayer().getInventory().getLeggings();
-            ItemStack boots = event.getPlayer().getInventory().getBoots();
-            if (helmet == null || chestplate == null || leggings == null || boots == null) return;
-            if (!allowedTypes.contains(helmet.getType())) {
-                event.getPlayer().getInventory().setHelmet(null);
-                ShortcutUtils.giveItemWithDrops(event.getPlayer(), helmet);
-            }
-            if (!allowedTypes.contains(chestplate.getType())) {
-                event.getPlayer().getInventory().setChestplate(null);
-                ShortcutUtils.giveItemWithDrops(event.getPlayer(), chestplate);
-            }
-            if (!allowedTypes.contains(leggings.getType())) {
-                event.getPlayer().getInventory().setLeggings(null);
-                ShortcutUtils.giveItemWithDrops(event.getPlayer(), leggings);
-            }
-            if (!allowedTypes.contains(boots.getType())) {
-                event.getPlayer().getInventory().setBoots(null);
-                ShortcutUtils.giveItemWithDrops(event.getPlayer(), boots);
+    fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
+        val newOrigin = event.newOrigin ?: return
+        if (!newOrigin.hasAbility(key)) return
+
+        val player = event.getPlayer()
+        val inventory = player.inventory
+        val helmet = inventory.helmet
+        val chestplate = inventory.chestplate
+        val leggings = inventory.leggings
+        val boots = inventory.boots
+
+        if (listOf(helmet, chestplate, leggings, boots).any { it == null }) return
+
+        val armorPieces = listOf(
+            helmet to { inventory.helmet = null },
+            chestplate to { inventory.chestplate = null },
+            leggings to { inventory.leggings = null },
+            boots to { inventory.boots = null }
+        )
+
+        armorPieces.forEach { (item, removeSlot) ->
+            if (!allowedTypes.contains(item?.type)) {
+                removeSlot()
+                giveItemWithDrops(player, item)
             }
         }
     }
 
     @EventHandler
-    public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventorySlots().contains(38)) {
-            if (event.getWhoClicked() instanceof Player player) {
-                checkArmorEvent(event, player, event.getOldCursor());
+    fun onInventoryDrag(event: InventoryDragEvent) {
+        if (event.inventorySlots.contains(38)) {
+            val clicker = event.whoClicked
+            if (clicker is Player) {
+                checkArmorEvent(event, clicker, event.oldCursor)
             }
         }
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getWhoClicked() instanceof Player player) {
-            if (event.getCursor() != null) {
-                if (isArmor(event.getCursor().getType())) {
-                    if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
-                        checkArmorEvent(event, player, event.getCursor());
-                    }
-                }
+    fun onInventoryClick(event: InventoryClickEvent) {
+        val clicker = event.whoClicked as? Player ?: return
+
+        event.cursor?.takeIf { isArmor(it.type) && event.slotType == InventoryType.SlotType.ARMOR }
+            ?.let { checkArmorEvent(event, clicker, it) }
+
+        if (event.isShiftClick) {
+            val currentItem = event.currentItem ?: return
+            if (event.inventory.type != InventoryType.CRAFTING) return
+
+            if (MaterialTags.HELMETS.isTagged(currentItem.type) && clicker.equipment.helmet == null) {
+                checkArmorEvent(event, clicker, currentItem)
             }
-            if (event.isShiftClick()) {
-                if (event.getCurrentItem() == null) return;
-                if (event.getInventory().getType() != InventoryType.CRAFTING) return;
-                if (MaterialTags.HELMETS.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getHelmet() == null) {
-                    checkArmorEvent(event, player, event.getCurrentItem());
-                }
-                if (MaterialTags.CHESTPLATES.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getChestplate() == null) {
-                    checkArmorEvent(event, player, event.getCurrentItem());
-                }
-                if (MaterialTags.LEGGINGS.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getLeggings() == null) {
-                    checkArmorEvent(event, player, event.getCurrentItem());
-                }
-                if (MaterialTags.BOOTS.isTagged(event.getCurrentItem().getType()) && player.getEquipment().getBoots() == null) {
-                    checkArmorEvent(event, player, event.getCurrentItem());
-                }
+            if (MaterialTags.CHESTPLATES.isTagged(currentItem.type) && clicker.equipment.chestplate == null) {
+                checkArmorEvent(event, clicker, currentItem)
             }
-            if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
-                if (event.getHotbarButton() == -1) {
-                    if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
-                        checkArmorEvent(event, player, player.getInventory().getItemInOffHand());
-                    }
-                }
+            if (MaterialTags.LEGGINGS.isTagged(currentItem.type) && clicker.equipment.leggings == null) {
+                checkArmorEvent(event, clicker, currentItem)
             }
-            if (event.getClick() == ClickType.NUMBER_KEY) {
-                if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
-                    ItemStack item = player.getInventory().getItem(event.getHotbarButton());
-                    if (item != null) {
-                        checkArmorEvent(event, player, item);
-                    }
-                }
+            if (MaterialTags.BOOTS.isTagged(currentItem.type) && clicker.equipment.boots == null) {
+                checkArmorEvent(event, clicker, currentItem)
+            }
+        }
+
+        if (event.action == InventoryAction.HOTBAR_SWAP &&
+            event.hotbarButton == -1 &&
+            event.slotType == InventoryType.SlotType.ARMOR
+        ) {
+            checkArmorEvent(event, clicker, clicker.inventory.itemInOffHand)
+        }
+
+        if (event.click == ClickType.NUMBER_KEY &&
+            event.slotType == InventoryType.SlotType.ARMOR
+        ) {
+            clicker.inventory.getItem(event.hotbarButton)?.let { item ->
+                checkArmorEvent(event, clicker, item)
             }
         }
     }
 
     @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction().isRightClick()) {
-            if (event.getItem() == null) return;
-            if (MaterialTags.HELMETS.isTagged(event.getItem().getType())) {
-                checkArmorEvent(event, event.getPlayer(), event.getItem());
+    fun onPlayerInteract(event: PlayerInteractEvent) {
+        if (event.getAction().isRightClick) {
+            if (event.getItem() == null) return
+            if (MaterialTags.HELMETS.isTagged(event.getItem()!!.type)) {
+                checkArmorEvent(event, event.getPlayer(), event.getItem()!!)
             }
-            if (MaterialTags.CHESTPLATES.isTagged(event.getItem().getType())) {
-                checkArmorEvent(event, event.getPlayer(), event.getItem());
+            if (MaterialTags.CHESTPLATES.isTagged(event.getItem()!!.type)) {
+                checkArmorEvent(event, event.getPlayer(), event.getItem()!!)
             }
-            if (MaterialTags.LEGGINGS.isTagged(event.getItem().getType())) {
-                checkArmorEvent(event, event.getPlayer(), event.getItem());
+            if (MaterialTags.LEGGINGS.isTagged(event.getItem()!!.type)) {
+                checkArmorEvent(event, event.getPlayer(), event.getItem()!!)
             }
-            if (MaterialTags.BOOTS.isTagged(event.getItem().getType())) {
-                checkArmorEvent(event, event.getPlayer(), event.getItem());
+            if (MaterialTags.BOOTS.isTagged(event.getItem()!!.type)) {
+                checkArmorEvent(event, event.getPlayer(), event.getItem()!!)
             }
         }
     }
+
     @EventHandler
-    public void onBlockDispenseArmor(BlockDispenseArmorEvent event) {
-        if (event.getTargetEntity() instanceof Player player) {
-            checkArmorEvent(event, player, event.getItem());
+    fun onBlockDispenseArmor(event: BlockDispenseArmorEvent) {
+        val target = event.targetEntity
+        if (target is Player) {
+            checkArmorEvent(event, target, event.item)
         }
     }
 
-    public void checkArmorEvent(Cancellable event, Player p, ItemStack armor) {
-        runForAbility(p, player -> {
-            if (allowedTypes.contains(armor.getType())) return;
-            event.setCancelled(true);
-        });
+    fun checkArmorEvent(event: Cancellable, p: Player?, armor: ItemStack) {
+        runForAbility(p, AbilityRunner { player: Player? ->
+            if (allowedTypes.contains(armor.type)) return@AbilityRunner
+            event.isCancelled = true
+        })
     }
 
-    public boolean isArmor(Material material) {
-        return MaterialTags.HELMETS.isTagged(material) || MaterialTags.CHESTPLATES.isTagged(material) || MaterialTags.LEGGINGS.isTagged(material) || MaterialTags.BOOTS.isTagged(material);
+    fun isArmor(material: Material): Boolean {
+        return MaterialTags.HELMETS.isTagged(material) || MaterialTags.CHESTPLATES.isTagged(material) || MaterialTags.LEGGINGS.isTagged(
+            material
+        ) || MaterialTags.BOOTS.isTagged(material)
     }
 }
