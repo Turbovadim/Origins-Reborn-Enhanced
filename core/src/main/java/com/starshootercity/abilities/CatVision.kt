@@ -18,7 +18,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
-class CatVision : VisibleAbility, Listener {
+open class CatVision : VisibleAbility, Listener {
     val storedEffects = mutableMapOf<Player, SavedPotionEffect>()
 
     @EventHandler

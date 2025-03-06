@@ -1021,7 +1021,7 @@ class OriginSwapper : Listener {
 
         fun resetAttributes(player: Player) {
             val health = doubleArrayOf(player.health)
-            for (attribute in Attribute.entries) {
+            for (attribute in Attribute.values()) {
                 val instance = player.getAttribute(attribute)
                 if (instance == null) continue
                 for (modifier in instance.modifiers) {
