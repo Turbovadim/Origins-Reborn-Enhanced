@@ -390,11 +390,6 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
     }
 
     @Override
-    public void setComments(String path, List<String> comments) {
-        config.setComments(path, comments);
-    }
-
-    @Override
     public void dealDryOutDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
         livingEntity.hurt(DamageSource.DRY_OUT, amount);

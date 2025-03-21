@@ -2,7 +2,10 @@ package com.starshootercity.abilities
 
 import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
 import com.starshootercity.OriginSwapper.LineData.LineComponent
-import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.OriginsReborn.Companion.bukkitDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -11,6 +14,7 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
+import org.endera.enderalib.utils.async.ioDispatcher
 
 class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
     override fun getKey(): Key {
@@ -34,13 +38,19 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
 
     @EventHandler
     fun onPlayerMove(event: PlayerMoveEvent) {
-        val player = event.player
-        if (!player.isInWater || player.isSwimming) return
+        CoroutineScope(ioDispatcher).launch {
+            val player = event.player
+            if (!player.isInWater || player.isSwimming) return@launch
 
-        val rising = event.to.y > event.from.y
-        runForAbility(player, AbilityRunner { p ->
-            p.isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
-        })
+            val rising = event.to.y > event.from.y
+            runForAbilityAsync(player) { p ->
+                val isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
+                withContext(bukkitDispatcher) {
+                    p.isFlying = isFlying
+                }
+            }
+        }
+
     }
 
     @EventHandler

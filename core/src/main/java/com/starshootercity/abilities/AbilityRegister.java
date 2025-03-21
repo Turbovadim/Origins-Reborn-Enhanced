@@ -1,6 +1,5 @@
 package com.starshootercity.abilities;
 
-import com.starshootercity.ConfigOptions;
 import com.starshootercity.OriginsReborn;
 import com.starshootercity.commands.FlightToggleCommand;
 import com.starshootercity.cooldowns.CooldownAbility;
@@ -30,7 +29,6 @@ public class AbilityRegister {
     public static Map<Key, DependencyAbility> dependencyAbilityMap = new HashMap<>();
     public static Map<Key, List<MultiAbility>> multiAbilityMap = new HashMap<>();
 
-    public static ConfigOptions options = ConfigOptions.getInstance();
     public static OriginsReborn origins = OriginsReborn.getInstance();
     public static NMSInvoker nmsInvoker = OriginsReborn.getNMSInvoker();
 
@@ -78,7 +76,6 @@ public class AbilityRegister {
             }
         }
 
-        // Регистрируем способность в основной карте способностей
         abilityMap.put(ability.getKey(), ability);
     }
 
@@ -115,7 +112,7 @@ public class AbilityRegister {
     public static void runForAbility(Entity entity, Key key, Runnable runnable, Runnable other) {
         if (entity == null) return;
         String worldId = entity.getWorld().getName();
-        if (options.getWorldsDisabledWorlds().contains(worldId)) return;
+        if (OriginsReborn.mainConfig.getWorlds().getDisabledWorlds().contains(worldId)) return;
         if (entity instanceof Player player) {
             if (hasAbility(player, key)) {
                 runnable.run();
@@ -157,12 +154,13 @@ public class AbilityRegister {
     }
 
     public static void updateFlight(Player player, boolean inDisabledWorld) {
-        // Если игрок в творческом или режиме наблюдения, либо включена возможность летать через команду — задаём стандартную скорость.
         if (
             player.getGameMode() == GameMode.CREATIVE ||
-            player.getGameMode() == GameMode.SPECTATOR ||
-            FlightToggleCommand.canFly(player)
+            player.getGameMode() == GameMode.SPECTATOR
         ) {
+            return;
+        }
+        if (FlightToggleCommand.canFly(player)) {
             player.setFlySpeed(0.1f);
             return;
         }
@@ -187,7 +185,7 @@ public class AbilityRegister {
             }
         }
 
-        // Устанавливаем урон при падении и скорость полёта
+        // Устанавливаем урон при падении и скорости полёта
         nmsInvoker.setFlyingFallDamage(player, flyingFallDamage);
         player.setFlySpeed(speed < 0f ? 0 : speed);
     }
@@ -196,19 +194,15 @@ public class AbilityRegister {
     public static void updateEntity(Player player, Entity target) {
         byte data = 0;
 
-        // Если у объекта есть огненные тики, устанавливаем бит 0 (0x01)
         if (target.getFireTicks() > 0) {
             data |= 0x01;
         }
-        // Если объект подсвечивается, устанавливаем бит 6 (0x40)
         if (target.isGlowing()) {
             data |= 0x40;
         }
-        // Если объект – LivingEntity и невидим, устанавливаем бит 5 (0x20)
         if (target instanceof LivingEntity living && living.isInvisible()) {
             data |= 0x20;
         }
-        // Если объект – Player, проверяем дополнительные состояния
         if (target instanceof Player targetPlayer) {
             if (targetPlayer.isSneaking()) {
                 data |= 0x02;
@@ -223,7 +217,6 @@ public class AbilityRegister {
                 data |= (byte) 0x80;
             }
 
-            // Кэшируем инвентарь игрока, чтобы не запрашивать его для каждого слота
             var inventory = targetPlayer.getInventory();
             for (EquipmentSlot slot : EquipmentSlot.values()) {
                 try {

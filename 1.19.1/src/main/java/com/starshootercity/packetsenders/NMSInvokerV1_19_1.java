@@ -231,11 +231,6 @@ public class NMSInvokerV1_19_1 extends NMSInvoker {
     }
 
     @Override
-    public void setComments(String path, List<String> comments) {
-        config.setComments(path, comments);
-    }
-
-    @Override
     public void sendEntityData(Player player, Entity entity, byte bytes) {
         ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
         SynchedEntityData data = ((CraftEntity) entity).getHandle().getEntityData();

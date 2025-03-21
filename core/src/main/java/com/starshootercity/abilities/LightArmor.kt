@@ -51,7 +51,7 @@ class LightArmor : VisibleAbility, Listener {
     @EventHandler
     fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
         val newOrigin = event.newOrigin ?: return
-        if (!newOrigin.hasAbility(key)) return
+        if (!newOrigin.hasAbility(getKey())) return
 
         val player = event.getPlayer()
         val inventory = player.inventory
@@ -155,8 +155,8 @@ class LightArmor : VisibleAbility, Listener {
         }
     }
 
-    fun checkArmorEvent(event: Cancellable, p: Player?, armor: ItemStack) {
-        runForAbility(p, AbilityRunner { player: Player? ->
+    fun checkArmorEvent(event: Cancellable, p: Player, armor: ItemStack) {
+        runForAbility(p, AbilityRunner { player ->
             if (allowedTypes.contains(armor.type)) return@AbilityRunner
             event.isCancelled = true
         })

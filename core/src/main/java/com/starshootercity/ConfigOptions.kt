@@ -4,7 +4,7 @@ package com.starshootercity
  * Класс для хранения и обновления значений опций из конфигурационного файла.
  * Реализован по паттерну Singleton — гарантируется наличие только одного экземпляра.
  */
-class ConfigOptions private constructor() {
+class ConfigsOptions private constructor() {
     // Поля настроек с не-null значениями
     var defaultOrigin: String = "NONE"
         private set
@@ -109,12 +109,12 @@ class ConfigOptions private constructor() {
      * @return true, если для данного слоя включена опция случайного выбора, иначе false.
      */
     fun isOriginSelectionRandomise(layer: String): Boolean {
-        return OriginsReborn.instance.getConfig().getBoolean("origin-selection.randomise.$layer", false)
+        return OriginsReborn.instance.config.getBoolean("origin-selection.randomize.$layer", false)
     }
 
     companion object {
         // Единственный экземпляр класса
         @JvmStatic
-        val instance: ConfigOptions by lazy { ConfigOptions() }
+        val instance: ConfigsOptions by lazy { ConfigsOptions() }
     }
 }

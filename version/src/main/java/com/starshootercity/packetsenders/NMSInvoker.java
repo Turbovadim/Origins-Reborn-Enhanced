@@ -99,8 +99,6 @@ public abstract class NMSInvoker implements Listener {
 
     public abstract void setWorldBorderOverlay(Player player, boolean show);
 
-    public abstract void setComments(String path, List<String> comments);
-
     public NMSInvoker(FileConfiguration config) {
         this.config = config;
     }

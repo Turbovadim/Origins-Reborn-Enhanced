@@ -89,10 +89,12 @@ class ScareCreepers : VisibleAbility, Listener {
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {
-        if (event.getEntity().type == EntityType.CREEPER) {
-            runForAbility(event.target, AbilityRunner { player: Player? ->
-                val data = event.getEntity().persistentDataContainer
-                    .get<String?, String?>(hitByPlayerKey, PersistentDataType.STRING)
+        if (event.entity.type == EntityType.CREEPER) {
+            val target = event.target
+            if (target == null) return
+            runForAbility(target, AbilityRunner { player: Player? ->
+                val data = event.entity.persistentDataContainer
+                    .get(hitByPlayerKey, PersistentDataType.STRING)
                 if (data == null) {
                     event.isCancelled = true
                     return@AbilityRunner

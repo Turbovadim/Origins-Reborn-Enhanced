@@ -13,7 +13,7 @@ class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
     }
 
     override fun getWorld(): World? {
-        val config = instance.getConfig()
+        val config = instance.config
         val nether = config.getString("worlds.world_nether") ?: "world_nether".also {
             config.set("worlds.world_nether", it)
             instance.saveConfig()

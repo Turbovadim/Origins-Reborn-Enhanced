@@ -242,36 +242,36 @@ object AddonLoader {
 
         val config = instance.config
 
-        if (!config.contains("origin-selection.default-origin.$layer")) {
-            config.set("origin-selection.default-origin.$layer", "NONE")
-            NMSInvoker.setComments(
-                "origin-selection.default-origin",
-                listOf(
-                    "Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin",
-                    "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'",
-                    "Disabled if set to an invalid name such as \"NONE\""
-                )
-            )
-            instance.saveConfig()
-        }
-
-        if (!config.contains("origin-selection.layer-orders.$layer")) {
-            config.set("origin-selection.layer-orders.$layer", priority)
-            NMSInvoker.setComments(
-                "origin-section.layer-orders",
-                listOf("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first.")
-            )
-            instance.saveConfig()
-        }
-
-        if (!config.contains("orb-of-origin.random.$layer")) {
-            config.set("orb-of-origin.random.$layer", false)
-            NMSInvoker.setComments(
-                "orb-of-origin.random",
-                listOf("Randomise origin instead of opening the selector upon using the orb")
-            )
-            instance.saveConfig()
-        }
+//        if (!config.contains("origin-selection.default-origin.$layer")) {
+//            config.set("origin-selection.default-origin.$layer", "NONE")
+//            NMSInvoker.setComments(
+//                "origin-selection.default-origin",
+//                listOf(
+//                    "Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin",
+//                    "Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'",
+//                    "Disabled if set to an invalid name such as \"NONE\""
+//                )
+//            )
+//            instance.saveConfig()
+//        }
+//
+//        if (!config.contains("origin-selection.layer-orders.$layer")) {
+//            config.set("origin-selection.layer-orders.$layer", priority)
+//            NMSInvoker.setComments(
+//                "origin-section.layer-orders",
+//                listOf("Priorities for different origin 'layers' to be selected in, higher priority layers are selected first.")
+//            )
+//            instance.saveConfig()
+//        }
+//
+//        if (!config.contains("orb-of-origin.random.$layer")) {
+//            config.set("orb-of-origin.random.$layer", false)
+//            NMSInvoker.setComments(
+//                "orb-of-origin.random",
+//                listOf("Randomise origin instead of opening the selector upon using the orb")
+//            )
+//            instance.saveConfig()
+//        }
 
         sortLayers()
 

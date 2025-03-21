@@ -1,6 +1,7 @@
 plugins {
     id("java")
     kotlin("jvm") version "2.1.10"
+    kotlin("plugin.serialization") version "2.1.10" apply true
 }
 
 repositories {
@@ -15,6 +16,8 @@ repositories {
 }
 
 dependencies {
+    val exposedVersion = "0.59.0"
+
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
@@ -30,9 +33,6 @@ dependencies {
     compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
     compileOnly(project(":version"))
-    compileOnly(project(":1.17.1"))
-    compileOnly(project(":1.18"))
-    compileOnly(project(":1.18.1"))
     compileOnly(project(":1.18.2"))
     compileOnly(project(":1.19"))
     compileOnly(project(":1.19.1"))
@@ -52,9 +52,17 @@ dependencies {
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Turbovadim:EnderaLib:1.4.2") {
+    implementation("com.github.Turbovadim:EnderaLib:1.4.5") {
         isTransitive = false
     }
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+
+    compileOnly("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    compileOnly("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    compileOnly("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    compileOnly("com.zaxxer:HikariCP:6.2.1")
+
 }
 
 tasks {

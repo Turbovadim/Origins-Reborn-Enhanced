@@ -456,9 +456,4 @@ public class NMSInvokerV1_20_4 extends NMSInvoker {
             player.setWorldBorder(border);
         } else player.setWorldBorder(null);
     }
-
-    @Override
-    public void setComments(String path, List<String> comments) {
-        config.setComments(path, comments);
-    }
 }

@@ -7,6 +7,10 @@ import com.starshootercity.OriginsReborn.Companion.NMSInvoker
 import com.starshootercity.OriginsReborn.Companion.instance
 import com.starshootercity.ShortcutUtils.isBedrockPlayer
 import com.starshootercity.events.PlayerSwapOriginEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -22,6 +26,7 @@ import org.bukkit.event.Listener
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
+import org.endera.enderalib.utils.async.ioDispatcher
 import org.intellij.lang.annotations.Subst
 import java.awt.image.BufferedImage
 import java.io.File
@@ -32,29 +37,39 @@ import kotlin.math.floor
 import kotlin.math.max
 
 class Cooldowns : Listener {
+
     private val registeredCooldowns: MutableMap<NamespacedKey?, CooldownInfo> = HashMap<NamespacedKey?, CooldownInfo>()
     private val cooldownKey = NamespacedKey(instance, "cooldowns")
     private val hasCooldownKey = NamespacedKey(instance, "has_cooldown")
-
-    private var tickCounter = 0
 
     @EventHandler
     fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
         event.getPlayer().persistentDataContainer.remove(cooldownKey)
     }
 
+    // Создаём канал для сигналов тика
+    private val tickChannel = Channel<Unit>(Channel.CONFLATED)
+
+    init {
+        CoroutineScope(ioDispatcher).launch {
+            for (signal in tickChannel) {
+                processTick()
+            }
+        }
+    }
+
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
-        tickCounter++
-        if (tickCounter < 10) {
-            return
-        }
-        tickCounter = 0
+        tickChannel.trySend(Unit)
+    }
 
+    private suspend fun processTick() {
         val now = Instant.now().toEpochMilli()
+        val updates = mutableListOf<Pair<Player, Component>>()
+
         for (player in Bukkit.getOnlinePlayers()) {
             val playerPDC = player.persistentDataContainer
-            val cooldownPDC = playerPDC.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+            val cooldownPDC = playerPDC.getOrDefault(
                 cooldownKey,
                 PersistentDataType.TAG_CONTAINER,
                 playerPDC.adapterContext.newPersistentDataContainer()
@@ -62,19 +77,19 @@ class Cooldowns : Listener {
 
             val cooldownKeys = getActiveCooldownKeys(cooldownPDC, now)
             if (cooldownKeys.isEmpty()) {
-                if (playerPDC.has<Byte, Boolean>(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+                if (playerPDC.has(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
                     playerPDC.remove(hasCooldownKey)
                 }
                 continue
             }
-            playerPDC.set<Byte, Boolean>(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+            playerPDC.set(hasCooldownKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
 
-            if (isBedrockPlayer(player.uniqueId)) {
+            val message: Component = if (isBedrockPlayer(player.uniqueId)) {
                 val sb = StringBuilder()
                 for (key in cooldownKeys) {
                     val info = registeredCooldowns[key]
                     if (info == null || info.icon == null) continue
-                    val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+                    val remaining = cooldownPDC.getOrDefault(
                         key,
                         PersistentDataType.LONG,
                         0L
@@ -85,10 +100,10 @@ class Cooldowns : Listener {
                         sb.append(timeStr).append(" ")
                     }
                 }
-                player.sendActionBar(Component.text(sb.toString()))
+                Component.text(sb.toString())
             } else {
                 var heightOffset = computeHeightOffset(player)
-                var message: Component = Component.empty()
+                var msg: Component = Component.empty()
                 for (key in cooldownKeys) {
                     val info = registeredCooldowns[key]
                     if (info == null || info.icon == null) continue
@@ -101,19 +116,27 @@ class Cooldowns : Listener {
                     if (!info.isReversed) {
                         ratio = 1 - ratio
                     }
-                    message = message
+                    msg = msg
                         .append(Component.text("\uF004"))
                         .append(formCooldownBar(ratio, info, heightOffset))
                     heightOffset++
                 }
-                val prefix = NMSInvoker.applyFont(
+                NMSInvoker.applyFont(
                     Component.text("\uF003"),
                     Key.key("minecraft:cooldown_bar/height_0")
-                )
-                player.sendActionBar(prefix.append(message))
+                ).append(msg)
+            }
+            updates.add(Pair(player, message))
+        }
+
+        withContext(OriginsReborn.bukkitDispatcher) {
+            for ((player, message) in updates) {
+                player.sendActionBar(message)
             }
         }
     }
+
+
 
     /**
      * Возвращает список активных кулдаунов для игрока.
@@ -176,7 +199,7 @@ class Cooldowns : Listener {
     }
 
 
-    fun formCooldownBar(percentage: Float, info: CooldownInfo, height: Int): Component {
+    suspend fun formCooldownBar(percentage: Float, info: CooldownInfo, height: Int): Component {
         return iconDataMap[info.icon]!!.assemble(percentage, height)
     }
 
@@ -206,10 +229,6 @@ class Cooldowns : Listener {
             !registeredCooldowns.containsKey(key) || (!hasCooldown(player, key!!) && !registeredCooldowns[key]!!.isStatic)
         }
         return keys
-
-
-
-
     }
 
     fun resetCooldowns(player: Player) {
@@ -242,7 +261,7 @@ class Cooldowns : Listener {
 
     @JvmRecord
     data class CooldownIconData(val barPieces: MutableList<Component?>?, val icon: Component?) {
-        fun assemble(completion: Float, height: Int): Component {
+        suspend fun assemble(completion: Float, height: Int): Component {
             val num = floor((barPieces!!.size * completion).toDouble())
             var result = icon!!.append(Component.text("\uF002"))
             for (i in barPieces.indices) {

@@ -455,11 +455,6 @@ public class NMSInvokerV1_21_4 extends NMSInvoker {
         entity.damage(amount, DamageSource.builder(DamageType.DROWN).build());
     }
 
-    @Override
-    public void setComments(String path, List<String> comments) {
-        config.setComments(path, comments);
-    }
-
     @EventHandler
     public void onBlockDamageAbort(BlockDamageAbortEvent event) {
         new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();

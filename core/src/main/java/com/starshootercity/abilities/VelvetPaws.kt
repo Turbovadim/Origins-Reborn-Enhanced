@@ -29,7 +29,7 @@ class VelvetPaws : VisibleAbility, Listener {
     @EventHandler
     fun onGenericGameEvent(event: GenericGameEvent) {
         if (event.event == GameEvent.STEP) {
-            runForAbility(event.entity, AbilityRunner { player: Player? -> event.isCancelled = true })
+            runForAbility(event.entity!!, AbilityRunner { player: Player? -> event.isCancelled = true })
         }
     }
 }

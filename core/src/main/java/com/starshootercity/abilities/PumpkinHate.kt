@@ -8,6 +8,9 @@ import com.starshootercity.OriginsReborn.Companion.NMSInvoker
 import com.starshootercity.OriginsReborn.Companion.instance
 import com.starshootercity.abilities.Ability.AbilityRunner
 import com.starshootercity.packetsenders.NMSInvoker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -15,38 +18,34 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
-import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.ioDispatcher
 
 class PumpkinHate : VisibleAbility, Listener {
-
-    private val ignoringPlayers = mutableMapOf<Player, MutableSet<Player>>()
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
         if (event.tickNumber % 10 != 0) return
 
-        val onlinePlayers = Bukkit.getOnlinePlayers()
-        val pumpkinWearers = onlinePlayers.filter { it.inventory.helmet?.type == Material.CARVED_PUMPKIN }.toSet()
-        val nonPumpkinWearers = onlinePlayers.filter { it !in pumpkinWearers }
+        CoroutineScope(ioDispatcher).launch {
+            val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+            val pumpkinWearers = onlinePlayers.filter { it.inventory.helmet?.type == Material.CARVED_PUMPKIN }.toSet()
+            val nonPumpkinWearers = onlinePlayers.filter { it !in pumpkinWearers }
 
-        onlinePlayers.forEach { pumpkinHater ->
-            runForAbility(pumpkinHater, AbilityRunner { hater ->
-                val ignoredSet = ignoringPlayers.getOrPut(hater) { mutableSetOf() }
-                pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
-                    ignoredSet.add(pumpkinWearer)
-                    nmsInvoker.sendEntityData(hater, pumpkinWearer, getData(pumpkinWearer))
-                    hater.hidePlayer(origins, pumpkinWearer)
-                    hater.sendEquipmentChange(pumpkinWearer, EquipmentSlot.HEAD, AIR_ITEMSTACK)
+            onlinePlayers.forEach { pumpkinHater ->
+                runForAbilityAsync(pumpkinHater) { hater ->
+                    withContext(OriginsReborn.bukkitDispatcher) {
+                        pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
+                            hater.hidePlayer(origins, pumpkinWearer)
+                        }
+                        nonPumpkinWearers.filter { it != hater }.forEach { other ->
+                            hater.showPlayer(origins, other)
+                        }
+                    }
                 }
-                nonPumpkinWearers.filter { it != hater }.forEach { other ->
-                    ignoredSet.remove(other)
-                    hater.showPlayer(origins, other)
-                    AbilityRegister.updateEntity(hater, other)
-                }
-            })
+            }
         }
     }
 

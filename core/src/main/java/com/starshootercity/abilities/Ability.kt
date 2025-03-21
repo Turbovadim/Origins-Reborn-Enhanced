@@ -1,88 +1,105 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
-import com.starshootercity.*;
-import com.starshootercity.util.WorldGuardHook;
-import net.kyori.adventure.key.Key;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.sk89q.worldedit.bukkit.BukkitAdapter
+import com.sk89q.worldguard.WorldGuard
+import com.starshootercity.AddonLoader
+import com.starshootercity.OriginSwapper
+import com.starshootercity.OriginsAddon
+import com.starshootercity.OriginsReborn
+import com.starshootercity.abilities.AbilityRegister.abilityMap
+import com.starshootercity.util.WorldGuardHook
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.Entity
+import org.bukkit.entity.Player
+import org.endera.enderalib.utils.async.ioDispatcher
 
-import java.util.List;
+interface Ability {
 
-import static com.starshootercity.abilities.AbilityRegister.abilityMap;
+    fun getKey(): Key
 
-public interface Ability {
-
-    @NotNull Key getKey();
-
-    default void runForAbility(Entity entity, @NotNull AbilityRunner runner) {
-        runForAbility(entity, runner, null);
+    suspend fun runForAbilityAsync(entity: Entity, runner: AsyncAbilityRunner) {
+        runForAbilityAsync(entity, runner, null)
     }
 
-    default void runForAbility(Entity entity, @Nullable AbilityRunner has, @Nullable AbilityRunner other) {
-        if (entity instanceof Player player) {
-            if (hasAbility(player)) {
-                if (has != null) has.run(player);
-            } else if (other != null) {
-                other.run(player);
+    suspend fun runForAbilityAsync(entity: Entity, has: AsyncAbilityRunner?, other: AsyncAbilityRunner?) {
+        if (entity is Player) {
+            if (hasAbilityAsync(entity)) {
+                has?.run(entity)
+            } else {
+                other?.run(entity)
             }
         }
     }
 
-    default boolean hasAbility(Player player) {
-        // Проверка переопределения способностей через аддоны
-        for (OriginsAddon.KeyStateGetter keyStateGetter : AddonLoader.abilityOverrideChecks) {
-            assert keyStateGetter != null;
-            OriginsAddon.State state = keyStateGetter.get(player, getKey());
-            if (state == OriginsAddon.State.DENY) return false;
-            else if (state == OriginsAddon.State.ALLOW) return true;
+    fun runForAbility(entity: Entity, runner: AbilityRunner) {
+        runForAbility(entity, runner, null)
+    }
+
+    fun runForAbility(entity: Entity, has: AbilityRunner?, other: AbilityRunner?) {
+        if (entity is Player) {
+            if (hasAbility(entity)) {
+                has?.run(entity)
+            } else {
+                other?.run(entity)
+            }
+        }
+    }
+
+    suspend fun hasAbilityAsync(player: Player): Boolean = withContext(ioDispatcher) {
+        for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
+            val state = keyStateGetter?.get(player, getKey())
+            when (state) {
+                OriginsAddon.State.DENY -> return@withContext false
+                OriginsAddon.State.ALLOW -> return@withContext true
+                else -> return@withContext false
+            }
         }
 
-        if (OriginsReborn.Companion.isWorldGuardHookInitialized()) {
-            if (WorldGuardHook.isAbilityDisabled(player.getLocation(), this)) return false;
+        if (OriginsReborn.Companion.isWorldGuardHookInitialized) {
+            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return@withContext false
 
-            ConfigurationSection section = OriginsReborn.getInstance().getConfig()
-                    .getConfigurationSection("prevent-abilities-in");
+            val section = OriginsReborn.instance.config.getConfigurationSection("prevent-abilities-in")
             if (section != null) {
-                Location loc = BukkitAdapter.adapt(player.getLocation());
-                RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-                RegionQuery query = container.createQuery();
-                ApplicableRegionSet regions = query.getApplicableRegions(loc);
-                String keyStr = getKey().toString();
-                for (ProtectedRegion region : regions) {
-                    for (String sectionKey : section.getKeys(false)) {
-                        List<String> abilities = section.getStringList(sectionKey);
-                        if (!abilities.contains(keyStr) && !abilities.contains("all")) continue;
-                        if (region.getId().equalsIgnoreCase(sectionKey)) {
-                            return false;
+                val loc = BukkitAdapter.adapt(player.location)
+                val container = WorldGuard.getInstance().platform.regionContainer
+                val query = container.createQuery()
+                val regions = query.getApplicableRegions(loc)
+                val keyStr = getKey().toString()
+                for (region in regions) {
+                    for (sectionKey in section.getKeys(false)) {
+                        val abilities = section.getStringList(sectionKey)
+                        if (!abilities.contains(keyStr) && !abilities.contains("all")) continue
+                        if (region.id.equals(sectionKey, ignoreCase = true)) {
+                            return@withContext false
                         }
                     }
                 }
             }
         }
 
-        // Проверка по списку Origin’ов игрока
-        List<Origin> origins = OriginSwapper.getOrigins(player);
-        boolean hasAbility = origins.stream().anyMatch(origin -> origin.hasAbility(getKey()));
+        val origins = OriginSwapper.getOrigins(player)
+        var hasAbility = origins.any { it.hasAbility(getKey()) }
 
-        if (abilityMap.get(getKey()) instanceof DependantAbility dependantAbility) {
-            boolean dependencyEnabled = dependantAbility.getDependency().isEnabled(player);
-            boolean expected = (dependantAbility.getDependencyType() == DependantAbility.DependencyType.REGULAR);
-            return hasAbility && (dependencyEnabled == expected);
+        if (abilityMap[getKey()] is DependantAbility) {
+            val dependantAbility = abilityMap[getKey()] as DependantAbility
+            val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
+            val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
+            hasAbility = hasAbility && (dependencyEnabled == expected)
         }
-        return hasAbility;
+        return@withContext hasAbility
     }
 
-    interface AbilityRunner {
-        void run(Player player);
+    fun hasAbility(player: Player): Boolean = runBlocking {
+        hasAbilityAsync(player)
+    }
+
+    fun interface AbilityRunner {
+        fun run(player: Player)
+    }
+
+    fun interface AsyncAbilityRunner {
+        suspend fun run(player: Player)
     }
 }

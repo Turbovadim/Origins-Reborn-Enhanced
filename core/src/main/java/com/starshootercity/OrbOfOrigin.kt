@@ -26,10 +26,8 @@ class OrbOfOrigin : Listener {
         if (event.currentItem == null || event.currentItem!!.itemMeta == null) return
         val meta = event.currentItem!!.itemMeta
         if (meta.persistentDataContainer
-                .has<Byte?, Boolean?>(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.persistentDataContainer
-                .has<Byte?, Boolean?>(
-                    updatedKey, OriginSwapper.BooleanPDT.BOOLEAN
-                )
+                .has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) && !meta.persistentDataContainer
+                .has(updatedKey, OriginSwapper.BooleanPDT.BOOLEAN)
         ) {
             event.currentItem!!.setItemMeta(orb.itemMeta)
         }
@@ -79,7 +77,6 @@ class OrbOfOrigin : Listener {
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {
-        // Если блок, по которому кликнули, существует и интерактивный – выходим.
         event.clickedBlock?.takeIf { it.type.isInteractable }?.let { return }
 
         if (!event.action.isRightClick) return
@@ -88,15 +85,12 @@ class OrbOfOrigin : Listener {
         val item = event.item ?: return
         val meta = item.itemMeta ?: return
 
-        // Если предмет не является Орбом Происхождения – выходим.
         if (!meta.persistentDataContainer.has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN)) return
 
-        // Проверяем кулдаун
         OriginSwapper.orbCooldown[player]?.let { lastUse ->
             if (System.currentTimeMillis() - lastUse < 500) return
         }
 
-        // Определяем, в какой руке находится орб (если в основной руке тоже орб, считаем, что он там)
         val hand = if (player.inventory.itemInMainHand.itemMeta
                 ?.persistentDataContainer
                 ?.has(orbKey, OriginSwapper.BooleanPDT.BOOLEAN) == true
@@ -107,7 +101,6 @@ class OrbOfOrigin : Listener {
             else -> player.swingOffHand()
         }
 
-        // Если в настройках включено потребление орба, уменьшаем количество предметов
         if (instance.config.getBoolean("orb-of-origin.consume")) {
             item.amount--
             player.inventory.setItemInMainHand(item)
@@ -124,7 +117,6 @@ class OrbOfOrigin : Listener {
             )
             if (opened) continue
 
-            // Если для данного слоя настроен рандомный выбор, открываем окно с рандомной ориентацией
             if (instance.config.getBoolean("orb-of-origin.random.$layer")) {
                 OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
                 val origin = OriginSwapper.getOrigin(player, layer)

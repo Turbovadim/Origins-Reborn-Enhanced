@@ -19,7 +19,7 @@ class DamageFromSnowballs : Ability, Listener {
         if (projectile.type != EntityType.SNOWBALL) return
 
         val direction = projectile.location.direction
-        runForAbility(event.hitEntity, AbilityRunner { player ->
+        runForAbility(event.hitEntity!!, AbilityRunner { player ->
             NMSInvoker.dealFreezeDamage(player, 3)
             NMSInvoker.knockback(player, 0.5, -direction.x, -direction.z)
         })

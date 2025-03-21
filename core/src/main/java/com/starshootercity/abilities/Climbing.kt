@@ -6,8 +6,11 @@ import com.starshootercity.OriginSwapper
 import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
 import com.starshootercity.OriginSwapper.LineData.LineComponent
 import com.starshootercity.OriginsReborn.Companion.NMSInvoker
+import com.starshootercity.OriginsReborn.Companion.bukkitDispatcher
 import com.starshootercity.OriginsReborn.Companion.instance
-import com.starshootercity.abilities.Ability.AbilityRunner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.util.TriState
 import org.bukkit.Bukkit
@@ -18,6 +21,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.persistence.PersistentDataType
+import org.endera.enderalib.utils.async.ioDispatcher
 import java.lang.Boolean
 import java.time.Instant
 import kotlin.Float
@@ -30,41 +34,43 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
 
     @EventHandler
     fun onServerTickEnd(ignored: ServerTickEndEvent?) {
-        for (p in Bukkit.getOnlinePlayers()) {
-            runForAbility(p, AbilityRunner { player ->
-                player ?: return@AbilityRunner
+        CoroutineScope(ioDispatcher).launch {
+            for (p in Bukkit.getOnlinePlayers().toList()) {
+                runForAbilityAsync(p) { player ->
+                    val baseBlock = player.location.block
+                    var hasSolid = false
+                    var hasSolidAbove = false
 
-                val baseBlock = player.location.block
-                var hasSolid = false
-                var hasSolidAbove = false
+                    withContext(bukkitDispatcher) {
+                        for (face in cardinals) {
+                            hasSolid = baseBlock.getRelative(face).isSolid
+                            hasSolidAbove = baseBlock.getRelative(BlockFace.UP).getRelative(face).isSolid
 
-                for (face in cardinals) {
-                    hasSolid = baseBlock.getRelative(face).isSolid
-                    hasSolidAbove = baseBlock.getRelative(BlockFace.UP).getRelative(face).isSolid
+                            if (hasSolid) break
+                        }
+                        setCanFly(player, hasSolid)
+                        if (hasSolid) {
+                            NMSInvoker.setFlyingFallDamage(player, TriState.TRUE)
+                        }
 
-                    if (hasSolid) break
-                }
 
-                setCanFly(player, hasSolid)
-                if (hasSolid) {
-                    NMSInvoker.setFlyingFallDamage(player, TriState.TRUE)
-                }
-
-                if (player.allowFlight && hasSolidAbove) {
-                    val stoppedClimbing = player.persistentDataContainer.get(
-                        stoppedClimbingKey, OriginSwapper.BooleanPDT.BOOLEAN
-                    )
-                    if (Boolean.TRUE != stoppedClimbing) {
-                        if (!player.isOnGround) player.isFlying = true
-                    } else {
-                        if (player.isOnGround) {
-                            player.persistentDataContainer.set(
-                                stoppedClimbingKey, OriginSwapper.BooleanPDT.BOOLEAN, false
+                        if (player.allowFlight && hasSolidAbove) {
+                            val stoppedClimbing = player.persistentDataContainer.get(
+                                stoppedClimbingKey, OriginSwapper.BooleanPDT.BOOLEAN
                             )
+                            if (Boolean.TRUE != stoppedClimbing) {
+                                if (!player.isOnGround) player.isFlying = true
+                            } else {
+                                if (player.isOnGround) {
+                                    player.persistentDataContainer.set(
+                                        stoppedClimbingKey, OriginSwapper.BooleanPDT.BOOLEAN, false
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            })
+            }
         }
     }
 

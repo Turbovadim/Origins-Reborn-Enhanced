@@ -5,7 +5,6 @@ import com.starshootercity.AddonLoader.allowOriginSwapCommand
 import com.starshootercity.AddonLoader.getOrigin
 import com.starshootercity.AddonLoader.getOrigins
 import com.starshootercity.AddonLoader.reloadAddons
-import com.starshootercity.ConfigOptions
 import com.starshootercity.OrbOfOrigin
 import com.starshootercity.OriginSwapper.Companion.getOrigin
 import com.starshootercity.OriginSwapper.Companion.openOriginSwapper
@@ -14,10 +13,12 @@ import com.starshootercity.OriginsReborn
 import com.starshootercity.OriginsReborn.Companion.getCooldowns
 import com.starshootercity.PackApplier.Companion.sendPacks
 import com.starshootercity.WidthGetter.reload
+import com.starshootercity.config.ConfigRegistry
 import com.starshootercity.cooldowns.Cooldowns.CooldownInfo
 import com.starshootercity.events.PlayerSwapOriginEvent
 import com.starshootercity.util.CompressionUtils
 import com.starshootercity.util.CompressionUtils.decompressFiles
+import com.starshootercity.util.testBenchmarks
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -33,12 +34,19 @@ import java.io.IOException
 import java.util.*
 
 class OriginCommand : CommandExecutor, TabCompleter {
+
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         if (args.isEmpty()) {
             sender.sendMessage(Component.text("Invalid command. Usage: /origin <command>").color(NamedTextColor.RED))
             return true
         }
         when (args[0].lowercase(Locale.getDefault())) {
+            "bench" -> {
+                if (sender !is Player) return true
+                testBenchmarks(sender, sender.location, 48.0)
+                sender.sendMessage(Component.text("finished"))
+                return true
+            }
             "swap" -> {
                 if (sender is Player) {
                     if (getCooldowns().hasCooldown(sender, key)) {
@@ -95,7 +103,9 @@ class OriginCommand : CommandExecutor, TabCompleter {
                 reloadAddons()
                 reload()
                 OriginsReborn.instance.reloadConfig()
-                ConfigOptions.instance.update()
+                OriginsReborn.multiConfigurationManager.loadAllConfigs().forEach { (clazz, config) ->
+                    ConfigRegistry.register(clazz, config)
+                }
                 return true
             }
 

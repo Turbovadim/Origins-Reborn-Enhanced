@@ -18,7 +18,6 @@ dependencies {
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
-    implementation(project(":1.18.1", "reobf"))
     implementation(project(":1.18.2", "reobf"))
     implementation(project(":1.19", "reobf"))
     implementation(project(":1.19.1", "reobf"))
@@ -61,7 +60,7 @@ tasks {
         dependencies {
             exclude(dependency("com.github.Turbovadim:EnderaLib"))
             exclude {
-                it.moduleGroup == "org.jetbrains.kotlin"
+                it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
             }
         }
     }

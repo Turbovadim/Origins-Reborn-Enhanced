@@ -59,7 +59,6 @@ object WidthGetter {
     }
 
     fun getWidth(c: Char): Int {
-        // Если символ не найден в конфигурации, возвращаем значение по умолчанию (например, 0).
         return charWidthMap[c] ?: 0
     }
 }

@@ -2,14 +2,19 @@ package com.starshootercity.abilities
 
 import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
 import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.OriginsReborn
 import com.starshootercity.ShortcutUtils.infiniteDuration
-import com.starshootercity.abilities.Ability.AbilityRunner
+import com.starshootercity.abilities.Ability.AsyncAbilityRunner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.ioDispatcher
 
 class SlowFalling : VisibleAbility, Listener {
 
@@ -23,13 +28,19 @@ class SlowFalling : VisibleAbility, Listener {
 
     @EventHandler
     fun onPlayerMove(event: PlayerMoveEvent) {
-        runForAbility(event.player, AbilityRunner { player ->
-            if (player.isSneaking) {
-                player.removePotionEffect(PotionEffectType.SLOW_FALLING)
-            } else {
-                player.addPotionEffect(potionEffect)
-            }
-        })
+        CoroutineScope(ioDispatcher).launch {
+            runForAbilityAsync(event.player, AsyncAbilityRunner { player ->
+                if (player.isSneaking) {
+                    withContext(OriginsReborn.bukkitDispatcher) {
+                        player.removePotionEffect(PotionEffectType.SLOW_FALLING)
+                    }
+                } else {
+                    withContext(OriginsReborn.bukkitDispatcher) {
+                        player.addPotionEffect(potionEffect)
+                    }
+                }
+            })
+        }
     }
 
     override fun getKey(): Key {
