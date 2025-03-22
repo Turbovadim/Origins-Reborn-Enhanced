@@ -1108,6 +1108,7 @@ class OriginSwapper : Listener {
 
             getCooldowns().resetCooldowns(player)
             val lowerName = newOrigin.getName().lowercase(Locale.getDefault())
+
             originFileConfiguration.set(key, lowerName)
             saveOrigins()
 

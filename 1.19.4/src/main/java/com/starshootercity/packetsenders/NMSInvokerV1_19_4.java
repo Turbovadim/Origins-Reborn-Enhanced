@@ -181,10 +181,6 @@ public class NMSInvokerV1_19_4 extends NMSInvoker {
         return null;
     }
 
-    public NMSInvokerV1_19_4(FileConfiguration config) {
-        super(config);
-    }
-
     @Override
     public @NotNull Enchantment getRespirationEnchantment() {
         return Enchantment.OXYGEN;

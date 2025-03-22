@@ -185,10 +185,6 @@ public class NMSInvokerV1_19_1 extends NMSInvoker {
         return null;
     }
 
-    public NMSInvokerV1_19_1(FileConfiguration config) {
-        super(config);
-    }
-
     @Override
     public Component applyFont(Component component, Key font) {
         return component.font(font);

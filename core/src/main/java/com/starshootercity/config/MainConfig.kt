@@ -11,11 +11,11 @@ data class MainConfig(
 
     @Spacer(1)
     @Comment("""
-Runs commands when the player switches to an origin
-Origins should be formatted as they are in the file names, but without the extension, e.g. "human"
-%player% is replaced with the player's username and %uuid% is replaced with their UUID
-Use "default" for commands that should be run regardless of origin
-""")
+        Runs commands when the player switches to an origin
+        Origins should be formatted as they are in the file names, but without the extension, e.g. "human"
+        %player% is replaced with the player's username and %uuid% is replaced with their UUID
+        Use "default" for commands that should be run regardless of origin
+    """)
     val commandsOnOrigin: Map<String, List<String>>,
 
     @Spacer(1)
@@ -24,9 +24,9 @@ Use "default" for commands that should be run regardless of origin
 
     @Spacer(1)
     @Comment("""
-Disables every cooldown
-To modify specific cooldowns, edit the cooldown-config.yml file
-""")
+        Disables every cooldown
+        To modify specific cooldowns, edit the cooldown-config.yml file
+    """)
     val cooldowns: Cooldowns,
 
     @Spacer(1)
@@ -47,10 +47,10 @@ To modify specific cooldowns, edit the cooldown-config.yml file
 
     @Spacer(1)
     @Comment("""
-Whether to enable the resource pack
-If this is set to false you should send the pack to players either in server.properties or in another plugin
-You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
-""")
+        Whether to enable the resource pack
+        If this is set to false you should send the pack to players either in server.properties or in another plugin
+        You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
+    """)
     val resourcePack: ResourcePack,
 
     @Spacer(1)
@@ -59,11 +59,11 @@ You can find the packs for each version on the GitHub at https://github.com/come
 
     @Spacer(1)
     @Comment("""
-Rule for reusing origins
-"NONE" allows origins to be reused
-"PERPLAYER" means individual players can only use an origin once
-"ALL" means no players can use an origin again after one has selected it
-""")
+        Rule for reusing origins
+        "NONE" allows origins to be reused
+        "PERPLAYER" means individual players can only use an origin once
+        "ALL" means no players can use an origin again after one has selected it
+    """)
     val restrictions: Restrictions,
 
     @Spacer(1)
@@ -103,15 +103,15 @@ data class Worlds(
 @Serializable
 data class Cooldowns(
     @Comment("""
-Disables every cooldown
-To modify specific cooldowns, edit the cooldown-config.yml file
-""")
+        Disables every cooldown
+        To modify specific cooldowns, edit the cooldown-config.yml file
+    """)
     val disableAllCooldowns: Boolean,
 
     @Comment("""
-Use the actionbar to show cooldown icons
-You may want to disable this if using another plugin that requires the actionbar
-""")
+        Use the actionbar to show cooldown icons
+        You may want to disable this if using another plugin that requires the actionbar
+    """)
     val showCooldownIcons: Boolean
 )
 
@@ -202,17 +202,6 @@ data class OriginSelection(
 )
 
 @Serializable
-data class DefaultOrigin(
-    @Comment("Default origin value")
-    val origin: String
-)
-
-@Serializable
-data class Randomize(
-    val origin: Map<String, Boolean>
-)
-
-@Serializable
 data class RandomOption(
     @Comment("Enable the random option choice - does nothing if randomise is enabled")
     val enabled: Boolean,
@@ -252,18 +241,12 @@ data class OrbOfOrigin(
 )
 
 @Serializable
-data class OrbRandom(
-    @Comment("Randomise origin instead of opening the selector upon using the orb")
-    val origin: Boolean
-)
-
-@Serializable
 data class ResourcePack(
     @Comment("""
-Whether to enable the resource pack
-If this is set to false you should send the pack to players either in server.properties or in another plugin
-You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
-""")
+        Whether to enable the resource pack
+        If this is set to false you should send the pack to players either in server.properties or in another plugin
+        You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
+    """)
     val enabled: Boolean
 )
 
@@ -276,11 +259,11 @@ data class Display(
 @Serializable
 data class Restrictions(
     @Comment("""
-Rule for reusing origins
-"NONE" allows origins to be reused
-"PERPLAYER" means individual players can only use an origin once
-"ALL" means no players can use an origin again after one has selected it
-""")
+        Rule for reusing origins
+        "NONE" allows origins to be reused
+        "PERPLAYER" means individual players can only use an origin once
+        "ALL" means no players can use an origin again after one has selected it
+    """)
     val reusingOrigins: String,
 
     @Comment("Prevent players from having the same origins as other players\nThis is locked on if reusing-origins is set to ALL")

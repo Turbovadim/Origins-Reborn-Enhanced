@@ -49,24 +49,23 @@ class OriginsReborn : OriginsAddon() {
         private fun initializeNMSInvoker(instance: OriginsReborn) {
             val version: String? =
                 Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
-            val config = Companion.instance.config
             NMSInvoker = when (version) {
-                "1.18.2" -> NMSInvokerV1_18_2(config)
-                "1.19" -> NMSInvokerV1_19(config)
-                "1.19.1" -> NMSInvokerV1_19_1(config)
-                "1.19.2" -> NMSInvokerV1_19_2(config)
-                "1.19.3" -> NMSInvokerV1_19_3(config)
-                "1.19.4" -> NMSInvokerV1_19_4(config)
-                "1.20" -> NMSInvokerV1_20(config)
-                "1.20.1" -> NMSInvokerV1_20_1(config)
-                "1.20.2" -> NMSInvokerV1_20_2(config)
-                "1.20.3" -> NMSInvokerV1_20_3(config)
-                "1.20.4" -> NMSInvokerV1_20_4(config)
-                "1.20.5", "1.20.6" -> NMSInvokerV1_20_6(config)
-                "1.21" -> NMSInvokerV1_21(config)
-                "1.21.1" -> NMSInvokerV1_21_1(config)
-                "1.21.2", "1.21.3" -> NMSInvokerV1_21_3(config)
-                "1.21.4" -> NMSInvokerV1_21_4(config)
+                "1.18.2" -> NMSInvokerV1_18_2()
+                "1.19" -> NMSInvokerV1_19()
+                "1.19.1" -> NMSInvokerV1_19_1()
+                "1.19.2" -> NMSInvokerV1_19_2()
+                "1.19.3" -> NMSInvokerV1_19_3()
+                "1.19.4" -> NMSInvokerV1_19_4()
+                "1.20" -> NMSInvokerV1_20()
+                "1.20.1" -> NMSInvokerV1_20_1()
+                "1.20.2" -> NMSInvokerV1_20_2()
+                "1.20.3" -> NMSInvokerV1_20_3()
+                "1.20.4" -> NMSInvokerV1_20_4()
+                "1.20.5", "1.20.6" -> NMSInvokerV1_20_6()
+                "1.21" -> NMSInvokerV1_21()
+                "1.21.1" -> NMSInvokerV1_21_1()
+                "1.21.2", "1.21.3" -> NMSInvokerV1_21_3()
+                "1.21.4" -> NMSInvokerV1_21_4()
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
@@ -86,7 +85,7 @@ class OriginsReborn : OriginsAddon() {
                 economy = economyProvider.getProvider()
             }
             return (economy != null)
-        } catch (e: NoClassDefFoundError) {
+        } catch (_: NoClassDefFoundError) {
             return false
         }
     }
@@ -137,14 +136,14 @@ class OriginsReborn : OriginsAddon() {
         initializeNMSInvoker(this)
         AbilityRegister.setupAMAF()
 
-        if (config.getBoolean("swap-command.vault.enabled")) {
+        if (mainConfig.swapCommand.vault.enabled) {
             this.isVaultEnabled = setupEconomy()
             if (!this.isVaultEnabled) {
                 getLogger().warning("Vault is missing, origin swaps will not cost currency")
             }
         } else this.isVaultEnabled = false
         cooldowns = Cooldowns()
-        if (!config.getBoolean("cooldowns.disable-all-cooldowns") && config.getBoolean("cooldowns.show-cooldown-icons")) {
+        if (!mainConfig.cooldowns.disableAllCooldowns && mainConfig.cooldowns.showCooldownIcons) {
             Bukkit.getPluginManager().registerEvents(cooldowns!!, this)
         }
 

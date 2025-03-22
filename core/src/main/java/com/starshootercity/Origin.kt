@@ -18,7 +18,7 @@ class Origin(
     private val name: String,
     val icon: ItemStack,
     val position: Int,
-    @get:org.jetbrains.annotations.Range(from = 0, to = 3) impactParam: Int,
+    @get:Range(from = 0, to = 3) impactParam: Int,
     val displayName: String,
     private val abilities: List<Key>,
     private val description: String,
@@ -50,8 +50,6 @@ class Origin(
         2 -> '\uE004'
         else -> '\uE005'
     }
-
-//    fun getCost(): Int? = cost
 
     fun isUnchoosable(player: Player): Boolean {
         if (unchoosable) return true

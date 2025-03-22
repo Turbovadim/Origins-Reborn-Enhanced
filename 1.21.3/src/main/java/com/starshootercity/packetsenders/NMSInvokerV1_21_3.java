@@ -49,9 +49,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
 public class NMSInvokerV1_21_3 extends NMSInvoker {
-    public NMSInvokerV1_21_3(FileConfiguration config) {
-        super(config);
-    }
 
     @Override
     public Component applyFont(Component component, Key font) {

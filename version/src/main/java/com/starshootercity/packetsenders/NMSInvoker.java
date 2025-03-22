@@ -99,12 +99,6 @@ public abstract class NMSInvoker implements Listener {
 
     public abstract void setWorldBorderOverlay(Player player, boolean show);
 
-    public NMSInvoker(FileConfiguration config) {
-        this.config = config;
-    }
-
-    protected final FileConfiguration config;
-
     public abstract Component applyFont(Component component, Key font);
 
     public @Nullable Material getOminousBottle() {

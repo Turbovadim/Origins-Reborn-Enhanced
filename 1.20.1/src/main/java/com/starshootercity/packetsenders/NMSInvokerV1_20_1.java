@@ -180,10 +180,6 @@ public class NMSInvokerV1_20_1 extends NMSInvoker {
         return null;
     }
 
-    public NMSInvokerV1_20_1(FileConfiguration config) {
-        super(config);
-    }
-
     @Override
     public void dealDrowningDamage(LivingEntity entity, int amount) {
         net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();

@@ -185,10 +185,6 @@ public class NMSInvokerV1_18_2 extends NMSInvoker {
         return null;
     }
 
-    public NMSInvokerV1_18_2(FileConfiguration config) {
-        super(config);
-    }
-
     @EventHandler
     public void onBlockDamageAbort(BlockDamageAbortEvent event) {
         new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();

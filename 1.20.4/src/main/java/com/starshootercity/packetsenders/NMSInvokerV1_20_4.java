@@ -186,10 +186,6 @@ public class NMSInvokerV1_20_4 extends NMSInvoker {
         return null;
     }
 
-    public NMSInvokerV1_20_4(FileConfiguration config) {
-        super(config);
-    }
-
     @Override
     @SuppressWarnings("UnstableApiUsage")
     public void dealDrowningDamage(LivingEntity entity, int amount) {

@@ -179,9 +179,6 @@ public class NMSInvokerV1_20_3 extends NMSInvoker {
     public @Nullable Attribute getTemptRangeAttribute() {
         return null;
     }
-    public NMSInvokerV1_20_3(FileConfiguration config) {
-        super(config);
-    }
 
     @Override
     public Component applyFont(Component component, Key font) {

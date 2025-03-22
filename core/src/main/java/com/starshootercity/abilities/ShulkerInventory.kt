@@ -63,7 +63,7 @@ class ShulkerInventory : VisibleAbility, Listener {
     @EventHandler
     fun onInventoryClose(event: InventoryCloseEvent) {
         event.player.persistentDataContainer
-            .set<Byte, Boolean>(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, false)
+            .set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, false)
     }
 
     @EventHandler
