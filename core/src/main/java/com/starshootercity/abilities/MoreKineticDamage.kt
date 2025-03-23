@@ -10,12 +10,12 @@ class MoreKineticDamage : VisibleAbility, Listener {
         return Key.key("origins:more_kinetic_damage")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You take more damage from falling and flying into blocks.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Brittle Bones",
         LineComponent.LineType.TITLE
     )

@@ -27,12 +27,12 @@ class ScareCreepers : VisibleAbility, Listener {
         return Key.key("origins:scare_creepers")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Creepers are scared of you and will only explode if you attack them first.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Catlike Appearance", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Catlike Appearance", LineComponent.LineType.TITLE)
 
     @EventHandler
     fun onEntitySpawn(event: EntitySpawnEvent) {
@@ -57,7 +57,7 @@ class ScareCreepers : VisibleAbility, Listener {
             Predicate { player -> hasAbility(player) },
             Predicate { livingEntity ->
                 creeper.persistentDataContainer.get(hitByPlayerKey, PersistentDataType.STRING)
-                    ?.let { stored -> stored == livingEntity?.uniqueId?.toString() } == true
+                    ?.let { stored -> stored == livingEntity.uniqueId.toString() } == true
             }
         )
         Bukkit.getMobGoals().addGoal(creeper, 0, afraidGoal)

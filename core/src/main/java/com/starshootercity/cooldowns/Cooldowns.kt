@@ -166,7 +166,7 @@ class Cooldowns : Listener {
         var offset = 0
         val vehicle = player.vehicle
         if (vehicle is LivingEntity) {
-            val instance = vehicle.getAttribute(NMSInvoker.getMaxHealthAttribute())
+            val instance = vehicle.getAttribute(NMSInvoker.maxHealthAttribute)
             if (instance != null) {
                 offset += (floor((instance.value - 1) / 10) - 1).toInt()
             }

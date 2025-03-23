@@ -143,7 +143,7 @@ class WaterBreathing : Listener, VisibleAbility {
     fun decreaseAir(player: Player) {
         val respirationLevel = player.inventory.helmet
             ?.itemMeta
-            ?.getEnchantLevel(NMSInvoker.getRespirationEnchantment()) ?: 0
+            ?.getEnchantLevel(NMSInvoker.respirationEnchantment) ?: 0
         if (respirationLevel > 0 && random.nextInt(respirationLevel + 1) > 0) return
         player.remainingAir--
     }
@@ -158,7 +158,7 @@ class WaterBreathing : Listener, VisibleAbility {
         return Key.key("origins:water_breathing")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> = makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Gills", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Gills", LineComponent.LineType.TITLE)
 }

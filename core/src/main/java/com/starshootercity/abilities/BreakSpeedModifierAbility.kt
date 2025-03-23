@@ -114,7 +114,7 @@ interface BreakSpeedModifierAbility : Ability {
                             val handItem = event.player.inventory.itemInMainHand
                             if (isTool(handItem.type)) {
                                 val unbreakingLevel =
-                                    handItem.getEnchantmentLevel(NMSInvoker.getUnbreakingEnchantment()) + 1
+                                    handItem.getEnchantmentLevel(NMSInvoker.unbreakingEnchantment) + 1
                                 var itemDamage = 0
                                 if (random.nextDouble() <= 1.0 / unbreakingLevel) {
                                     itemDamage += 1
@@ -205,7 +205,7 @@ interface BreakSpeedModifierAbility : Ability {
 
         @EventHandler
         fun onServerTickEnd(event: ServerTickEndEvent?) {
-            val attribute = NMSInvoker.getBlockBreakSpeedAttribute()
+            val attribute = NMSInvoker.blockBreakSpeedAttribute
             for (player in Bukkit.getOnlinePlayers().toList()) {
                 val origins = runBlocking {
                     getOrigins(player)
@@ -223,7 +223,7 @@ interface BreakSpeedModifierAbility : Ability {
                 }
                 if (speedModifierAbility != null) {
                     if (attribute == null) {
-                        val effect = player.getPotionEffect(NMSInvoker.getMiningFatigueEffect())
+                        val effect = player.getPotionEffect(NMSInvoker.miningFatigueEffect)
                         var ambient = false
                         var showParticles = false
                         if (effect != null) {
@@ -231,12 +231,12 @@ interface BreakSpeedModifierAbility : Ability {
                             showParticles = effect.hasParticles()
                             if (effect.amplifier != -1) {
                                 storedEffects.put(player, SavedPotionEffect(effect, Bukkit.getCurrentTick()))
-                                player.removePotionEffect(NMSInvoker.getMiningFatigueEffect())
+                                player.removePotionEffect(NMSInvoker.miningFatigueEffect)
                             }
                         }
                         player.addPotionEffect(
                             PotionEffect(
-                                NMSInvoker.getMiningFatigueEffect(),
+                                NMSInvoker.miningFatigueEffect,
                                 infiniteDuration(),
                                 -1,
                                 ambient,
@@ -258,14 +258,14 @@ interface BreakSpeedModifierAbility : Ability {
                     }
                 } else {
                     if (attribute == null) {
-                        if (player.hasPotionEffect(NMSInvoker.getMiningFatigueEffect())) {
-                            val effect = player.getPotionEffect(NMSInvoker.getMiningFatigueEffect())
+                        if (player.hasPotionEffect(NMSInvoker.miningFatigueEffect)) {
+                            val effect = player.getPotionEffect(NMSInvoker.miningFatigueEffect)
                             if (effect != null) {
-                                if (effect.amplifier == -1) player.removePotionEffect(NMSInvoker.getMiningFatigueEffect())
+                                if (effect.amplifier == -1) player.removePotionEffect(NMSInvoker.miningFatigueEffect)
                             }
                         }
                         if (storedEffects.containsKey(player)) {
-                            val effect: SavedPotionEffect = storedEffects.get(player)!!
+                            val effect: SavedPotionEffect = storedEffects[player]!!
                             storedEffects.remove(player)
                             val potionEffect: PotionEffect? = checkNotNull(effect.effect)
                             val time = potionEffect!!.duration - (Bukkit.getCurrentTick() - effect.currentTime)
@@ -301,12 +301,12 @@ interface BreakSpeedModifierAbility : Ability {
             }
 
 
-            fun getDestroySpeed(context: BlockMiningContext, blockType: Material?): Float {
+            fun getDestroySpeed(context: BlockMiningContext, blockType: Material): Float {
                 var f: Float = NMSInvoker.getDestroySpeed(context.heldItem, blockType)
 
                 if (f > 1.0f) {
                     val itemstack = context.heldItem
-                    val i = itemstack.getEnchantmentLevel(NMSInvoker.getEfficiencyEnchantment())
+                    val i = itemstack.getEnchantmentLevel(NMSInvoker.efficiencyEnchantment)
 
                     if (i > 0 && itemstack.type != Material.AIR) {
                         f += (i * i + 1).toFloat()

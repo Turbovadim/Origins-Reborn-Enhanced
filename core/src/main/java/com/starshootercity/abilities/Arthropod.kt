@@ -22,7 +22,7 @@ class Arthropod : Ability, Listener {
         val damager = event.damager as? LivingEntity ?: return
         val equipment = damager.equipment ?: return
         val mainHand = equipment.itemInMainHand
-        val baneEnchantment = NMSInvoker.getBaneOfArthropodsEnchantment()
+        val baneEnchantment = NMSInvoker.baneOfArthropodsEnchantment
 
         if (!mainHand.containsEnchantment(baneEnchantment)) return
 
@@ -32,7 +32,7 @@ class Arthropod : Ability, Listener {
             val duration = (20 * random.nextDouble(1.0, 1 + (0.5 * level))).toInt()
             player.addPotionEffect(
                 PotionEffect(
-                    NMSInvoker.getSlownessEffect(),
+                    NMSInvoker.slownessEffect,
                     duration,
                     3,
                     false,

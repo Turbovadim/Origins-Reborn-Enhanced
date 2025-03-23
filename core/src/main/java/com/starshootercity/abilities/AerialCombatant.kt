@@ -21,11 +21,11 @@ class AerialCombatant : VisibleAbility, Listener {
         return Key.key("origins:aerial_combatant")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
             "You deal substantially more damage while in Elytra flight.",
             LineComponent.LineType.DESCRIPTION
         )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Aerial Combatant", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Aerial Combatant", LineComponent.LineType.TITLE)
 
 }

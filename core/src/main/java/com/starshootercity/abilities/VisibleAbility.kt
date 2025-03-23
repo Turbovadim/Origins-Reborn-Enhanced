@@ -5,10 +5,10 @@ import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
 import com.starshootercity.OriginSwapper.LineData.LineComponent
 
 interface VisibleAbility : Ability {
-    val description: List<LineComponent?>
-    val title: List<LineComponent?>
+    val description: List<LineComponent>
+    val title: List<LineComponent>
 
-    val usedDescription: List<LineComponent?>
+    val usedDescription: List<LineComponent>
         get() {
             val keyText = getKey().toString().replace(":", ".")
             val text = getTextFor("power.$keyText.description")
@@ -19,7 +19,7 @@ interface VisibleAbility : Ability {
             }
         }
 
-    val usedTitle: List<LineComponent?>
+    val usedTitle: List<LineComponent>
         get() {
             val keyText = getKey().toString().replace(":", ".")
             val text = getTextFor("power.$keyText.name")

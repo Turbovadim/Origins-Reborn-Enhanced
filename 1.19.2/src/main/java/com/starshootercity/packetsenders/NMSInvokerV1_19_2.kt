@@ -1,462 +1,368 @@
-package com.starshootercity.packetsenders;
+package com.starshootercity.packetsenders
 
-import com.destroystokyo.paper.entity.ai.Goal;
-import io.netty.buffer.Unpooled;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.util.TriState;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.state.BlockState;
-import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_19_R1.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftLivingEntity;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.BlockDamageAbortEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.destroystokyo.paper.entity.ai.Goal
+import io.netty.buffer.Unpooled
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.util.TriState
+import net.minecraft.core.BlockPos
+import net.minecraft.network.FriendlyByteBuf
+import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.network.syncher.EntityDataAccessor
+import net.minecraft.network.syncher.EntityDataSerializers
+import net.minecraft.world.damagesource.DamageSource
+import net.minecraft.world.entity.PathfinderMob
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal
+import net.minecraft.world.level.GameType
+import org.bukkit.*
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeInstance
+import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.v1_19_R1.block.data.CraftBlockData
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftLivingEntity
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack
+import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Creeper
+import org.bukkit.entity.Entity
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.block.BlockDamageAbortEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.potion.PotionEffectType
+import java.util.*
+import java.util.function.Predicate
 
-import java.util.*;
-import java.util.function.Predicate;
+class NMSInvokerV1_19_2 : NMSInvoker() {
+    override val miningEfficiencyAttribute: Attribute?
+        get() = null
 
-public class NMSInvokerV1_19_2 extends NMSInvoker {
+    override val sneakingSpeedAttribute: Attribute?
+        get() = null
 
-    @Override
-    public @Nullable Attribute getMiningEfficiencyAttribute() {
-        return null;
+    override val submergedMiningSpeedAttribute: Attribute?
+        get() = null
+
+    override val sweepingDamageRatioAttribute: Attribute?
+        get() = null
+
+    override fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta {
+        meta.setCustomModelData(cmd)
+        return meta
     }
 
-    @Override
-    public @Nullable Attribute getSneakingSpeedAttribute() {
-        return null;
+    override val flyingSpeedAttribute: Attribute
+        get() = Attribute.GENERIC_FLYING_SPEED
+
+    override val attackKnockbackAttribute: Attribute
+        get() = Attribute.GENERIC_ATTACK_KNOCKBACK
+
+    override val attackSpeedAttribute: Attribute
+        get() = Attribute.GENERIC_ATTACK_SPEED
+
+    override val armorToughnessAttribute: Attribute
+        get() = Attribute.GENERIC_ARMOR_TOUGHNESS
+
+    override val luckAttribute: Attribute
+        get() = Attribute.GENERIC_LUCK
+
+    override val horseJumpStrengthAttribute: Attribute
+        get() = Attribute.HORSE_JUMP_STRENGTH
+
+    override val spawnReinforcementsAttribute: Attribute
+        get() = Attribute.ZOMBIE_SPAWN_REINFORCEMENTS
+
+    override val followRangeAttribute: Attribute
+        get() = Attribute.GENERIC_FOLLOW_RANGE
+
+    override val knockbackResistanceAttribute: Attribute
+        get() = Attribute.GENERIC_KNOCKBACK_RESISTANCE
+
+    override val fallDamageMultiplierAttribute: Attribute?
+        get() = null
+
+    override val maxAbsorptionAttribute: Attribute?
+        get() = null
+
+    override val safeFallDistanceAttribute: Attribute?
+        get() = null
+
+    override val scaleAttribute: Attribute?
+        get() = null
+
+    override val stepHeightAttribute: Attribute?
+        get() = null
+
+    override val gravityAttribute: Attribute?
+        get() = null
+
+    override val jumpStrengthAttribute: Attribute?
+        get() = null
+
+    override val burningTimeAttribute: Attribute?
+        get() = null
+
+    override val explosionKnockbackResistanceAttribute: Attribute?
+        get() = null
+
+    override val movementEfficiencyAttribute: Attribute?
+        get() = null
+
+    override val oxygenBonusAttribute: Attribute?
+        get() = null
+
+    override val waterMovementEfficiencyAttribute: Attribute?
+        get() = null
+
+    override val temptRangeAttribute: Attribute?
+        get() = null
+
+    override fun dealDrowningDamage(entity: LivingEntity, amount: Int) {
+        val livingEntity = (entity as CraftLivingEntity).handle
+        livingEntity.hurt(DamageSource.DROWN, amount.toFloat())
     }
 
-    @Override
-    public @Nullable Attribute getSubmergedMiningSpeedAttribute() {
-        return null;
-    }
+    override val respirationEnchantment: Enchantment
+        get() = Enchantment.OXYGEN
 
-    @Override
-    public @Nullable Attribute getSweepingDamageRatioAttribute() {
-        return null;
-    }
-
-    @Override
-    public @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd) {
-        meta.setCustomModelData(cmd);
-        return meta;
-    }
-
-    @Override
-    public @NotNull Attribute getFlyingSpeedAttribute() {
-        return Attribute.GENERIC_FLYING_SPEED;
-    }
-
-    @Override
-    public @NotNull Attribute getAttackKnockbackAttribute() {
-        return Attribute.GENERIC_ATTACK_KNOCKBACK;
-    }
-
-    @Override
-    public @NotNull Attribute getAttackSpeedAttribute() {
-        return Attribute.GENERIC_ATTACK_SPEED;
-    }
-
-    @Override
-    public @NotNull Attribute getArmorToughnessAttribute() {
-        return Attribute.GENERIC_ARMOR_TOUGHNESS;
-    }
-
-    @Override
-    public @NotNull Attribute getLuckAttribute() {
-        return Attribute.GENERIC_LUCK;
-    }
-
-    @Override
-    public @NotNull Attribute getHorseJumpStrengthAttribute() {
-        return Attribute.HORSE_JUMP_STRENGTH;
-    }
-
-    @Override
-    public @NotNull Attribute getSpawnReinforcementsAttribute() {
-        return Attribute.ZOMBIE_SPAWN_REINFORCEMENTS;
-    }
-
-    @Override
-    public @NotNull Attribute getFollowRangeAttribute() {
-        return Attribute.GENERIC_FOLLOW_RANGE;
-    }
-
-    @Override
-    public @NotNull Attribute getKnockbackResistanceAttribute() {
-        return Attribute.GENERIC_KNOCKBACK_RESISTANCE;
-    }
-
-    @Override
-    public @Nullable Attribute getFallDamageMultiplierAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getMaxAbsorptionAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getSafeFallDistanceAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getScaleAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getStepHeightAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getGravityAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getJumpStrengthAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getBurningTimeAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getExplosionKnockbackResistanceAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getMovementEfficiencyAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getOxygenBonusAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getWaterMovementEfficiencyAttribute() {
-        return null;
-    }
-
-    @Override
-    public @Nullable Attribute getTemptRangeAttribute() {
-        return null;
-    }
-
-    @Override
-    public void dealDrowningDamage(LivingEntity entity, int amount) {
-        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
-        livingEntity.hurt(DamageSource.DROWN, amount);
-    }
-
-    @Override
-    public @NotNull Enchantment getRespirationEnchantment() {
-        return Enchantment.OXYGEN;
-    }
-
-    @Override
-    public Component applyFont(Component component, Key font) {
-        return component.font(font);
+    override fun applyFont(component: Component, font: Key): Component {
+        return component.font(font)
     }
 
     @EventHandler
-    public void onBlockDamageAbort(BlockDamageAbortEvent event) {
-        new OriginsRebornBlockDamageAbortEvent(event.getPlayer(), event.getBlock(), event.getItemInHand()).callEvent();
+    fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
+        OriginsRebornBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 
-    @Override
-    public void sendEntityData(Player player, Entity entity, byte bytes) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        SynchedEntityData data = ((CraftEntity) entity).getHandle().getEntityData();
-        data.set(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE), bytes);
-        ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(entity.getEntityId(), data, false);
-        serverPlayer.connection.send(packet);
+    override fun sendEntityData(player: Player, entity: Entity, bytes: Byte) {
+        val serverPlayer = (player as CraftPlayer).handle
+        val data = (entity as CraftEntity).handle.getEntityData()
+        data.set<Byte?>(EntityDataAccessor<Byte?>(0, EntityDataSerializers.BYTE), bytes)
+        val packet = ClientboundSetEntityDataPacket(entity.entityId, data, false)
+        serverPlayer.connection.send(packet)
     }
 
-    @Override
-    public Goal<Creeper> getCreeperAfraidGoal(LivingEntity creeper, Predicate<Player> hasAbility, Predicate<LivingEntity> hasKey) {
-        return new AvoidEntityGoal<>(
-                (PathfinderMob) ((CraftEntity) creeper).getHandle(),
-                net.minecraft.world.entity.player.Player.class,
-                6,
-                1,
-                1.2,
-                livingEntity -> {
-                    if (livingEntity.getBukkitEntity() instanceof Player player) {
-                        if (hasAbility.test(player)) {
-                            return (!hasKey.test(creeper));
-                        }
+    override fun getCreeperAfraidGoal(
+        creeper: LivingEntity,
+        hasAbility: Predicate<Player>,
+        hasKey: Predicate<LivingEntity>
+    ): Goal<Creeper> {
+        return AvoidEntityGoal<net.minecraft.world.entity.player.Player>(
+            (creeper as CraftEntity).handle as PathfinderMob,
+            net.minecraft.world.entity.player.Player::class.java,
+            6f,
+            1.0,
+            1.2,
+            Predicate { livingEntity: net.minecraft.world.entity.LivingEntity? ->
+                val player = livingEntity!!.bukkitEntity as? Player
+                if (player != null) {
+                    if (hasAbility.test(player)) {
+                        return@Predicate (!hasKey.test(creeper))
                     }
-                    return false;
                 }
+                false
+            }
 
-        ).asPaperVanillaGoal();
+        ).asPaperVanillaGoal<Creeper>()
     }
 
-    @Override
-    public boolean wasTouchingWater(Player player) {
-        return ((CraftPlayer) player).getHandle().wasTouchingWater;
+    override fun wasTouchingWater(player: Player): Boolean {
+        return (player as CraftPlayer).handle.wasTouchingWater
     }
 
-    @Override
-    public float getDestroySpeed(ItemStack item, Material block) {
-        BlockState b = ((CraftBlockData) block.createBlockData()).getState();
-        net.minecraft.world.item.ItemStack handle = CraftItemStack.asNMSCopy(item);
-        return handle.getDestroySpeed(b);
+    override fun getDestroySpeed(item: ItemStack, block: Material): Float {
+        val b = (block.createBlockData() as CraftBlockData).state
+        val handle = CraftItemStack.asNMSCopy(item)
+        return handle.getDestroySpeed(b)
     }
 
-    @Override
-    public float getDestroySpeed(Material block) {
-        return ((CraftBlockData) block.createBlockData()).getState().destroySpeed;
+    override fun getDestroySpeed(block: Material): Float {
+        return (block.createBlockData() as CraftBlockData).state.destroySpeed
     }
 
-    @Override
-    public void setNoPhysics(Player player, boolean noPhysics) {
-        ((CraftPlayer) player).getHandle().noPhysics = noPhysics;
+    override fun setNoPhysics(player: Player, noPhysics: Boolean) {
+        (player as CraftPlayer).handle.noPhysics = noPhysics
     }
 
-    @Override
-    public void sendPhasingGamemodeUpdate(Player player, GameMode gameMode) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+    override fun sendPhasingGamemodeUpdate(player: Player, gameMode: GameMode) {
+        val serverPlayer = (player as CraftPlayer).handle
 
-        GameType gameType = switch (gameMode) {
-            case CREATIVE -> GameType.CREATIVE;
-            case SURVIVAL -> GameType.SURVIVAL;
-            case ADVENTURE -> GameType.ADVENTURE;
-            case SPECTATOR -> GameType.SPECTATOR;
-        };
-
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeEnum(ClientboundPlayerInfoPacket.Action.UPDATE_GAME_MODE);
-        buf.writeCollection(List.of("null"), (buf2, e) -> {
-            buf2.writeUUID(serverPlayer.getUUID());
-            buf2.writeVarInt(gameType.getId());
-        });
-
-        ClientboundPlayerInfoPacket packet = new ClientboundPlayerInfoPacket(buf);
-
-        serverPlayer.connection.send(packet);
-    }
-
-    @Override
-    public @NotNull Attribute getArmorAttribute() {
-        return Attribute.GENERIC_ARMOR;
-    }
-
-    @Override
-    public @NotNull Attribute getMaxHealthAttribute() {
-        return Attribute.GENERIC_MAX_HEALTH;
-    }
-
-    @Override
-    public @NotNull Attribute getMovementSpeedAttribute() {
-        return Attribute.GENERIC_MOVEMENT_SPEED;
-    }
-
-    @Override
-    public @NotNull Attribute getAttackDamageAttribute() {
-        return Attribute.GENERIC_ATTACK_DAMAGE;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void sendResourcePacks(Player player, String pack, Map<?, OriginsRebornResourcePackInfo> extraPacks) {
-        player.setResourcePack(pack);
-    }
-
-    @Override
-    public @NotNull PotionEffectType getNauseaEffect() {
-        return PotionEffectType.CONFUSION;
-    }
-
-    @Override
-    public @NotNull PotionEffectType getMiningFatigueEffect() {
-        return PotionEffectType.SLOW_DIGGING;
-    }
-
-    @Override
-    public @NotNull PotionEffectType getHasteEffect() {
-        return PotionEffectType.FAST_DIGGING;
-    }
-
-    @Override
-    public @NotNull PotionEffectType getJumpBoostEffect() {
-        return PotionEffectType.JUMP;
-    }
-
-    @Override
-    public @NotNull PotionEffectType getSlownessEffect() {
-        return PotionEffectType.SLOW;
-    }
-
-    @Override
-    public @NotNull PotionEffectType getStrengthEffect() {
-        return PotionEffectType.INCREASE_DAMAGE;
-    }
-
-    @Override
-    public @NotNull Enchantment getUnbreakingEnchantment() {
-        return Enchantment.DURABILITY;
-    }
-
-    @Override
-    public @NotNull Enchantment getAquaAffinityEnchantment() {
-        return Enchantment.WATER_WORKER;
-    }
-
-    @Override
-    public @NotNull Enchantment getBaneOfArthropodsEnchantment() {
-        return Enchantment.DAMAGE_ARTHROPODS;
-    }
-
-    @Override
-    public @NotNull Enchantment getEfficiencyEnchantment() {
-        return Enchantment.DIG_SPEED;
-    }
-
-    @Override
-    public @Nullable Location getRespawnLocation(Player player) {
-        return player.getBedSpawnLocation();
-    }
-
-    @Override
-    public void resetRespawnLocation(Player player) {
-        player.setBedSpawnLocation(null);
-    }
-
-    @Override
-    public @Nullable AttributeModifier getAttributeModifier(AttributeInstance instance, NamespacedKey key) {
-        UUID u = UUID.nameUUIDFromBytes(key.toString().getBytes());
-        for (AttributeModifier am : instance.getModifiers()) {
-            if (am.getUniqueId().equals(u)) return am;
+        val gameType = when (gameMode) {
+            GameMode.CREATIVE -> GameType.CREATIVE
+            GameMode.SURVIVAL -> GameType.SURVIVAL
+            GameMode.ADVENTURE -> GameType.ADVENTURE
+            GameMode.SPECTATOR -> GameType.SPECTATOR
         }
-        return null;
+
+        val buf = FriendlyByteBuf(Unpooled.buffer())
+        buf.writeEnum(ClientboundPlayerInfoPacket.Action.UPDATE_GAME_MODE)
+        buf.writeCollection<String?>(
+            mutableListOf<String?>("null"),
+            FriendlyByteBuf.Writer { buf2: FriendlyByteBuf?, e: String? ->
+                buf2!!.writeUUID(serverPlayer.getUUID())
+                buf2.writeVarInt(gameType.id)
+            })
+
+        val packet = ClientboundPlayerInfoPacket(buf)
+
+        serverPlayer.connection.send(packet)
     }
 
-    @Override
-    public void addAttributeModifier(AttributeInstance instance, NamespacedKey key, String name, double amount, AttributeModifier.Operation operation) {
-        instance.addModifier(new AttributeModifier(UUID.nameUUIDFromBytes(key.toString().getBytes()), name, amount, operation));
+    override val armorAttribute: Attribute
+        get() = Attribute.GENERIC_ARMOR
+
+    override val maxHealthAttribute: Attribute
+        get() = Attribute.GENERIC_MAX_HEALTH
+
+    override val movementSpeedAttribute: Attribute
+        get() = Attribute.GENERIC_MOVEMENT_SPEED
+
+    override val attackDamageAttribute: Attribute
+        get() = Attribute.GENERIC_ATTACK_DAMAGE
+
+    override fun sendResourcePacks(
+        player: Player,
+        pack: String,
+        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+    ) {
+        player.setResourcePack(pack)
     }
 
-    @Override
-    public boolean supportsInfiniteDuration() {
-        return false;
+    override val nauseaEffect: PotionEffectType
+        get() = PotionEffectType.CONFUSION
+
+    override val miningFatigueEffect: PotionEffectType
+        get() = PotionEffectType.SLOW_DIGGING
+
+    override val hasteEffect: PotionEffectType
+        get() = PotionEffectType.FAST_DIGGING
+
+    override val jumpBoostEffect: PotionEffectType
+        get() = PotionEffectType.JUMP
+
+    override val slownessEffect: PotionEffectType
+        get() = PotionEffectType.SLOW
+
+    override val strengthEffect: PotionEffectType
+        get() = PotionEffectType.INCREASE_DAMAGE
+
+    override val unbreakingEnchantment: Enchantment
+        get() = Enchantment.DURABILITY
+
+    override val aquaAffinityEnchantment: Enchantment
+        get() = Enchantment.WATER_WORKER
+
+    override val baneOfArthropodsEnchantment: Enchantment
+        get() = Enchantment.DAMAGE_ARTHROPODS
+
+    override val efficiencyEnchantment: Enchantment
+        get() = Enchantment.DIG_SPEED
+
+    override fun getRespawnLocation(player: Player): Location? {
+        return player.bedSpawnLocation
     }
 
-    @Override
-    public boolean isUnderWater(LivingEntity entity) {
-        return ((CraftLivingEntity) entity).getHandle().isUnderWater();
+    override fun resetRespawnLocation(player: Player) {
+        player.bedSpawnLocation = null
     }
 
-    @Override
-    public void knockback(LivingEntity entity, double strength, double x, double z) {
-        ((CraftLivingEntity) entity).getHandle().knockback(strength, x, z);
+    override fun getAttributeModifier(instance: AttributeInstance, key: NamespacedKey): AttributeModifier? {
+        val u = UUID.nameUUIDFromBytes(key.toString().toByteArray())
+        for (am in instance.modifiers) {
+            if (am.uniqueId == u) return am
+        }
+        return null
     }
 
-    @Override
-    public Attribute getBlockInteractionRangeAttribute() {
-        return null;
+    override fun addAttributeModifier(
+        instance: AttributeInstance,
+        key: NamespacedKey,
+        name: String,
+        amount: Double,
+        operation: AttributeModifier.Operation
+    ) {
+        instance.addModifier(
+            AttributeModifier(
+                UUID.nameUUIDFromBytes(key.toString().toByteArray()),
+                name,
+                amount,
+                operation
+            )
+        )
     }
 
-    @Override
-    public Attribute getEntityInteractionRangeAttribute() {
-        return null;
+    override fun supportsInfiniteDuration(): Boolean {
+        return false
     }
 
-    @Override
-    public void dealDryOutDamage(LivingEntity entity, int amount) {
-        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
-        livingEntity.hurt(DamageSource.DRY_OUT, amount);
+    override fun isUnderWater(entity: LivingEntity): Boolean {
+        return (entity as CraftLivingEntity).handle.isUnderWater
     }
 
-    @Override
-    public void dealFreezeDamage(LivingEntity entity , int amount) {
-        net.minecraft.world.entity.LivingEntity livingEntity = ((CraftLivingEntity) entity).getHandle();
-        livingEntity.hurt(DamageSource.FREEZE, amount);
+    override fun knockback(entity: LivingEntity, strength: Double, x: Double, z: Double) {
+        (entity as CraftLivingEntity).handle.knockback(strength, x, z)
     }
 
-    @Override
-    public void broadcastSlotBreak(Player player, EquipmentSlot slot, Collection<Player> players) {
-        player.broadcastSlotBreak(slot, players);
+    override val blockInteractionRangeAttribute: Attribute?
+        get() = null
+
+    override val entityInteractionRangeAttribute: Attribute?
+        get() = null
+
+    override fun dealDryOutDamage(entity: LivingEntity, amount: Int) {
+        val livingEntity = (entity as CraftLivingEntity).handle
+        livingEntity.hurt(DamageSource.DRY_OUT, amount.toFloat())
     }
 
-    @Override
-    public void sendBlockDamage(Player player, Location location, float damage, Entity entity) {
-        ClientboundBlockDestructionPacket packet = new ClientboundBlockDestructionPacket(entity.getEntityId(), new BlockPos(location.getX(), location.getY(), location.getZ()), (int) (damage*10));
-        ((CraftPlayer) player).getHandle().connection.send(packet);
+    override fun dealFreezeDamage(entity: LivingEntity, amount: Int) {
+        val livingEntity = (entity as CraftLivingEntity).handle
+        livingEntity.hurt(DamageSource.FREEZE, amount.toFloat())
     }
 
-    @Override
-    public void setFlyingFallDamage(Player player, TriState state) {
-        flyingFallDamage.put(player, state);
+    override fun broadcastSlotBreak(player: Player, slot: EquipmentSlot, players: MutableCollection<Player>) {
+        player.broadcastSlotBreak(slot, players)
     }
 
-    public Map<Player, TriState> flyingFallDamage = new HashMap<>();
+    override fun sendBlockDamage(player: Player, location: Location, damage: Float, entity: Entity) {
+        val packet = ClientboundBlockDestructionPacket(
+            entity.entityId,
+            BlockPos(location.x, location.y, location.z),
+            (damage * 10).toInt()
+        )
+        (player as CraftPlayer).handle.connection.send(packet)
+    }
+
+    override fun setFlyingFallDamage(player: Player, state: TriState) {
+        flyingFallDamage.put(player, state)
+    }
+
+    var flyingFallDamage: MutableMap<Player?, TriState?> = HashMap<Player?, TriState?>()
 
     @EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            if (player.getAllowFlight()) {
-                if (flyingFallDamage.get(player) == TriState.FALSE) event.setCancelled(true);
-            }
+    fun onEntityDamage(event: EntityDamageEvent) {
+        val player = event.getEntity() as? Player ?: return
+        if (player.allowFlight) {
+            if (flyingFallDamage[player] == TriState.FALSE) event.isCancelled = true
         }
     }
 
-    @Override
-    public Attribute getBlockBreakSpeedAttribute() {
-        return null;
-    }
+    override val blockBreakSpeedAttribute: Attribute?
+        get() = null
 
-    @Override
-    public void setWorldBorderOverlay(Player player, boolean show) {
+    override fun setWorldBorderOverlay(player: Player, show: Boolean) {
         if (show) {
-            WorldBorder border = Bukkit.createWorldBorder();
-            border.setCenter(player.getWorld().getWorldBorder().getCenter());
-            border.setSize(player.getWorld().getWorldBorder().getSize());
-            border.setWarningDistance((int) (player.getWorld().getWorldBorder().getSize()*2));
-            player.setWorldBorder(border);
-        } else player.setWorldBorder(null);
+            val border = Bukkit.createWorldBorder()
+            border.center = player.world.worldBorder.center
+            border.size = player.world.worldBorder.size
+            border.warningDistance = (player.world.worldBorder.size * 2).toInt()
+            player.worldBorder = border
+        } else player.worldBorder = null
     }
 }

@@ -18,12 +18,12 @@ class LikeAir : VisibleAbility, Listener {
         return Key.key("origins:like_air")
     }
 
-    override val description: MutableList<LineComponent?>
+    override val description: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(
             "Modifiers to your walking speed also apply while you're airborne.",
             LineComponent.LineType.DESCRIPTION
         )
 
-    override val title: MutableList<LineComponent?>
+    override val title: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Like Air", LineComponent.LineType.TITLE)
 }

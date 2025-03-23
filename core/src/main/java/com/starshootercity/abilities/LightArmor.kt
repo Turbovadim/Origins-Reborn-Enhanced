@@ -22,12 +22,12 @@ class LightArmor : VisibleAbility, Listener {
         return Key.key("origins:light_armor")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You can not wear any heavy armor (armor with protection values higher than chainmail).",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Need for Mobility",
         LineComponent.LineType.TITLE
     )

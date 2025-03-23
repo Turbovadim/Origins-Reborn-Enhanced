@@ -382,14 +382,14 @@ class OriginSwapper : Listener {
                 DESCRIPTION
             }
 
-            private val component: Component?
+            private val component: Component
             @JvmField
             val type: LineType?
             @JvmField
             val rawText: String?
             val isEmpty: Boolean
 
-            constructor(component: Component?, type: LineType?, rawText: String?) {
+            constructor(component: Component, type: LineType, rawText: String) {
                 this.component = component
                 this.type = type
                 this.rawText = rawText
@@ -410,10 +410,10 @@ class OriginSwapper : Listener {
             }
         }
 
-        val rawLines: MutableList<LineComponent?>
+        val rawLines: MutableList<LineComponent>
 
         constructor(origin: Origin) {
-            this.rawLines = ArrayList<LineComponent?>()
+            this.rawLines = ArrayList<LineComponent>()
             rawLines.addAll(makeLineFor(origin.getDescription(), LineType.DESCRIPTION))
             val visibleAbilities: List<VisibleAbility> = origin.getVisibleAbilities()
             val size = visibleAbilities.size
@@ -427,7 +427,7 @@ class OriginSwapper : Listener {
             }
         }
 
-        constructor(lines: MutableList<LineComponent?>) {
+        constructor(lines: MutableList<LineComponent>) {
             this.rawLines = lines
         }
 
@@ -440,8 +440,8 @@ class OriginSwapper : Listener {
 
         companion object {
             // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
-            fun makeLineFor(text: String, type: LineType?): MutableList<LineComponent?> {
-                val resultList = mutableListOf<LineComponent?>()
+            fun makeLineFor(text: String, type: LineType): MutableList<LineComponent> {
+                val resultList = mutableListOf<LineComponent>()
 
                 // Разбиваем текст на первую строку и остаток (если есть)
                 val lines = text.split("\n", limit = 2)
@@ -883,7 +883,7 @@ class OriginSwapper : Listener {
         }
 
 
-        fun applyFont(component: Component?, font: Key?): Component {
+        fun applyFont(component: Component, font: Key): Component {
             return nmsInvoker.applyFont(component, font)
         }
 
@@ -1021,7 +1021,7 @@ class OriginSwapper : Listener {
             }
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(origins, {
-                player.getAttribute(nmsInvoker.getMaxHealthAttribute())?.let { mh ->
+                player.getAttribute(nmsInvoker.maxHealthAttribute)?.let { mh ->
                     player.health = min(mh.value, initialHealth)
                 }
             }, 10)

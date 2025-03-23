@@ -12,12 +12,12 @@ class ExtraReach : VisibleAbility, MultiAbility {
         return Key.key("origins:extra_reach")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You can reach blocks and entities further away.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Slender Body",
         LineComponent.LineType.TITLE
     )
@@ -29,7 +29,7 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
     class ExtraReachEntities : AttributeModifierAbility {
 
-        override val attribute: Attribute = NMSInvoker.getEntityInteractionRangeAttribute()!!
+        override val attribute: Attribute = NMSInvoker.entityInteractionRangeAttribute!!
 
         override val amount: Double = 1.5
 
@@ -46,7 +46,7 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
     class ExtraReachBlocks : AttributeModifierAbility {
 
-        override val attribute: Attribute = NMSInvoker.getBlockInteractionRangeAttribute()!!
+        override val attribute: Attribute = NMSInvoker.blockInteractionRangeAttribute!!
 
         override val amount: Double = 1.5
 

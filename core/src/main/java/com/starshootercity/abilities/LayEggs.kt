@@ -33,12 +33,12 @@ class LayEggs : VisibleAbility, Listener {
         return Key.key("origins:lay_eggs")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Whenever you wake up in the morning, you will lay an egg.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Oviparous",
         LineComponent.LineType.TITLE
     )

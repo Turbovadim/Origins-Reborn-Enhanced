@@ -17,12 +17,12 @@ class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
         return Key.key("origins:elytra")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You have Elytra wings without needing to equip any.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Winged",
         LineComponent.LineType.TITLE
     )

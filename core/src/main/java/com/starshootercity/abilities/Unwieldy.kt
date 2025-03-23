@@ -27,10 +27,10 @@ class Unwieldy : VisibleAbility, Listener {
         return Key.key("origins:no_shield")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "The way your hands are formed provide no way of holding a shield upright.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Unwieldy", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Unwieldy", LineComponent.LineType.TITLE)
 }

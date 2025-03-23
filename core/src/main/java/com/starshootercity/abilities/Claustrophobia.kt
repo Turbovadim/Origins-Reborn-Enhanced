@@ -36,7 +36,7 @@ class Claustrophobia : VisibleAbility, Listener {
                     p.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
                     p.addPotionEffect(
                         PotionEffect(
-                            OriginsReborn.NMSInvoker.getSlownessEffect(),
+                            OriginsReborn.NMSInvoker.slownessEffect,
                             newStacks,
                             0,
                             true,

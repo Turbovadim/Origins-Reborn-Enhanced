@@ -19,7 +19,7 @@ class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
         }
 
 
-    override val description: MutableList<LineComponent?> = makeLineFor("Your natural spawn will be in the Nether.", LineComponent.LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> = makeLineFor("Your natural spawn will be in the Nether.", LineComponent.LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Nether Inhabitant", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Nether Inhabitant", LineComponent.LineType.TITLE)
 }

@@ -27,12 +27,12 @@ class WeakArms : VisibleAbility, Listener {
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {
-        val attribute = NMSInvoker.getBlockBreakSpeedAttribute()
+        val attribute = NMSInvoker.blockBreakSpeedAttribute
         val currentTick = Bukkit.getCurrentTick()
         for (player in Bukkit.getOnlinePlayers()) {
             runForAbility(player, AbilityRunner { player ->
-                val miningFatigue = NMSInvoker.getMiningFatigueEffect()
-                val strengthEffect = NMSInvoker.getStrengthEffect()
+                val miningFatigue = NMSInvoker.miningFatigueEffect
+                val strengthEffect = NMSInvoker.strengthEffect
                 val target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER)
                 val hasStrength = player.getPotionEffect(strengthEffect) != null
                 val isTargetNatural = target != null && naturalStones.contains(target.type)
@@ -115,12 +115,12 @@ class WeakArms : VisibleAbility, Listener {
         return Key.key("origins:weak_arms")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "When not under the effect of a strength potion, you can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Weak Arms", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Weak Arms", LineComponent.LineType.TITLE)
     companion object {
         private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
             init {

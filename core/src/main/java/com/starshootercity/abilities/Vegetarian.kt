@@ -46,12 +46,12 @@ class Vegetarian : VisibleAbility, Listener {
         }
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You can't digest any meat.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Vegetarian",
         LineComponent.LineType.TITLE
     )

@@ -14,12 +14,12 @@ class HungerOverTime : DependantAbility, VisibleAbility, Listener {
         return Key.key("origins:hunger_over_time")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Being phantomized causes you to become hungry.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Fast Metabolism",
         LineComponent.LineType.TITLE
     )

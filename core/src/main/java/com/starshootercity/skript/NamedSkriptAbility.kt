@@ -11,8 +11,8 @@ class NamedSkriptAbility(
     description2: String
 ) : SkriptAbility(key), VisibleAbility {
 
-    override val description: MutableList<LineComponent?> = makeLineFor(description2, LineComponent.LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> = makeLineFor(description2, LineComponent.LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent?> = makeLineFor(title2, LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor(title2, LineComponent.LineType.TITLE)
 
 }

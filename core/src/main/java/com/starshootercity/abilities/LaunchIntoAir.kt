@@ -16,12 +16,12 @@ class LaunchIntoAir : VisibleAbility, Listener, CooldownAbility {
         return Key.key("origins:launch_into_air")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Every 30 seconds, you are able to launch about 20 blocks up into the air.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Gift of the Winds",
         LineComponent.LineType.TITLE
     )

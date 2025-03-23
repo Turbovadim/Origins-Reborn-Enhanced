@@ -111,12 +111,12 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
         return Key.key("origins:climbing")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You are able to climb up any kind of wall, not just ladders.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Climbing",
         LineComponent.LineType.TITLE
     )

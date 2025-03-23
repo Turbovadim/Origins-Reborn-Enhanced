@@ -238,7 +238,7 @@ class OriginsReborn : OriginsAddon() {
                 NaturalArmor()
             )
         )
-        if (NMSInvoker.getBlockInteractionRangeAttribute() != null && NMSInvoker.getEntityInteractionRangeAttribute() != null) {
+        if (NMSInvoker.blockInteractionRangeAttribute != null && NMSInvoker.entityInteractionRangeAttribute != null) {
             abilities.add(ExtraReach())
             abilities.add(ExtraReach.ExtraReachBlocks.extraReachBlocks)
             abilities.add(ExtraReach.ExtraReachEntities.extraReachEntities)

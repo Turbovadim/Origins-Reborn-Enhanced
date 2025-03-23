@@ -31,12 +31,12 @@ class ShulkerInventory : VisibleAbility, Listener {
         return Key.key("origins:shulker_inventory")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You have access to an additional 9 slots of inventory, which keep the items on death.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Hoarder", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Hoarder", LineComponent.LineType.TITLE)
 
     var openedBoxKey: NamespacedKey = NamespacedKey(instance, "openedbox")
 

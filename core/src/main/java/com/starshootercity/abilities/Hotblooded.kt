@@ -26,12 +26,12 @@ class Hotblooded : VisibleAbility, Listener {
         return Key.key("origins:hotblooded")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Due to your hot body, venoms burn up, making you immune to poison and hunger status effects.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Hotblooded",
         LineComponent.LineType.TITLE
     )

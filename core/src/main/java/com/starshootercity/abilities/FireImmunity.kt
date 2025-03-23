@@ -30,12 +30,12 @@ class FireImmunity : VisibleAbility, Listener {
         return Key.key("origins:fire_immunity")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You are immune to all types of fire damage.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Fire Immunity",
         LineComponent.LineType.TITLE
     )

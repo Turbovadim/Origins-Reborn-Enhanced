@@ -7,18 +7,15 @@ import com.starshootercity.OriginsReborn
 import com.starshootercity.OriginsReborn.Companion.NMSInvoker
 import com.starshootercity.OriginsReborn.Companion.instance
 import com.starshootercity.abilities.Ability.AbilityRunner
-import com.starshootercity.packetsenders.NMSInvoker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
-import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
-import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.ioDispatcher
@@ -57,18 +54,18 @@ class PumpkinHate : VisibleAbility, Listener {
                 event.item.amount -= 1
 
                 player.addPotionEffect(PotionEffect(PotionEffectType.HUNGER, 300, 2, false, true))
-                player.addPotionEffect(PotionEffect(NMSInvoker.getNauseaEffect(), 300, 1, false, true))
+                player.addPotionEffect(PotionEffect(NMSInvoker.nauseaEffect, 300, 1, false, true))
                 player.addPotionEffect(PotionEffect(PotionEffectType.POISON, 1200, 1, false, true))
             }
         })
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You are afraid of pumpkins. For a good reason.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Scared of Gourds",
         LineComponent.LineType.TITLE
     )

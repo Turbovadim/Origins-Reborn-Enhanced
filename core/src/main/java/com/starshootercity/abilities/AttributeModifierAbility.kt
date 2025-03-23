@@ -26,7 +26,6 @@ interface AttributeModifierAbility : Ability {
                     .setVariable("x", total)
                     .evaluate()
             } catch (_: IllegalArgumentException) {
-                // Ignore exception and fallback to returning total
             }
         }
         return total

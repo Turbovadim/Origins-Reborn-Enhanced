@@ -25,12 +25,12 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
         return Key.key("origins:strong_arms")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You are strong enough to break natural stones without using a pickaxe.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Strong Arms", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Strong Arms", LineComponent.LineType.TITLE)
 
     override val abilities: MutableList<Ability> = mutableListOf(
         StrongArmsDrops.Companion.strongArmsDrops,
@@ -90,12 +90,12 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
             var aquaAffinity = false
             val helmet = player.inventory.helmet
             if (helmet != null) {
-                if (helmet.containsEnchantment(NMSInvoker.getAquaAffinityEnchantment())) aquaAffinity = true
+                if (helmet.containsEnchantment(NMSInvoker.aquaAffinityEnchantment)) aquaAffinity = true
             }
             return BlockMiningContext(
                 ItemStack(Material.IRON_PICKAXE),
-                player.getPotionEffect(NMSInvoker.getMiningFatigueEffect()),
-                player.getPotionEffect(NMSInvoker.getHasteEffect()),
+                player.getPotionEffect(NMSInvoker.miningFatigueEffect),
+                player.getPotionEffect(NMSInvoker.hasteEffect),
                 player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
                 NMSInvoker.isUnderWater(player),
                 aquaAffinity,

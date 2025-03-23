@@ -70,12 +70,12 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
         }
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "When underwater, you do not sink to the ground unless you want to.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Like Water",
         LineComponent.LineType.TITLE
     )

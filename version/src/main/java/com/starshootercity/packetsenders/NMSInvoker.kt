@@ -1,175 +1,181 @@
-package com.starshootercity.packetsenders;
+package com.starshootercity.packetsenders
 
-import com.destroystokyo.paper.entity.ai.Goal;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.util.TriState;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.destroystokyo.paper.entity.ai.Goal
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.util.TriState
+import org.bukkit.GameMode
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeInstance
+import org.bukkit.attribute.AttributeModifier
+import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Creeper
+import org.bukkit.entity.Entity
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.event.Listener
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.potion.PotionEffectType
+import java.util.function.Predicate
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
+abstract class NMSInvoker : Listener {
+    abstract fun sendEntityData(player: Player, entity: Entity, bytes: Byte)
 
-public abstract class NMSInvoker implements Listener {
-    public abstract void sendEntityData(Player player, Entity entity, byte bytes);
+    abstract fun getCreeperAfraidGoal(
+        creeper: LivingEntity,
+        hasAbility: Predicate<Player>,
+        hasKey: Predicate<LivingEntity>
+    ): Goal<Creeper>
 
-    public abstract Goal<Creeper> getCreeperAfraidGoal(LivingEntity creeper, Predicate<Player> hasAbility, Predicate<LivingEntity> hasKey);
+    abstract fun wasTouchingWater(player: Player): Boolean
 
-    public abstract boolean wasTouchingWater(Player player);
+    abstract fun getDestroySpeed(item: ItemStack, block: Material): Float
 
-    public abstract float getDestroySpeed(ItemStack item, Material block);
+    abstract fun getDestroySpeed(block: Material): Float
 
-    public abstract float getDestroySpeed(Material block);
+    abstract fun setNoPhysics(player: Player, noPhysics: Boolean)
 
-    public abstract void setNoPhysics(Player player, boolean noPhysics);
+    abstract fun sendPhasingGamemodeUpdate(player: Player, gameMode: GameMode)
 
-    public abstract void sendPhasingGamemodeUpdate(Player player, GameMode gameMode);
+    abstract fun sendResourcePacks(
+        player: Player,
+        pack: String,
+        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+    )
 
-    public abstract void sendResourcePacks(Player player, String pack, Map<?, OriginsRebornResourcePackInfo> extraPacks);
+    abstract val nauseaEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getNauseaEffect();
+    abstract val miningFatigueEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getMiningFatigueEffect();
+    abstract val hasteEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getHasteEffect();
+    abstract val jumpBoostEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getJumpBoostEffect();
+    abstract val slownessEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getSlownessEffect();
+    abstract val strengthEffect: PotionEffectType
 
-    public abstract @NotNull PotionEffectType getStrengthEffect();
+    abstract val unbreakingEnchantment: Enchantment
 
-    public abstract @NotNull Enchantment getUnbreakingEnchantment();
+    abstract val efficiencyEnchantment: Enchantment
 
-    public abstract @NotNull Enchantment getEfficiencyEnchantment();
+    abstract val respirationEnchantment: Enchantment
 
-    public abstract @NotNull Enchantment getRespirationEnchantment();
+    abstract val aquaAffinityEnchantment: Enchantment
 
-    public abstract @NotNull Enchantment getAquaAffinityEnchantment();
+    abstract val baneOfArthropodsEnchantment: Enchantment
 
-    public abstract @NotNull Enchantment getBaneOfArthropodsEnchantment();
+    abstract fun getRespawnLocation(player: Player): Location?
 
-    public abstract @Nullable Location getRespawnLocation(Player player);
+    abstract fun resetRespawnLocation(player: Player)
 
-    public abstract void resetRespawnLocation(Player player);
+    abstract fun getAttributeModifier(instance: AttributeInstance, key: NamespacedKey): AttributeModifier?
 
-    public abstract @Nullable AttributeModifier getAttributeModifier(AttributeInstance instance, NamespacedKey key);
+    abstract fun dealDryOutDamage(entity: LivingEntity, amount: Int)
 
-    public abstract void dealDryOutDamage(LivingEntity entity, int amount);
+    abstract fun dealDrowningDamage(entity: LivingEntity, amount: Int)
 
-    public abstract void dealDrowningDamage(LivingEntity entity, int amount);
+    abstract fun dealFreezeDamage(entity: LivingEntity, amount: Int)
 
-    public abstract void dealFreezeDamage(LivingEntity entity, int amount);
-
-    public boolean supportsInfiniteDuration() {
-        return true;
+    open fun supportsInfiniteDuration(): Boolean {
+        return true
     }
 
-    public abstract boolean isUnderWater(LivingEntity entity);
+    abstract fun isUnderWater(entity: LivingEntity): Boolean
 
-    public abstract void knockback(LivingEntity entity, double strength, double x, double z);
+    abstract fun knockback(entity: LivingEntity, strength: Double, x: Double, z: Double)
 
-    public abstract void setFlyingFallDamage(Player player, TriState state);
+    abstract fun setFlyingFallDamage(player: Player, state: TriState)
 
-    public abstract void broadcastSlotBreak(Player player, EquipmentSlot slot, Collection<Player> players);
+    abstract fun broadcastSlotBreak(player: Player, slot: EquipmentSlot, players: MutableCollection<Player>)
 
-    public abstract void sendBlockDamage(Player player, Location location, float damage, Entity entity);
+    abstract fun sendBlockDamage(player: Player, location: Location, damage: Float, entity: Entity)
 
-    public abstract void addAttributeModifier(AttributeInstance instance, NamespacedKey key, String name, double amount, AttributeModifier.Operation operation);
+    abstract fun addAttributeModifier(
+        instance: AttributeInstance,
+        key: NamespacedKey,
+        name: String,
+        amount: Double,
+        operation: AttributeModifier.Operation
+    )
 
-    public abstract void setWorldBorderOverlay(Player player, boolean show);
+    abstract fun setWorldBorderOverlay(player: Player, show: Boolean)
 
-    public abstract Component applyFont(Component component, Key font);
+    abstract fun applyFont(component: Component, font: Key): Component
 
-    public @Nullable Material getOminousBottle() {
-        return null;
-    }
+    open val ominousBottle: Material?
+        get() = null
 
-    public abstract @NotNull Attribute getArmorAttribute();
+    abstract val armorAttribute: Attribute
 
-    public abstract @NotNull Attribute getMaxHealthAttribute();
+    abstract val maxHealthAttribute: Attribute
 
-    public abstract @NotNull Attribute getMovementSpeedAttribute();
+    abstract val movementSpeedAttribute: Attribute
 
-    public abstract @NotNull Attribute getFlyingSpeedAttribute();
+    abstract val flyingSpeedAttribute: Attribute
 
-    public abstract @NotNull Attribute getAttackDamageAttribute();
+    abstract val attackDamageAttribute: Attribute
 
-    public abstract @NotNull Attribute getAttackKnockbackAttribute();
+    abstract val attackKnockbackAttribute: Attribute
 
-    public abstract @NotNull Attribute getAttackSpeedAttribute();
+    abstract val attackSpeedAttribute: Attribute
 
-    public abstract @NotNull Attribute getArmorToughnessAttribute();
+    abstract val armorToughnessAttribute: Attribute
 
-    public abstract @NotNull Attribute getLuckAttribute();
+    abstract val luckAttribute: Attribute
 
-    public abstract @NotNull Attribute getHorseJumpStrengthAttribute();
+    abstract val horseJumpStrengthAttribute: Attribute
 
-    public abstract @NotNull Attribute getSpawnReinforcementsAttribute();
+    abstract val spawnReinforcementsAttribute: Attribute
 
-    public abstract @NotNull Attribute getFollowRangeAttribute();
+    abstract val followRangeAttribute: Attribute
 
-    public abstract @NotNull Attribute getKnockbackResistanceAttribute();
+    abstract val knockbackResistanceAttribute: Attribute
 
-    public abstract @Nullable Attribute getFallDamageMultiplierAttribute();
+    abstract val fallDamageMultiplierAttribute: Attribute?
 
-    public abstract @Nullable Attribute getMaxAbsorptionAttribute();
+    abstract val maxAbsorptionAttribute: Attribute?
 
-    public abstract @Nullable Attribute getSafeFallDistanceAttribute();
+    abstract val safeFallDistanceAttribute: Attribute?
 
-    public abstract @Nullable Attribute getScaleAttribute();
+    abstract val scaleAttribute: Attribute?
 
-    public abstract @Nullable Attribute getStepHeightAttribute();
+    abstract val stepHeightAttribute: Attribute?
 
-    public abstract @Nullable Attribute getGravityAttribute();
+    abstract val gravityAttribute: Attribute?
 
-    public abstract @Nullable Attribute getJumpStrengthAttribute();
+    abstract val jumpStrengthAttribute: Attribute?
 
-    public abstract @Nullable Attribute getBurningTimeAttribute();
+    abstract val burningTimeAttribute: Attribute?
 
-    public abstract @Nullable Attribute getExplosionKnockbackResistanceAttribute();
+    abstract val explosionKnockbackResistanceAttribute: Attribute?
 
-    public abstract @Nullable Attribute getMovementEfficiencyAttribute();
+    abstract val movementEfficiencyAttribute: Attribute?
 
-    public abstract @Nullable Attribute getOxygenBonusAttribute();
+    abstract val oxygenBonusAttribute: Attribute?
 
-    public abstract @Nullable Attribute getWaterMovementEfficiencyAttribute();
+    abstract val waterMovementEfficiencyAttribute: Attribute?
 
-    public abstract @Nullable Attribute getTemptRangeAttribute();
+    abstract val temptRangeAttribute: Attribute?
 
-    public abstract @Nullable Attribute getBlockInteractionRangeAttribute();
+    abstract val blockInteractionRangeAttribute: Attribute?
 
-    public abstract @Nullable Attribute getEntityInteractionRangeAttribute();
+    abstract val entityInteractionRangeAttribute: Attribute?
 
-    public abstract @Nullable Attribute getBlockBreakSpeedAttribute();
+    abstract val blockBreakSpeedAttribute: Attribute?
 
-    public abstract @Nullable Attribute getMiningEfficiencyAttribute();
+    abstract val miningEfficiencyAttribute: Attribute?
 
-    public abstract @Nullable Attribute getSneakingSpeedAttribute();
+    abstract val sneakingSpeedAttribute: Attribute?
 
-    public abstract @Nullable Attribute getSubmergedMiningSpeedAttribute();
+    abstract val submergedMiningSpeedAttribute: Attribute?
 
-    public abstract @Nullable Attribute getSweepingDamageRatioAttribute();
+    abstract val sweepingDamageRatioAttribute: Attribute?
 
-    public abstract @NotNull ItemMeta setCustomModelData(ItemMeta meta, int cmd);
+    abstract fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta
 }

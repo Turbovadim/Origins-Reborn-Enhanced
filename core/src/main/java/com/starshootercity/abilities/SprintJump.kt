@@ -13,7 +13,7 @@ import org.bukkit.potion.PotionEffect
 
 class SprintJump : VisibleAbility, Listener {
 
-    private val potionEffect = PotionEffect(NMSInvoker.getJumpBoostEffect(), 5, 1, false, false)
+    private val potionEffect = PotionEffect(NMSInvoker.jumpBoostEffect, 5, 1, false, false)
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {
@@ -30,10 +30,10 @@ class SprintJump : VisibleAbility, Listener {
         return Key.key("origins:sprint_jump")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You are able to jump higher by jumping while sprinting.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Strong Ankles", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Strong Ankles", LineComponent.LineType.TITLE)
 }

@@ -15,12 +15,12 @@ class VelvetPaws : VisibleAbility, Listener {
         return Key.key("origins:velvet_paws")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "Your footsteps don't cause any vibrations which could otherwise be picked up by nearby lifeforms.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Velvet Paws", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Velvet Paws", LineComponent.LineType.TITLE)
 
     @EventHandler
     fun onGenericGameEvent(event: GenericGameEvent) {

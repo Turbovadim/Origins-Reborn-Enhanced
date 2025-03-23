@@ -47,10 +47,10 @@ class SlowFalling : VisibleAbility, Listener {
         return Key.key("origins:slow_falling")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You fall as gently to the ground as a feather would, unless you sneak.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor("Featherweight", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = makeLineFor("Featherweight", LineComponent.LineType.TITLE)
 }

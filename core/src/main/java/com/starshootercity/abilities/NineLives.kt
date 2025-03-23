@@ -12,17 +12,17 @@ class NineLives : AttributeModifierAbility, VisibleAbility {
         return Key.key("origins:nine_lives")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You have 1 less heart of health than humans.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Nine Lives",
         LineComponent.LineType.TITLE
     )
 
-    override val attribute: Attribute = NMSInvoker.getMaxHealthAttribute()
+    override val attribute: Attribute = NMSInvoker.maxHealthAttribute
 
     override val amount: Double = -2.0
 

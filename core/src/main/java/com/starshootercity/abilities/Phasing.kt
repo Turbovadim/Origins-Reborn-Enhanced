@@ -31,12 +31,12 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
 
     override val dependencyKey: Key = Key.key("origins:phantomize")
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "While phantomized, you can walk through solid material, except Obsidian.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Phasing",
         LineComponent.LineType.TITLE
     )
@@ -130,12 +130,12 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
         val helmet = player.inventory.helmet
         var aquaAffinity = false
         if (helmet != null) {
-            aquaAffinity = helmet.containsEnchantment(NMSInvoker.getAquaAffinityEnchantment())
+            aquaAffinity = helmet.containsEnchantment(NMSInvoker.aquaAffinityEnchantment)
         }
         return BlockMiningContext(
             player.inventory.itemInMainHand,
-            player.getPotionEffect(NMSInvoker.getHasteEffect()),
-            player.getPotionEffect(NMSInvoker.getMiningFatigueEffect()),
+            player.getPotionEffect(NMSInvoker.hasteEffect),
+            player.getPotionEffect(NMSInvoker.miningFatigueEffect),
             player.getPotionEffect(PotionEffectType.CONDUIT_POWER),
             NMSInvoker.isUnderWater(player),
             aquaAffinity,

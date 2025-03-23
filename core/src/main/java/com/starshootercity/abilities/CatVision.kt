@@ -98,12 +98,12 @@ open class CatVision : VisibleAbility, Listener {
         return Key.key("origins:cat_vision")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You can slightly see in the dark when not in water.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Nocturnal",
         LineComponent.LineType.TITLE
     )

@@ -12,12 +12,12 @@ class MoreExhaustion : VisibleAbility, Listener {
         return Key.key("origins:more_exhaustion")
     }
 
-    override val description: MutableList<LineComponent?> = makeLineFor(
+    override val description: MutableList<LineComponent> = makeLineFor(
         "You exhaust much quicker than others, thus requiring you to eat more.",
         LineComponent.LineType.DESCRIPTION
     )
 
-    override val title: MutableList<LineComponent?> = makeLineFor(
+    override val title: MutableList<LineComponent> = makeLineFor(
         "Large Appetite",
         LineComponent.LineType.TITLE
     )

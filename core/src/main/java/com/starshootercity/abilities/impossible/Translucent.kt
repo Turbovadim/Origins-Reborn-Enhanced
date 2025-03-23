@@ -15,12 +15,12 @@ class Translucent : VisibleAbility {
         return Key.key("origins:translucent")
     }
 
-    override val description: MutableList<LineComponent?>
+    override val description: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(
             "Your skin is translucent.",
             LineComponent.LineType.DESCRIPTION
         )
 
-    override val title: MutableList<LineComponent?>
+    override val title: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Translucent", LineComponent.LineType.TITLE)
 }
