@@ -25,7 +25,7 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
         return player.isInWater && !player.isInBubbleColumn
     }
 
-    override fun getFlightSpeed(player: Player?): Float {
+    override fun getFlightSpeed(player: Player): Float {
         return 0.06f
     }
 
@@ -65,19 +65,18 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
 
     @EventHandler
     fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
-        runForAbility(event.getPlayer()) { player ->
-            if (player!!.isInWater) event.isCancelled = true
+        runForAbility(event.player) { player ->
+            if (player.isInWater) event.isCancelled = true
         }
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "When underwater, you do not sink to the ground unless you want to.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "When underwater, you do not sink to the ground unless you want to.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Like Water", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Like Water",
+        LineComponent.LineType.TITLE
+    )
 }

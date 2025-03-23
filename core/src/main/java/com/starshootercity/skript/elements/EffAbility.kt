@@ -1,64 +1,67 @@
-package com.starshootercity.skript.elements;
+package com.starshootercity.skript.elements
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Effect;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser;
-import ch.njol.util.Kleenean;
-import com.starshootercity.abilities.Ability;
-import com.starshootercity.abilities.AbilityRegister;
-import com.starshootercity.skript.NamedSkriptAbility;
-import com.starshootercity.skript.SkriptAbility;
-import net.kyori.adventure.key.Key;
-import org.bukkit.event.Event;
-import org.intellij.lang.annotations.Subst;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import ch.njol.skript.Skript
+import ch.njol.skript.lang.Effect
+import ch.njol.skript.lang.Expression
+import ch.njol.skript.lang.SkriptParser
+import ch.njol.util.Kleenean
+import com.starshootercity.abilities.Ability
+import com.starshootercity.abilities.AbilityRegister.registerAbility
+import com.starshootercity.skript.NamedSkriptAbility
+import com.starshootercity.skript.SkriptAbility
+import net.kyori.adventure.key.Key
+import org.bukkit.event.Event
 
-@SuppressWarnings("unused")
-public class EffAbility extends Effect {
+class EffAbility : Effect() {
+    private var ability: Expression<String?>? = null
+    private var title: Expression<String?>? = null
+    private var description: Expression<String?>? = null
 
-    static {
-        Skript.registerEffect(EffAbility.class, "(register|create) [(a new|an|a)] (ability|power) with (key|id) %string% [[and] (title|name) %-string% [and] description %-string%]");
-    }
+    override fun execute(event: Event) {
+        val keyString = ability?.getSingle(event) ?: return
 
-    @Override
-    protected void execute(@NotNull Event event) {
-        if (ability == null) return;
-        @Subst("skript:ability") String key = ability.getSingle(event);
-        if (key == null) return;
-        if ((title == null) != (description == null)) return;
-        Ability a;
-        if (title != null) {
-            String titl = title.getSingle(event);
-            String desc = description.getSingle(event);
-            a = new NamedSkriptAbility(Key.key(key), titl, desc);
-        } else a = new SkriptAbility(Key.key(key));
-        AbilityRegister.registerAbility(
-                a,
-                Skript.getInstance()
-        );
-    }
+        // Check that either both title and description are provided or neither is.
+        if ((title == null) xor (description == null)) return
 
-    private Expression<String> ability;
-    private Expression<String> title;
-    private Expression<String> description;
-
-    @Override
-    public @NotNull String toString(@Nullable Event event, boolean debug) {
-        if (event == null) return "Ability register effect";
-        if ((title != null) && (description != null)) {
-            return "Ability register effect with expression ability\">: " + ability.toString(event, debug) + " and title\">: " + title.toString(event, debug) + " and description\">: " + description.toString(event, debug);
+        val key = Key.key(keyString)
+        val abilityInstance: Ability = if (title != null) {
+            NamedSkriptAbility(key, title!!.getSingle(event)!!, description!!.getSingle(event)!!)
+        } else {
+            SkriptAbility(key)
         }
-        return "Ability register effect with expression ability\">: " + ability.toString(event, debug);
+        registerAbility(abilityInstance, Skript.getInstance())
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public boolean init(Expression<?> @NotNull [] expressions, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult) {
-        this.ability = (Expression<String>) expressions[0];
-        this.title = (Expression<String>) expressions[1];
-        this.description = (Expression<String>) expressions[2];
-        return true;
+    override fun toString(event: Event?, debug: Boolean): String {
+        return if (event == null) {
+            "Ability register effect"
+        } else if (title != null && description != null) {
+            "Ability register effect with expression ability: ${ability?.toString(event, debug)} " +
+                    "and title: ${title?.toString(event, debug)} and description: ${description?.toString(event, debug)}"
+        } else {
+            "Ability register effect with expression ability: ${ability?.toString(event, debug)}"
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun init(
+        expressions: Array<Expression<*>?>,
+        matchedPattern: Int,
+        isDelayed: Kleenean,
+        parseResult: SkriptParser.ParseResult
+    ): Boolean {
+        ability = expressions[0] as Expression<String?>?
+        title = expressions[1] as Expression<String?>?
+        description = expressions[2] as Expression<String?>?
+        return true
+    }
+
+    companion object {
+        init {
+            Skript.registerEffect(
+                EffAbility::class.java,
+                "(register|create) [(a new|an|a)] (ability|power) with (key|id) %string% [[and] (title|name) %-string% [and] description %-string%]"
+            )
+        }
     }
 }

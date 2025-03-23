@@ -9,7 +9,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 object OriginKeyValuePairs : IntIdTable("origin_key_value_pairs") {
     val parent = reference("parent_id", UUIDOrigins) // связь с UUIDOrigins
     val layer = varchar("layer", 128)
-    val origin = varchar("origin", 512)
+    val origin = varchar("origin", 512).nullable()
 }
 
 // Entity класс для работы с OriginKeyValuePairs
@@ -33,6 +33,6 @@ data class OriginKeyValuePair(
     val id: Int,
     val parentId: Int,
     val layer: String,
-    val origin: String
+    val origin: String?
 )
 

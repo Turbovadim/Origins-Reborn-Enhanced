@@ -10,14 +10,13 @@ class MoreKineticDamage : VisibleAbility, Listener {
         return Key.key("origins:more_kinetic_damage")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You take more damage from falling and flying into blocks.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You take more damage from falling and flying into blocks.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Brittle Bones", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Brittle Bones",
+        LineComponent.LineType.TITLE
+    )
 }

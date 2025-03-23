@@ -11,6 +11,7 @@ import com.starshootercity.AddonLoader.getRandomOrigin
 import com.starshootercity.AddonLoader.getTextFor
 import com.starshootercity.AddonLoader.shouldOpenSwapMenu
 import com.starshootercity.OriginSwapper.LineData.LineComponent.LineType
+import com.starshootercity.OriginsReborn.Companion.bukkitDispatcher
 import com.starshootercity.OriginsReborn.Companion.getCooldowns
 import com.starshootercity.OriginsReborn.Companion.instance
 import com.starshootercity.abilities.AbilityRegister
@@ -18,11 +19,16 @@ import com.starshootercity.abilities.AttributeModifierAbility
 import com.starshootercity.abilities.DefaultSpawnAbility
 import com.starshootercity.abilities.VisibleAbility
 import com.starshootercity.commands.OriginCommand
+import com.starshootercity.database.DatabaseManager
 import com.starshootercity.events.PlayerSwapOriginEvent
 import com.starshootercity.events.PlayerSwapOriginEvent.SwapReason
 import com.starshootercity.geysermc.GeyserSwapper
 import com.starshootercity.packetsenders.NMSInvoker
 import fr.xephi.authme.api.v3.AuthMeApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -30,9 +36,6 @@ import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.*
 import org.bukkit.attribute.Attribute
-import org.bukkit.configuration.InvalidConfigurationException
-import org.bukkit.configuration.file.FileConfiguration
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -48,8 +51,7 @@ import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scheduler.BukkitRunnable
-import java.io.File
-import java.io.IOException
+import org.endera.enderalib.utils.async.ioDispatcher
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -64,81 +66,94 @@ class OriginSwapper : Listener {
             val meta = item.itemMeta
             if (meta == null) return
             val itemContainer = meta.persistentDataContainer
-            if (itemContainer.has<Byte?, Boolean?>(displayKey, BooleanPDT.Companion.BOOLEAN)) {
+            if (itemContainer.has(displayKey, BooleanPDT.Companion.BOOLEAN)) {
                 event.isCancelled = true
             }
-            val layer = itemContainer.getOrDefault<String?, String>(layerKey, PersistentDataType.STRING, "origin")
+            val layer = itemContainer.getOrDefault(layerKey, PersistentDataType.STRING, "origin")
             val player = event.whoClicked
-            if (player is Player) {
-                val currentItem = event.currentItem
-                if (currentItem == null || currentItem.itemMeta == null) return
-                val currentItemMeta = currentItem.itemMeta
-                val currentItemContainer = currentItemMeta.persistentDataContainer
-                val page = currentItemContainer.get<Int?, Int?>(pageSetKey, PersistentDataType.INTEGER)
-                if (page != null) {
-                    val cost = currentItemContainer.getOrDefault<Byte?, Boolean?>(costKey, BooleanPDT.Companion.BOOLEAN, false)
-                    val allowUnchoosable = currentItemContainer.getOrDefault<Byte?, Boolean?>(
-                        displayOnlyKey,
-                        BooleanPDT.Companion.BOOLEAN,
-                        false
-                    )
-                    val scroll = currentItemContainer.get<Int?, Int?>(pageScrollKey, PersistentDataType.INTEGER)
-                    if (scroll == null) return
-                    player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                    openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable, layer)
+            CoroutineScope(ioDispatcher).launch {
+                if (player is Player) {
+                    val currentItem = event.currentItem
+                    if (currentItem == null || currentItem.itemMeta == null) return@launch
+                    val currentItemMeta = currentItem.itemMeta
+                    val currentItemContainer = currentItemMeta.persistentDataContainer
+                    val page = currentItemContainer.get(pageSetKey, PersistentDataType.INTEGER)
+                    if (page != null) {
+                        val cost = currentItemContainer.getOrDefault(costKey, BooleanPDT.Companion.BOOLEAN, false)
+                        val allowUnchoosable = currentItemContainer.getOrDefault(
+                            displayOnlyKey,
+                            BooleanPDT.Companion.BOOLEAN,
+                            false
+                        )
+                        val scroll = currentItemContainer.get(pageScrollKey, PersistentDataType.INTEGER)
+                        if (scroll == null) return@launch
+                        withContext(bukkitDispatcher) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                        }
+                        openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable, layer)
+                    }
+                    if (currentItemContainer.has(confirmKey, BooleanPDT.Companion.BOOLEAN)) {
+                        var amount = config.swapCommand.vault.defaultCost
+
+                        if (!player.hasPermission(config.swapCommand.vault.bypassPermission) && currentItemContainer.has(
+                                costsCurrencyKey, PersistentDataType.INTEGER
+                            )
+                        ) {
+                            amount = currentItemContainer.getOrDefault(
+                                costsCurrencyKey,
+                                PersistentDataType.INTEGER,
+                                amount
+                            )
+                            if (!instance.economy!!.has(player, amount.toDouble())) {
+                                return@launch
+                            } else {
+                                origins.economy!!.withdrawPlayer(player, amount.toDouble())
+                            }
+                        }
+                        val originName = item.itemMeta.persistentDataContainer
+                            .get(originKey, PersistentDataType.STRING)
+                        if (originName == null) return@launch
+                        val origin = if (originName.equals("random", ignoreCase = true)) {
+                            val excludedOrigins = config.originSelection.randomOption.exclude
+
+                            val origins = getOrigins(layer)
+                            val iterator = origins.iterator()
+                            while (iterator.hasNext()) {
+                                val origin1 = iterator.next()
+                                if (excludedOrigins.contains(origin1.getName()) || origin1.isUnchoosable(player)) {
+                                    iterator.remove()
+                                }
+                            }
+                            if (origins.isEmpty()) {
+                                getFirstOrigin(layer)
+                            } else {
+                                origins[random.nextInt(origins.size)]
+                            }
+                        } else {
+                            getOrigin(originName)
+                        }
+
+                        val reason = getReason(item)
+
+                        withContext(bukkitDispatcher) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            player.closeInventory()
+                        }
+
+                        if (reason == SwapReason.ORB_OF_ORIGIN) orbCooldown.put(player, System.currentTimeMillis())
+                        val resetPlayer: Boolean = shouldResetPlayer(reason)
+                        if (origin!!.isUnchoosable(player)) {
+                            openOriginSwapper(player, reason, 0, 0, layer)
+                            return@launch
+                        }
+                        getCooldowns().setCooldown(player, OriginCommand.key)
+                        setOrigin(player, origin, reason, resetPlayer, layer)
+                    } else if (currentItemContainer.has(
+                            closeKey,
+                            BooleanPDT.Companion.BOOLEAN
+                        )
+                    ) event.whoClicked.closeInventory()
                 }
-                if (currentItemContainer.has<Byte?, Boolean?>(confirmKey, BooleanPDT.Companion.BOOLEAN)) {
-                    var amount = config.swapCommand.vault.defaultCost
-
-                    if (!player.hasPermission(config.swapCommand.vault.bypassPermission) && currentItemContainer.has<Int?, Int?>(
-                            costsCurrencyKey, PersistentDataType.INTEGER
-                        )
-                    ) {
-                        amount = currentItemContainer.getOrDefault<Int?, Int?>(
-                            costsCurrencyKey,
-                            PersistentDataType.INTEGER,
-                            amount
-                        )
-                        if (!instance.economy!!.has(player, amount.toDouble())) {
-                            return
-                        } else {
-                            origins.economy!!.withdrawPlayer(player, amount.toDouble())
-                        }
-                    }
-                    val originName = item.itemMeta.persistentDataContainer
-                        .get(originKey, PersistentDataType.STRING)
-                    if (originName == null) return
-                    val origin = if (originName.equals("random", ignoreCase = true)) {
-                        val excludedOrigins = config.originSelection.randomOption.exclude
-
-                        val origins = getOrigins(layer)
-                        origins.removeIf { origin1: Origin? -> excludedOrigins.contains(origin1!!.getName()) }
-                        origins.removeIf { origin1: Origin? -> origin1!!.isUnchoosable(player) }
-                        if (origins.isEmpty()) {
-                            getFirstOrigin(layer)
-                        } else {
-                            origins[random.nextInt(origins.size)]
-                        }
-                    } else {
-                        getOrigin(originName)
-                    }
-                    val reason = getReason(item)
-                    player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                    player.closeInventory()
-
-                    if (reason == SwapReason.ORB_OF_ORIGIN) orbCooldown.put(player, System.currentTimeMillis())
-                    val resetPlayer: Boolean = shouldResetPlayer(reason)
-                    if (origin!!.isUnchoosable(player)) {
-                        openOriginSwapper(player, reason, 0, 0, layer)
-                        return
-                    }
-                    getCooldowns().setCooldown(player, OriginCommand.key)
-                    setOrigin(player, origin, reason, resetPlayer, layer)
-                } else if (currentItemContainer.has(
-                        closeKey,
-                        BooleanPDT.Companion.BOOLEAN
-                    )
-                ) event.whoClicked.closeInventory()
             }
         }
     }
@@ -150,37 +165,40 @@ class OriginSwapper : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        val player = event.getPlayer()
-        loadOrigins(player)
-        resetAttributes(player)
-        lastJoinedTick.put(player, Bukkit.getCurrentTick())
-        if (player.openInventory.type == InventoryType.CHEST) {
-            return
-        }
-        val config: FileConfiguration = origins.config
-        for (layer in AddonLoader.layers) {
-            val origin: Origin? = getOrigin(player, layer!!)
+        CoroutineScope(ioDispatcher).launch {
+            val player = event.player
+            loadOrigins(player)
+            withContext(bukkitDispatcher) {
+                resetAttributes(player)
+            }
+            lastJoinedTick.put(player, Bukkit.getCurrentTick())
+            if (player.openInventory.type == InventoryType.CHEST) {
+                return@launch
+            }
+            for (layer in AddonLoader.layers) {
+                val origin = getOrigin(player, layer!!)
 
-            if (origin != null) {
-                if (origin.team == null) {
-                    return
-                }
-                origin.team.addPlayer(player)
-            } else {
-                val defaultOrigin = getDefaultOrigin(layer)
-                if (defaultOrigin != null) {
-                    setOrigin(player, defaultOrigin, SwapReason.INITIAL, false, layer)
-                } else if (config.getBoolean("origin-selection.randomise.$layer")) {
-                    selectRandomOrigin(player, SwapReason.INITIAL, layer)
-                } else if (ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                    val delay = config.getInt("geyser.join-form-delay", 20)
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(
-                        origins,
-                        Runnable { GeyserSwapper.openOriginSwapper(player, SwapReason.INITIAL, false, false, layer) },
-                        delay.toLong()
-                    )
+                if (origin != null) {
+                    if (origin.team == null) {
+                        return@launch
+                    }
+                    origin.team.addPlayer(player)
                 } else {
-                    openOriginSwapper(player, SwapReason.INITIAL, 0, 0, layer)
+                    val defaultOrigin = getDefaultOrigin(layer)
+                    if (defaultOrigin != null) {
+                        setOrigin(player, defaultOrigin, SwapReason.INITIAL, false, layer)
+
+                    } else if (OriginsReborn.mainConfig.originSelection.randomize[layer] == true) {
+                        selectRandomOrigin(player, SwapReason.INITIAL, layer)
+                    } else if (ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
+                        val delayMillis = OriginsReborn.mainConfig.geyser.joinFormDelay.toLong()
+                        delay(delayMillis)
+                        withContext(bukkitDispatcher) {
+                            GeyserSwapper.openOriginSwapper(player, SwapReason.INITIAL, false, false, layer)
+                        }
+                    } else {
+                        openOriginSwapper(player, SwapReason.INITIAL, 0, 0, layer)
+                    }
                 }
             }
         }
@@ -196,38 +214,48 @@ class OriginSwapper : Listener {
     }
 
     private fun updateAllPlayers() {
-        val config = OriginsReborn.mainConfig
-        val delay: Int = config.originSelection.delayBeforeRequired
+        CoroutineScope(ioDispatcher).launch {
+            val config = OriginsReborn.mainConfig
+            val delay: Int = config.originSelection.delayBeforeRequired
 
-        for (player in Bukkit.getOnlinePlayers()) {
-            lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick())
-            if (Bukkit.getCurrentTick() - delay < lastJoinedTick[player]!!) {
-                continue
-            }
-            val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
-            if (shouldDisallowSelection(player, reason)) {
-                player.allowFlight = AbilityRegister.canFly(player, true)
-                AbilityRegister.updateFlight(player, true)
-                resetAttributes(player)
-                continue
-            }
-            if (!config.miscSettings.disableFlightStuff) {
-                player.allowFlight = AbilityRegister.canFly(player, false)
-                AbilityRegister.updateFlight(player, false)
-            }
-
-            player.isInvisible = AbilityRegister.isInvisible(player)
-            applyAttributeChanges(player)
-            val layer = getFirstUnselectedLayer(player)
-            if (layer == null) {
-                continue
-            }
-            if (player.openInventory.type != InventoryType.CHEST) {
-                if (getDefaultOrigin(layer) != null) {
-                    setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
+            for (player in Bukkit.getOnlinePlayers()) {
+                lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick())
+                if (Bukkit.getCurrentTick() - delay < lastJoinedTick[player]!!) {
+                    continue
                 }
-                if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                    openOriginSwapper(player, reason, 0, 0, layer)
+                val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
+
+                if (withContext(bukkitDispatcher) {
+                    if (shouldDisallowSelection(player, reason)) {
+                        player.allowFlight = AbilityRegister.canFly(player, true)
+                        AbilityRegister.updateFlight(player, true)
+                        resetAttributes(player)
+                        true
+                    } else {
+                        false
+                    }
+                }) continue
+
+                withContext(bukkitDispatcher) {
+                    if (!config.miscSettings.disableFlightStuff) {
+                        player.allowFlight = AbilityRegister.canFly(player, false)
+                        AbilityRegister.updateFlight(player, false)
+                    }
+
+                    player.isInvisible = AbilityRegister.isInvisible(player)
+                    applyAttributeChanges(player)
+                }
+                val layer = getFirstUnselectedLayer(player)
+                if (layer == null) {
+                    continue
+                }
+                if (player.openInventory.type != InventoryType.CHEST) {
+                    if (getDefaultOrigin(layer) != null) {
+                        setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
+                    }
+                    if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
+                        openOriginSwapper(player, reason, 0, 0, layer)
+                    }
                 }
             }
         }
@@ -235,28 +263,35 @@ class OriginSwapper : Listener {
 
     @EventHandler
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
-        if (hasNotSelectedAllOrigins(event.getPlayer())) event.isCancelled = true
+        CoroutineScope(ioDispatcher).launch {
+            if (hasNotSelectedAllOrigins(event.player)) event.isCancelled = true
+        }
     }
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageEvent) {
-        val player = event.entity as? Player ?: return
+        CoroutineScope(ioDispatcher).launch {
+            val player = event.entity as? Player ?: return@launch
 
-        if (invulnerableMode.equals("INITIAL", ignoreCase = true) && hasNotSelectedAllOrigins(player)) {
-            event.isCancelled = true
-            return
-        }
+            if (invulnerableMode.equals("INITIAL", ignoreCase = true) && hasNotSelectedAllOrigins(player)) {
+                event.isCancelled = true
+                return@launch
+            }
 
-        if (invulnerableMode.equals("ON", ignoreCase = true)) {
-            player.openInventory.topInventory.getItem(1)?.itemMeta?.persistentDataContainer?.let { container ->
-                if (container.has(originKey, PersistentDataType.STRING)) {
-                    event.isCancelled = true
+            if (invulnerableMode.equals("ON", ignoreCase = true)) {
+                withContext(bukkitDispatcher) {
+                    player.openInventory.topInventory.getItem(1)?.itemMeta?.persistentDataContainer?.let { container ->
+                        if (container.has(originKey, PersistentDataType.STRING)) {
+                            event.isCancelled = true
+                        }
+                    }
                 }
             }
         }
+
     }
 
-    fun hasNotSelectedAllOrigins(player: Player): Boolean {
+    suspend fun hasNotSelectedAllOrigins(player: Player): Boolean {
         for (layer in AddonLoader.layers) {
             if (getOrigin(player, layer!!) == null) return true
         }
@@ -302,22 +337,31 @@ class OriginSwapper : Listener {
     @EventHandler
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         if (nmsInvoker.getRespawnLocation(event.getPlayer()) == null) {
-            val world: World = getRespawnWorld(getOrigins(event.getPlayer()))
-            event.respawnLocation = world.spawnLocation
+            CoroutineScope(ioDispatcher).launch {
+                val originRespawnWorld = getOrigins(event.getPlayer())
+                withContext(bukkitDispatcher) {
+                    val world = getRespawnWorld(originRespawnWorld)
+                    event.respawnLocation = world.spawnLocation
+                }
+            }
         }
-
         lastRespawnReasons.put(event.getPlayer(), event.respawnFlags)
     }
 
     @EventHandler
     fun onPlayerPostRespawn(event: PlayerPostRespawnEvent) {
-        if (lastRespawnReasons[event.getPlayer()]!!.contains(PlayerRespawnEvent.RespawnFlag.END_PORTAL)) return
-        if (OriginsReborn.mainConfig.originSelection.deathOriginChange) {
-            for (layer in AddonLoader.layers) {
-                setOrigin(event.getPlayer(), null, SwapReason.DIED, false, layer!!)
-                if (instance.config.getBoolean("origin-selection.randomise.$layer")) {
-                    selectRandomOrigin(event.getPlayer(), SwapReason.INITIAL, layer)
-                } else openOriginSwapper(event.getPlayer(), SwapReason.INITIAL, 0, 0, layer)
+        CoroutineScope(ioDispatcher).launch {
+            if (lastRespawnReasons[event.player]!!.contains(PlayerRespawnEvent.RespawnFlag.END_PORTAL)) return@launch
+            if (OriginsReborn.mainConfig.originSelection.deathOriginChange) {
+                for (layer in AddonLoader.layers) {
+                    setOrigin(event.player, null, SwapReason.DIED, false, layer!!)
+
+                    if (OriginsReborn.mainConfig.originSelection.randomize[layer] == true) {
+                        selectRandomOrigin(event.player, SwapReason.INITIAL, layer)
+                    } else {
+                        openOriginSwapper(event.player, SwapReason.INITIAL, 0, 0, layer)
+                    }
+                }
             }
         }
     }
@@ -325,35 +369,11 @@ class OriginSwapper : Listener {
     fun getReason(icon: ItemStack): SwapReason {
         return SwapReason.get(
             icon.itemMeta.persistentDataContainer
-                .get<String?, String?>(swapTypeKey, PersistentDataType.STRING)
+                .get(swapTypeKey, PersistentDataType.STRING)
         )
     }
 
     private val invulnerableMode: String = instance.config.getString("origin-selection.invulnerable-mode", "OFF")!!
-
-    init {
-        originFileConfiguration = loadConfiguration("selected-origins.yml").also {
-            originFile = File(instance.dataFolder, "selected-origins.yml")
-        }
-        usedOriginFileConfiguration = loadConfiguration("used-origins.yml").also {
-            usedOriginFile = File(instance.dataFolder, "used-origins.yml")
-        }
-    }
-
-    private fun loadConfiguration(filename: String): YamlConfiguration {
-        val file = File(instance.dataFolder, filename)
-        if (!file.exists()) {
-            file.parentFile.mkdirs()
-            instance.saveResource(filename, false)
-        }
-        return try {
-            YamlConfiguration.loadConfiguration(file)
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        } catch (e: InvalidConfigurationException) {
-            throw RuntimeException(e)
-        }
-    }
 
     class LineData {
         class LineComponent {
@@ -401,8 +421,8 @@ class OriginSwapper : Listener {
             if (size > 0) rawLines.add(LineComponent())
             for (visibleAbility in visibleAbilities) {
                 count++
-                rawLines.addAll(visibleAbility.getUsedTitle())
-                rawLines.addAll(visibleAbility.getUsedDescription())
+                rawLines.addAll(visibleAbility.usedTitle)
+                rawLines.addAll(visibleAbility.usedDescription)
                 if (count < size) rawLines.add(LineComponent())
             }
         }
@@ -420,7 +440,6 @@ class OriginSwapper : Listener {
 
         companion object {
             // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
-            @JvmStatic
             fun makeLineFor(text: String, type: LineType?): MutableList<LineComponent?> {
                 val resultList = mutableListOf<LineComponent?>()
 
@@ -549,7 +568,7 @@ class OriginSwapper : Listener {
         }
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
-        fun openOriginSwapper(
+        suspend fun openOriginSwapper(
             player: Player,
             reason: SwapReason,
             slot: Int,
@@ -561,21 +580,21 @@ class OriginSwapper : Listener {
         }
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
-        fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int) {
+        suspend fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int) {
             openOriginSwapper(player, reason, slot, scrollAmount, "origin")
         }
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
-        fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int, cost: Boolean) {
+        suspend fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int, cost: Boolean) {
             openOriginSwapper(player, reason, slot, scrollAmount, cost, "origin")
         }
 
-        fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int, layer: String) {
+        suspend fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int, layer: String) {
             openOriginSwapper(player, reason, slot, scrollAmount, false, false, layer)
         }
 
         @JvmStatic
-        fun openOriginSwapper(
+        suspend fun openOriginSwapper(
             player: Player,
             reason: SwapReason,
             slot: Int,
@@ -587,7 +606,7 @@ class OriginSwapper : Listener {
         }
 
         @JvmStatic
-        fun openOriginSwapper(
+        suspend fun openOriginSwapper(
             player: Player,
             reason: SwapReason,
             slot: Int,
@@ -597,13 +616,10 @@ class OriginSwapper : Listener {
             layer: String
         ) {
             val config = OriginsReborn.mainConfig
-
             var slotIndex = slot
 
-            // Если выбор заблокирован – выходим
             if (shouldDisallowSelection(player, reason)) return
 
-            // Если причина – INITIAL, пытаемся установить дефолтную опцию
             if (reason == SwapReason.INITIAL) {
                 config.originSelection.defaultOrigin.values.first().let { def ->
                     getOriginByFilename(def)?.let { defaultOrigin ->
@@ -613,21 +629,21 @@ class OriginSwapper : Listener {
                 }
             }
 
-            // Сохраняем последнюю причину свапа
             lastSwapReasons[player] = reason
             val enableRandom = config.originSelection.randomOption.enabled
 
-            // Проверяем, можно ли открыть свапер для данного игрока
             if (!GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly, layer)) return
             val allOrigins = getOrigins(layer)
             if (allOrigins.isEmpty()) return
 
-            // Отбираем только подходящие опции (если не displayOnly)
             val origins = allOrigins.toMutableList()
             if (!displayOnly) {
-                origins.removeIf { origin ->
-                    origin!!.isUnchoosable(player) ||
-                            (origin.hasPermission() && !player.hasPermission(origin.permission!!))
+                val iterator = origins.iterator()
+                while (iterator.hasNext()) {
+                    val origin = iterator.next()
+                    if (origin.isUnchoosable(player) || (origin.hasPermission() && !player.hasPermission(origin.permission!!))) {
+                        iterator.remove()
+                    }
                 }
             }
 
@@ -664,14 +680,14 @@ class OriginSwapper : Listener {
                     "${getTextFor("origin.origins.random.description", "You'll be assigned one of the following:")}\n\n"
                 )
                 origins.forEach { origin ->
-                    if (!excludedOriginNames.contains(origin!!.getName())) {
+                    if (!excludedOriginNames.contains(origin.getName())) {
                         descriptionText.append(origin.getName()).append("\n")
                     }
                 }
                 data = LineData(LineData.makeLineFor(descriptionText.toString(), LineType.DESCRIPTION))
             } else {
                 // Конкретная опция (по индексу)
-                val origin = origins[slotIndex]!!
+                val origin = origins[slotIndex]
                 icon = origin.icon
                 name = origin.getName()
                 nameForDisplay = origin.getNameForDisplay()
@@ -754,21 +770,24 @@ class OriginSwapper : Listener {
 
             // Если стоит опция стоимости – добавляем описание и сохраняем стоимость в метаданных
             if (costAmount != 0 && cost && !player.hasPermission(config.swapCommand.vault.bypassPermission)) {
-                var canPurchase = true
-                if (instance.config.getBoolean("swap-command.vault.permanent-purchases")) {
-                    canPurchase = !usedOriginFileConfiguration.getStringList(player.uniqueId.toString()).contains(name)
-                }
-                if (canPurchase) {
-                    val symbol = config.swapCommand.vault.currencySymbol
-                    val costMessage = if (instance.economy!!.has(player, costAmount.toDouble()))
-                        "This will cost $symbol$costAmount of your balance!"
-                    else
-                        "You need at least %s%s in your balance to do this!"
-                    val costLore = listOf(Component.text(costMessage))
-                    confirmMeta.lore(costLore)
-                    invisibleConfirmMeta.lore(costLore)
-                    confirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
-                    invisibleConfirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
+                val vaultConfig = config.swapCommand.vault
+                CoroutineScope(ioDispatcher).launch {
+                    val canPurchase = !vaultConfig.permanentPurchases || !DatabaseManager.getUsedOrigins(player.uniqueId.toString()).contains(name)
+                    if (canPurchase) {
+                        val symbol = vaultConfig.currencySymbol
+                        val hasFunds = instance.economy!!.has(player, costAmount.toDouble())
+                        val costMessage = if (hasFunds)
+                            "This will cost $symbol$costAmount of your balance!"
+                        else
+                            "You need at least %s%s in your balance to do this!"
+                        val costLore = listOf(Component.text(costMessage))
+                        withContext(bukkitDispatcher) {
+                            confirmMeta.lore(costLore)
+                            invisibleConfirmMeta.lore(costLore)
+                            confirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
+                            invisibleConfirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
+                        }
+                    }
                 }
             }
 
@@ -858,7 +877,9 @@ class OriginSwapper : Listener {
             swapperInventory.setItem(50, invisibleConfirm)
 
             // Открываем инвентарь для игрока
-            player.openInventory(swapperInventory)
+            withContext(bukkitDispatcher) {
+                player.openInventory(swapperInventory)
+            }
         }
 
 
@@ -931,23 +952,23 @@ class OriginSwapper : Listener {
             for (effect in player.activePotionEffects) {
                 player.removePotionEffect(effect.type)
             }
-            val world: World = getRespawnWorld(getOrigins(player))
-            player.teleport(world.spawnLocation)
-            nmsInvoker.resetRespawnLocation(player)
+            CoroutineScope(ioDispatcher).launch {
+                val world: World = getRespawnWorld(getOrigins(player))
+                withContext(bukkitDispatcher) {
+                    player.teleport(world.spawnLocation)
+                    nmsInvoker.resetRespawnLocation(player)
+                }
+            }
         }
 
         fun getRespawnWorld(origin: List<Origin>): World {
 
             origin.flatMap { it.getAbilities() }
                 .filterIsInstance<DefaultSpawnAbility>()
-                .firstNotNullOfOrNull { it.getWorld() }
+                .firstNotNullOfOrNull { it.world }
                 ?.let { return it }
 
-            val overworld = instance.config.getString("worlds.world") ?: run {
-                instance.config.set("worlds.world", "world")
-                instance.saveConfig()
-                "world"
-            }
+            val overworld = OriginsReborn.mainConfig.worlds.world
 
             return Bukkit.getWorld(overworld) ?: Bukkit.getWorlds()[0]
         }
@@ -962,7 +983,7 @@ class OriginSwapper : Listener {
 
         fun applyAttributeChanges(player: Player) {
             AbilityRegister.abilityMap.values.filterIsInstance<AttributeModifierAbility>().forEach { ability ->
-                val instance = runCatching { player.getAttribute(ability.getAttribute()) }.getOrNull() ?: return@forEach
+                val instance = runCatching { player.getAttribute(ability.attribute) }.getOrNull() ?: return@forEach
 
                 val abilityKeyStr = ability.getKey().asString()
                 val key = NamespacedKey(origins, abilityKeyStr.replace(":", "-"))
@@ -1020,19 +1041,19 @@ class OriginSwapper : Listener {
         }
 
 
-        fun selectRandomOrigin(player: Player, reason: SwapReason, layer: String) {
+        suspend fun selectRandomOrigin(player: Player, reason: SwapReason, layer: String) {
             val origin = getRandomOrigin(layer)
             setOrigin(player, origin, reason, shouldResetPlayer(reason), layer)
             openOriginSwapper(player, reason, getOrigins(layer).indexOf(origin), 0, false, true, layer)
         }
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
-        fun getOrigin(player: Player): Origin? {
+        suspend fun getOrigin(player: Player): Origin? {
             return getOrigin(player, "origin")
         }
 
         @JvmStatic
-        fun getOrigin(player: Player, layer: String): Origin? {
+        suspend fun getOrigin(player: Player, layer: String): Origin? {
             return if (player.persistentDataContainer.has(originKey, PersistentDataType.STRING)) {
                 getStoredOrigin(player, layer)
             } else {
@@ -1044,104 +1065,105 @@ class OriginSwapper : Listener {
             }
         }
 
-        fun getStoredOrigin(player: Player, layer: String): Origin? {
+        suspend fun getStoredOrigin(player: Player, layer: String): Origin? {
             val playerId = player.uniqueId.toString()
-            val key = "$playerId.$layer"
-
-            originFileConfiguration.getString(playerId, "null")
-                ?.takeIf { it != "null" && layer == "origin" && !it.contains("MemorySection") }
-                ?.let { oldOrigin ->
-                    originFileConfiguration.set(key, oldOrigin)
-                    saveOrigins()
-                }
-
-            val name = originFileConfiguration.getString(key, "null") ?: "null"
-            return getOrigin(name)
+            
+            val originName = DatabaseManager.getOriginForLayer(playerId, layer) ?: "null"
+            return getOrigin(originName)
         }
 
-        fun loadOrigins(player: Player) {
-            player.persistentDataContainer.remove(originKey)
+
+        suspend fun loadOrigins(player: Player) {
+            withContext(bukkitDispatcher) {
+                player.persistentDataContainer.remove(originKey)
+            }
 
             AddonLoader.layers.filterNotNull().forEach { layer ->
                 getStoredOrigin(player, layer)?.let { origin ->
-                    val pdc = player.persistentDataContainer.get(originKey, PersistentDataType.TAG_CONTAINER)
-                        ?: player.persistentDataContainer.adapterContext.newPersistentDataContainer()
+                    withContext(bukkitDispatcher) {
+                        val pdc = player.persistentDataContainer.get(originKey, PersistentDataType.TAG_CONTAINER)
+                            ?: player.persistentDataContainer.adapterContext.newPersistentDataContainer()
 
-                    pdc.set(
-                        AddonLoader.layerKeys[layer]!!,
-                        PersistentDataType.STRING,
-                        origin.getName().lowercase(Locale.getDefault())
-                    )
+                        pdc.set(
+                            AddonLoader.layerKeys[layer]!!,
+                            PersistentDataType.STRING,
+                            origin.getName().lowercase(Locale.getDefault())
+                        )
 
-                    player.persistentDataContainer.set(originKey, PersistentDataType.TAG_CONTAINER, pdc)
+                        player.persistentDataContainer.set(originKey, PersistentDataType.TAG_CONTAINER, pdc)
+                    }
                 }
             }
         }
 
         @JvmStatic
-        fun getOrigins(player: Player): MutableList<Origin> =
+        suspend fun getOrigins(player: Player): MutableList<Origin> =
             AddonLoader.layers.filterNotNull()
                 .mapNotNull { getOrigin(player, it) }
                 .toMutableList()
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
-        fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean) {
+        suspend fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean) {
             setOrigin(player, origin, reason, resetPlayer, "origin")
         }
 
         @JvmStatic
-        fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean, layer: String) {
-            val playerId = player.uniqueId.toString()
-            val key = "$playerId.$layer"
+        suspend fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean, layer: String) {
+            val uuid = player.uniqueId.toString()
             val swapOriginEvent = PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player, layer), origin)
-            if (!swapOriginEvent.callEvent()) return
+
+            val event = withContext(bukkitDispatcher) {
+                swapOriginEvent.callEvent()
+            }
+            if (!event) return
 
             val newOrigin = swapOriginEvent.newOrigin
+
+
             if (newOrigin == null) {
-                originFileConfiguration.set(key, null)
-                saveOrigins()
-                resetPlayer(player, swapOriginEvent.isResetPlayer)
+                DatabaseManager.updateOrigin(uuid, layer, null)
+                withContext(bukkitDispatcher) {
+                    resetPlayer(player, swapOriginEvent.isResetPlayer)
+                }
                 return
             }
 
-            newOrigin.team?.addPlayer(player)
+            withContext(bukkitDispatcher) {
+                newOrigin.team?.addPlayer(player)
+                getCooldowns().resetCooldowns(player)
+            }
 
-            getCooldowns().resetCooldowns(player)
             val lowerName = newOrigin.getName().lowercase(Locale.getDefault())
+            DatabaseManager.updateOrigin(uuid, layer, lowerName)
+            DatabaseManager.addOriginToHistory(uuid, lowerName)
 
-            originFileConfiguration.set(key, lowerName)
-            saveOrigins()
-
-            val usedOrigins = ArrayList<String?>(usedOriginFileConfiguration.getStringList(playerId))
-            usedOrigins.add(lowerName)
-            usedOriginFileConfiguration.set(playerId, usedOrigins)
-            saveUsedOrigins()
-
-            resetPlayer(player, swapOriginEvent.isResetPlayer)
-            loadOrigins(player)
-        }
-
-
-        private lateinit var originFile: File
-        lateinit var originFileConfiguration: FileConfiguration
-
-        private lateinit var usedOriginFile: File
-        lateinit var usedOriginFileConfiguration: FileConfiguration
-
-        fun saveOrigins() {
-            try {
-                originFileConfiguration.save(originFile)
-            } catch (e: IOException) {
-                throw RuntimeException(e)
+            withContext(bukkitDispatcher) {
+                resetPlayer(player, swapOriginEvent.isResetPlayer)
+                loadOrigins(player)
             }
         }
 
-        fun saveUsedOrigins() {
-            try {
-                usedOriginFileConfiguration.save(usedOriginFile)
-            } catch (e: IOException) {
-                throw RuntimeException(e)
-            }
-        }
+
+//        private lateinit var originFile: File
+//        lateinit var originFileConfiguration: FileConfiguration
+//
+//        private lateinit var usedOriginFile: File
+//        lateinit var usedOriginFileConfiguration: FileConfiguration
+//
+//        fun saveOrigins() {
+//            try {
+//                originFileConfiguration.save(originFile)
+//            } catch (e: IOException) {
+//                throw RuntimeException(e)
+//            }
+//        }
+//
+//        fun saveUsedOrigins() {
+//            try {
+//                usedOriginFileConfiguration.save(usedOriginFile)
+//            } catch (e: IOException) {
+//                throw RuntimeException(e)
+//            }
+//        }
     }
 }

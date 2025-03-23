@@ -14,13 +14,17 @@ class HungerOverTime : DependantAbility, VisibleAbility, Listener {
         return Key.key("origins:hunger_over_time")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("Being phantomized causes you to become hungry.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Being phantomized causes you to become hungry.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Fast Metabolism", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Fast Metabolism",
+        LineComponent.LineType.TITLE
+    )
+
+    override val dependencyKey: Key = Key.key("origins:phantomize")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
@@ -31,8 +35,4 @@ class HungerOverTime : DependantAbility, VisibleAbility, Listener {
         }
     }
 
-
-    override fun getDependencyKey(): Key {
-        return Key.key("origins:phantomize")
-    }
 }

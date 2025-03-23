@@ -20,27 +20,22 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffectType
 
 class StrongArms : MultiAbility, VisibleAbility, Listener {
+
     override fun getKey(): Key {
         return Key.key("origins:strong_arms")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You are strong enough to break natural stones without using a pickaxe.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You are strong enough to break natural stones without using a pickaxe.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Strong Arms", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Strong Arms", LineComponent.LineType.TITLE)
 
-    override fun getAbilities(): MutableList<Ability?> {
-        return mutableListOf(
-            StrongArmsDrops.Companion.strongArmsDrops,
-            StrongArmsBreakSpeed.Companion.strongArmsBreakSpeed
-        )
-    }
+    override val abilities: MutableList<Ability> = mutableListOf(
+        StrongArmsDrops.Companion.strongArmsDrops,
+        StrongArmsBreakSpeed.Companion.strongArmsBreakSpeed
+    )
 
     class StrongArmsDrops : Ability, Listener {
 

@@ -38,10 +38,10 @@ class PumpkinHate : VisibleAbility, Listener {
                 runForAbilityAsync(pumpkinHater) { hater ->
                     withContext(OriginsReborn.bukkitDispatcher) {
                         pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
-                            hater.hidePlayer(origins, pumpkinWearer)
+                            hater.hidePlayer(instance, pumpkinWearer)
                         }
                         nonPumpkinWearers.filter { it != hater }.forEach { other ->
-                            hater.showPlayer(origins, other)
+                            hater.showPlayer(instance, other)
                         }
                     }
                 }
@@ -63,41 +63,17 @@ class PumpkinHate : VisibleAbility, Listener {
         })
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You are afraid of pumpkins. For a good reason.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You are afraid of pumpkins. For a good reason.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Scared of Gourds",
-            LineComponent.LineType.TITLE
-        )
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Scared of Gourds",
+        LineComponent.LineType.TITLE
+    )
 
     override fun getKey(): Key {
         return Key.key("origins:pumpkin_hate")
-    }
-
-    companion object {
-        var origins: OriginsReborn = instance
-        val nmsInvoker: NMSInvoker = NMSInvoker
-        private val AIR_ITEMSTACK = ItemStack(Material.AIR)
-
-        /**
-         * Returns a bit mask representing the player’s current state.
-         */
-        private fun getData(pumpkinWearer: Player): Byte {
-            var data = 0x20
-            if (pumpkinWearer.fireTicks > 0) data = data or 0x01
-            if (pumpkinWearer.isSneaking) data = data or 0x02
-            if (pumpkinWearer.isSprinting) data = data or 0x08
-            if (pumpkinWearer.isSwimming) data = data or 0x10
-            if (pumpkinWearer.isGlowing) data = data or 0x40
-            if (pumpkinWearer.isGliding) data = data or 0x80
-            return data.toByte()
-        }
     }
 }

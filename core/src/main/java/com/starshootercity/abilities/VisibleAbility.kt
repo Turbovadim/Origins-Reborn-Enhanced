@@ -1,25 +1,32 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.starshootercity.AddonLoader;
-import com.starshootercity.OriginSwapper;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.AddonLoader.getTextFor
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
 
-import java.util.List;
+interface VisibleAbility : Ability {
+    val description: List<LineComponent?>
+    val title: List<LineComponent?>
 
-public interface VisibleAbility extends Ability {
-    @NotNull List<OriginSwapper.LineData.LineComponent> getDescription();
-    @NotNull List<OriginSwapper.LineData.LineComponent> getTitle();
+    val usedDescription: List<LineComponent?>
+        get() {
+            val keyText = getKey().toString().replace(":", ".")
+            val text = getTextFor("power.$keyText.description")
+            return if (text != null) {
+                makeLineFor(text, LineComponent.LineType.DESCRIPTION)
+            } else {
+                description
+            }
+        }
 
-    default List<OriginSwapper.LineData.LineComponent> getUsedDescription() {
-        String s = AddonLoader.getTextFor("power." + getKey().toString().replace(":", ".") + ".description");
-        if (s != null) return OriginSwapper.LineData.makeLineFor(s, OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
-        else return getDescription();
-    }
-
-    default List<OriginSwapper.LineData.LineComponent> getUsedTitle() {
-        String s = AddonLoader.getTextFor("power." + getKey().toString().replace(":", ".") + ".name");
-        if (s != null)
-            return OriginSwapper.LineData.makeLineFor(s, OriginSwapper.LineData.LineComponent.LineType.TITLE);
-        else return getTitle();
-    }
+    val usedTitle: List<LineComponent?>
+        get() {
+            val keyText = getKey().toString().replace(":", ".")
+            val text = getTextFor("power.$keyText.name")
+            return if (text != null) {
+                makeLineFor(text, LineComponent.LineType.TITLE)
+            } else {
+                title
+            }
+        }
 }

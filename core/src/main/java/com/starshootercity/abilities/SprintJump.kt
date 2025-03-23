@@ -30,14 +30,10 @@ class SprintJump : VisibleAbility, Listener {
         return Key.key("origins:sprint_jump")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You are able to jump higher by jumping while sprinting.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You are able to jump higher by jumping while sprinting.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Strong Ankles", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Strong Ankles", LineComponent.LineType.TITLE)
 }

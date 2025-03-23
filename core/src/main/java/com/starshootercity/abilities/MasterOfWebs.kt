@@ -132,16 +132,15 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         return Key.key("origins:master_of_webs")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Master of Webs", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Master of Webs",
+        LineComponent.LineType.TITLE
+    )
 
     fun isInCobweb(entity: Entity): Boolean {
         for (start in object : ArrayList<Block?>() {
@@ -162,11 +161,11 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         return false
     }
 
-    override fun canFly(player: Player?): Boolean {
+    override fun canFly(player: Player): Boolean {
         return canFly.getOrDefault(player, false)!!
     }
 
-    override fun getFlightSpeed(player: Player?): Float {
+    override fun getFlightSpeed(player: Player): Float {
         return 0.04f
     }
 

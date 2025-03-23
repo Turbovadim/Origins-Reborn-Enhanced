@@ -16,16 +16,15 @@ class LaunchIntoAir : VisibleAbility, Listener, CooldownAbility {
         return Key.key("origins:launch_into_air")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Every 30 seconds, you are able to launch about 20 blocks up into the air.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Every 30 seconds, you are able to launch about 20 blocks up into the air.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Gift of the Winds", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Gift of the Winds",
+        LineComponent.LineType.TITLE
+    )
 
     @EventHandler
     fun onSneakToggle(event: PlayerToggleSneakEvent) {

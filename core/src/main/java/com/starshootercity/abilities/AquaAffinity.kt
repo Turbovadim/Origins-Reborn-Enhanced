@@ -13,13 +13,9 @@ class AquaAffinity : VisibleAbility, BreakSpeedModifierAbility {
         return Key.key("origins:aqua_affinity")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You may break blocks underwater as others do on land.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor("You may break blocks underwater as others do on land.", LineComponent.LineType.DESCRIPTION)
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Aqua Affinity", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Aqua Affinity", LineComponent.LineType.TITLE)
 
     override fun provideContextFor(player: Player) = with(player) {
         BlockMiningContext(

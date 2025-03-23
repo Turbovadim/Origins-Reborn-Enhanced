@@ -115,17 +115,12 @@ class WeakArms : VisibleAbility, Listener {
         return Key.key("origins:weak_arms")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "When not under the effect of a strength potion, you can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "When not under the effect of a strength potion, you can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Weak Arms", LineComponent.LineType.TITLE)
-    }
-
+    override val title: MutableList<LineComponent?> = makeLineFor("Weak Arms", LineComponent.LineType.TITLE)
     companion object {
         private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
             init {

@@ -12,23 +12,13 @@ class Tailwind : AttributeModifierAbility, VisibleAbility {
         return Key.key("origins:tailwind")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You are a little bit quicker on foot than others.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor("You are a little bit quicker on foot than others.", LineComponent.LineType.DESCRIPTION)
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Tailwind", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Tailwind", LineComponent.LineType.TITLE)
 
-    override fun getAttribute(): Attribute {
-        return NMSInvoker.getMovementSpeedAttribute()
-    }
+    override val attribute: Attribute = NMSInvoker.getMovementSpeedAttribute()
 
-    override fun getAmount(): Double {
-        return 0.2
-    }
+    override val amount: Double = 0.2
 
-    override fun getOperation(): AttributeModifier.Operation {
-        return AttributeModifier.Operation.MULTIPLY_SCALAR_1
-    }
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
 }

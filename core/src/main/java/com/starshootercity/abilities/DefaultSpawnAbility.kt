@@ -1,8 +1,7 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import org.bukkit.World;
-import org.jetbrains.annotations.Nullable;
+import org.bukkit.World
 
-public interface DefaultSpawnAbility extends Ability {
-    @Nullable World getWorld();
+interface DefaultSpawnAbility : Ability {
+    val world: World?
 }

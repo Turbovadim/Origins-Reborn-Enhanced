@@ -17,13 +17,15 @@ class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
         return Key.key("origins:elytra")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You have Elytra wings without needing to equip any.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You have Elytra wings without needing to equip any.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Winged", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Winged",
+        LineComponent.LineType.TITLE
+    )
 
     @EventHandler
     fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
@@ -35,7 +37,7 @@ class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
     }
 
 
-    override fun canFly(player: Player?): Boolean {
+    override fun canFly(player: Player): Boolean {
         return true
     }
 
@@ -56,7 +58,7 @@ class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
         })
     }
 
-    override fun getFlyingFallDamage(player: Player?): TriState {
+    override fun getFlyingFallDamage(player: Player): TriState {
         return TriState.TRUE
     }
 }

@@ -22,14 +22,11 @@ class BurningWrath : VisibleAbility, Listener {
         return Key.key("origins:burning_wrath")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
+    override val description: MutableList<LineComponent?> = makeLineFor(
             "When on fire, you deal additional damage with your attacks.",
             LineComponent.LineType.DESCRIPTION
         )
-    }
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Burning Wrath", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Burning Wrath", LineComponent.LineType.TITLE)
+
 }

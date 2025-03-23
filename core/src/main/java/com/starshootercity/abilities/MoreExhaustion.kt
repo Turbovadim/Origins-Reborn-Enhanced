@@ -12,16 +12,15 @@ class MoreExhaustion : VisibleAbility, Listener {
         return Key.key("origins:more_exhaustion")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You exhaust much quicker than others, thus requiring you to eat more.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You exhaust much quicker than others, thus requiring you to eat more.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Large Appetite", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Large Appetite",
+        LineComponent.LineType.TITLE
+    )
 
     @EventHandler
     fun onEntityExhaustion(event: EntityExhaustionEvent) {

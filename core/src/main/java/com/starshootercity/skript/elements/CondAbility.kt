@@ -1,55 +1,65 @@
-package com.starshootercity.skript.elements;
+package com.starshootercity.skript.elements
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser;
-import ch.njol.util.Kleenean;
-import com.starshootercity.abilities.AbilityRegister;
-import net.kyori.adventure.key.InvalidKeyException;
-import net.kyori.adventure.key.Key;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.intellij.lang.annotations.Subst;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import ch.njol.skript.Skript
+import ch.njol.skript.lang.Condition
+import ch.njol.skript.lang.Expression
+import ch.njol.skript.lang.SkriptParser
+import ch.njol.util.Kleenean
+import com.starshootercity.abilities.AbilityRegister
+import net.kyori.adventure.key.InvalidKeyException
+import net.kyori.adventure.key.Key
+import org.bukkit.entity.Player
+import org.bukkit.event.Event
 
-@SuppressWarnings("unused")
-public class CondAbility extends Condition {
+class CondAbility : Condition() {
+    private var player: Expression<Player?>? = null
+    private var ability: Expression<String?>? = null
 
-    static {
-        Skript.registerCondition(CondAbility.class, "%player% (1¦has|2¦does( not|n't) have) [the] [(ability|power)] [with (id|key)] %string%");
+    override fun check(event: Event): Boolean {
+        val p = player?.getSingle(event) ?: return isNegated
+        val abilityStr = ability?.getSingle(event) ?: return isNegated
+
+        val key = try {
+            Key.key(abilityStr)
+        } catch (_: InvalidKeyException) {
+            return isNegated
+        }
+
+        val registeredAbility = AbilityRegister.abilityMap[key] ?: return isNegated
+        return registeredAbility.hasAbility(p) != isNegated
     }
 
-    Expression<Player> player;
-    Expression<String> ability;
-
-    @Override
-    public boolean check(@NotNull Event event) {
-        Player p = player.getSingle(event);
-        @Subst("skript:ability") String a = ability.getSingle(event);
-        if (p == null || a == null) return isNegated();
-        try {
-            Key key = Key.key(a);
-            if (!AbilityRegister.abilityMap.containsKey(key)) return isNegated();
-            return AbilityRegister.abilityMap.get(key).hasAbility(p) != isNegated();
-        } catch (InvalidKeyException e) {
-            return isNegated();
+    override fun toString(event: Event?, debug: Boolean): String {
+        return if (event == null) {
+            "Player has ability"
+        } else {
+            "Player ${player?.toString(event, debug)} has ability with id ${ability?.toString(event, debug)}"
         }
     }
 
-    @Override
-    public @NotNull String toString(@Nullable Event event, boolean debug) {
-        if (event == null) return "Player has ability";
-        return "Player " + player.toString(event, debug) + " has ability with id " + ability.toString(event, debug);
+    companion object {
+        private const val NEGATION_MARK = 2
+
+        init {
+            Skript.registerCondition(
+                CondAbility::class.java,
+                "%player% (1¦has|2¦does( not|n't) have) [the] [(ability|power)] [with (id|key)] %string%"
+            )
+        }
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public boolean init(Expression<?> @NotNull [] expressions, int matchedPattern, @NotNull Kleenean isDelayed, SkriptParser.@NotNull ParseResult parseResult) {
-        this.player = (Expression<Player>) expressions[0];
-        this.ability = (Expression<String>) expressions[1];
-        setNegated(parseResult.mark == 2);
-        return true;
+    @Suppress("UNCHECKED_CAST")
+    override fun init(
+        expressions: Array<Expression<*>?>,
+        matchedPattern: Int,
+        isDelayed: Kleenean,
+        parseResult: SkriptParser.ParseResult
+    ): Boolean {
+        player = expressions.getOrNull(0) as? Expression<Player?>
+        ability = expressions.getOrNull(1) as? Expression<String?>
+        if (player == null || ability == null) return false
+
+        isNegated = parseResult.mark == NEGATION_MARK
+        return true
     }
 }

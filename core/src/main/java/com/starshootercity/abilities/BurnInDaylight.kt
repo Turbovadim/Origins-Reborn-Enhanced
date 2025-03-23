@@ -13,9 +13,9 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 
 open class BurnInDaylight : VisibleAbility, DependantAbility, Listener {
-    override fun getDependencyType(): DependencyType {
-        return DependencyType.INVERSE
-    }
+
+    override val dependencyType: DependencyType = DependencyType.INVERSE
+
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
@@ -45,18 +45,12 @@ open class BurnInDaylight : VisibleAbility, DependantAbility, Listener {
         return Key.key("origins:burn_in_daylight")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
+    override val description: MutableList<LineComponent?> = makeLineFor(
             "You begin to burn in daylight if you are not invisible.",
             LineComponent.LineType.DESCRIPTION
         )
-    }
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Photoallergic", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Photoallergic", LineComponent.LineType.TITLE)
 
-    override fun getDependencyKey(): Key {
-        return Key.key("origins:phantomize")
-    }
+    override val dependencyKey: Key = Key.key("origins:phantomize")
 }

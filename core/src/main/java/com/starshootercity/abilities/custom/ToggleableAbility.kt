@@ -1,10 +1,12 @@
-package com.starshootercity.abilities.custom;
+package com.starshootercity.abilities.custom
 
-import com.starshootercity.abilities.Ability;
+import com.starshootercity.abilities.Ability
+import com.starshootercity.abilities.custom.ToggleableAbilities.isEnabled
+import com.starshootercity.abilities.custom.ToggleableAbilities.registerAbility
 
-public interface ToggleableAbility extends Ability {
-    default boolean shouldRegister() {
-        ToggleableAbilities.registerAbility(this);
-        return ToggleableAbilities.isEnabled(this);
+interface ToggleableAbility : Ability {
+    fun shouldRegister(): Boolean {
+        registerAbility(this)
+        return isEnabled(this)
     }
 }

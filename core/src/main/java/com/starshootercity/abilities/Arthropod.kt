@@ -30,7 +30,7 @@ class Arthropod : Ability, Listener {
             val level = mainHand.getEnchantmentLevel(baneEnchantment)
             event.damage += 1.25 * level
             val duration = (20 * random.nextDouble(1.0, 1 + (0.5 * level))).toInt()
-            player?.addPotionEffect(
+            player.addPotionEffect(
                 PotionEffect(
                     NMSInvoker.getSlownessEffect(),
                     duration,

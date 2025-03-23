@@ -98,7 +98,7 @@ class OriginsReborn : OriginsAddon() {
             if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
                 isWorldGuardHookInitialized = WorldGuardHook.tryInitialize()
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             isWorldGuardHookInitialized = false
         }
     }
@@ -243,7 +243,7 @@ class OriginsReborn : OriginsAddon() {
             abilities.add(ExtraReach.ExtraReachBlocks.extraReachBlocks)
             abilities.add(ExtraReach.ExtraReachEntities.extraReachEntities)
         }
-        abilities.addAll(ToggleableAbilities.getAbilities())
+        abilities.addAll(ToggleableAbilities.abilities)
         return abilities.toList()
     }
 }

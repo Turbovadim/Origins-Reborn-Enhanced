@@ -12,23 +12,19 @@ class Fragile : AttributeModifierAbility, VisibleAbility {
         return Key.key("origins:fragile")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You have 3 less hearts of health than humans.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You have 3 less hearts of health than humans.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Fragile", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Fragile",
+        LineComponent.LineType.TITLE
+    )
 
-    override fun getAttribute(): Attribute {
-        return NMSInvoker.getMaxHealthAttribute()
-    }
+    override val attribute: Attribute = NMSInvoker.getMaxHealthAttribute()
 
-    override fun getAmount(): Double {
-        return -6.0
-    }
+    override val amount: Double = -6.0
 
-    override fun getOperation(): AttributeModifier.Operation {
-        return AttributeModifier.Operation.ADD_NUMBER
-    }
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 }

@@ -2,6 +2,7 @@ package com.starshootercity.abilities
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.starshootercity.OriginSwapper
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
 import com.starshootercity.OriginsReborn
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
@@ -61,19 +62,15 @@ class Claustrophobia : VisibleAbility, Listener {
         return Key.key("origins:claustrophobia")
     }
 
-    @NotNull
-    override fun getDescription(): List<OriginSwapper.LineData.LineComponent> {
-        return OriginSwapper.LineData.makeLineFor(
+    override val description: List<OriginSwapper.LineData.LineComponent> =
+        makeLineFor(
             "Being somewhere with a low ceiling for too long will weaken you and make you slower.",
             OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
         ).filterNotNull()
-    }
 
-    @NotNull
-    override fun getTitle(): List<OriginSwapper.LineData.LineComponent> {
-        return OriginSwapper.LineData.makeLineFor(
+    override val title: List<OriginSwapper.LineData.LineComponent> =
+        makeLineFor(
             "Claustrophobia",
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         ).filterNotNull()
-    }
 }

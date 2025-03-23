@@ -10,13 +10,12 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 
 class PhantomizeOverlay : DependantAbility, Listener {
+
     override fun getKey(): Key {
         return Key.key("origins:phantomize_overlay")
     }
 
-    override fun getDependencyKey(): Key {
-        return Key.key("origins:phantomize")
-    }
+    override val dependencyKey: Key = Key.key("origins:phantomize")
 
     @EventHandler
     fun onPhantomizeToggle(event: PhantomizeToggleEvent) {
@@ -33,7 +32,7 @@ class PhantomizeOverlay : DependantAbility, Listener {
         updatePhantomizeOverlay(event.getPlayer())
     }
 
-    private fun updatePhantomizeOverlay(player: Player?) {
+    private fun updatePhantomizeOverlay(player: Player) {
         NMSInvoker.setWorldBorderOverlay(player, dependency.isEnabled(player))
     }
 }

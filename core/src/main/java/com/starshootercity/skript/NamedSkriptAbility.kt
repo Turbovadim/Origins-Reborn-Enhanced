@@ -1,30 +1,18 @@
-package com.starshootercity.skript;
+package com.starshootercity.skript
 
-import com.starshootercity.OriginSwapper;
-import com.starshootercity.abilities.VisibleAbility;
-import net.kyori.adventure.key.Key;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.OriginSwapper.LineData.Companion.makeLineFor
+import com.starshootercity.OriginSwapper.LineData.LineComponent
+import com.starshootercity.abilities.VisibleAbility
+import net.kyori.adventure.key.Key
 
-import java.util.List;
+class NamedSkriptAbility(
+    key: Key,
+    title2: String,
+    description2: String
+) : SkriptAbility(key), VisibleAbility {
 
-public class NamedSkriptAbility extends SkriptAbility implements VisibleAbility {
+    override val description: MutableList<LineComponent?> = makeLineFor(description2, LineComponent.LineType.DESCRIPTION)
 
-    private final String title;
-    private final String description;
+    override val title: MutableList<LineComponent?> = makeLineFor(title2, LineComponent.LineType.TITLE)
 
-    public NamedSkriptAbility(Key key, String title, String description) {
-        super(key);
-        this.title = title;
-        this.description = description;
-    }
-
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getDescription() {
-        return OriginSwapper.LineData.makeLineFor(description, OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION);
-    }
-
-    @Override
-    public @NotNull List<OriginSwapper.LineData.LineComponent> getTitle() {
-        return OriginSwapper.LineData.makeLineFor(title, OriginSwapper.LineData.LineComponent.LineType.TITLE);
-    }
 }

@@ -22,20 +22,17 @@ import org.bukkit.persistence.PersistentDataType
 import java.util.function.Predicate
 
 class ScareCreepers : VisibleAbility, Listener {
+
     override fun getKey(): Key {
         return Key.key("origins:scare_creepers")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Creepers are scared of you and will only explode if you attack them first.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Creepers are scared of you and will only explode if you attack them first.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Catlike Appearance", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Catlike Appearance", LineComponent.LineType.TITLE)
 
     @EventHandler
     fun onEntitySpawn(event: EntitySpawnEvent) {

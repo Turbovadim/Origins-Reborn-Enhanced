@@ -158,11 +158,7 @@ class WaterBreathing : Listener, VisibleAbility {
         return Key.key("origins:water_breathing")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Gills", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Gills", LineComponent.LineType.TITLE)
 }

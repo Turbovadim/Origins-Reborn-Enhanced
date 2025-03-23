@@ -23,16 +23,12 @@ class ThrowEnderPearl : VisibleAbility, Listener, CooldownAbility {
         return Key.key("origins:throw_ender_pearl")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Teleportation", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Teleportation", LineComponent.LineType.TITLE)
 
     private val falseEnderPearlKey = NamespacedKey(instance, "false-ender-pearl")
 

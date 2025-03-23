@@ -33,7 +33,7 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
     private val cardinals = listOf(BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH)
 
     @EventHandler
-    fun onServerTickEnd(ignored: ServerTickEndEvent?) {
+    fun onServerTickEnd(event: ServerTickEndEvent?) {
         CoroutineScope(ioDispatcher).launch {
             for (p in Bukkit.getOnlinePlayers().toList()) {
                 runForAbilityAsync(p) { player ->
@@ -111,26 +111,25 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
         return Key.key("origins:climbing")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You are able to climb up any kind of wall, not just ladders.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You are able to climb up any kind of wall, not just ladders.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Climbing", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Climbing",
+        LineComponent.LineType.TITLE
+    )
 
-    override fun canFly(player: Player?): kotlin.Boolean {
+    override fun canFly(player: Player): kotlin.Boolean {
         return canFly.getOrDefault(player, false)!!
     }
 
-    override fun getFlightSpeed(player: Player?): Float {
+    override fun getFlightSpeed(player: Player): Float {
         return 0.05f
     }
 
-    override fun getFlyingFallDamage(player: Player?): TriState {
+    override fun getFlyingFallDamage(player: Player): TriState {
         return TriState.TRUE
     }
 }

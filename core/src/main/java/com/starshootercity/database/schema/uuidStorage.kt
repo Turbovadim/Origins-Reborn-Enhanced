@@ -14,7 +14,7 @@ object UUIDOrigins : IntIdTable("uuid_origins") {
 data class UUIDOrigin(
     val id: Int,
     val uuid: String,
-    val layerOriginPairs: Map<String, String>
+    val layerOriginPairs: Map<String, String?>
 )
 
 // Entity класс для работы с UUIDOrigins

@@ -1,53 +1,51 @@
-package com.starshootercity.abilities.custom;
+package com.starshootercity.abilities.custom
 
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.InvalidConfigurationException
+import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+object ToggleableAbilities {
+    // Store registered abilities in a mutable list.
+    val abilities = mutableListOf<ToggleableAbility>()
 
-public class ToggleableAbilities {
-    public static List<ToggleableAbility> getAbilities() {
-        return List.of(
+    private lateinit var file: File
+    private lateinit var fileConfiguration: FileConfiguration
 
-        );
-    }
-
-    private static File file;
-    private static FileConfiguration fileConfiguration;
-
-    public static void initialize(JavaPlugin plugin) {
-        file = new File(plugin.getDataFolder(), "toggleable-abilities.yml");
+    fun initialize(plugin: JavaPlugin) {
+        file = File(plugin.dataFolder, "toggleable-abilities.yml")
         if (!file.exists()) {
-            boolean ignored = file.getParentFile().mkdirs();
-            plugin.saveResource("toggleable-abilities.yml", false);
+            file.parentFile.mkdirs()
+            plugin.saveResource("toggleable-abilities.yml", false)
         }
 
-
-        fileConfiguration = new YamlConfiguration();
-
+        fileConfiguration = YamlConfiguration()
         try {
-            fileConfiguration.load(file);
-        } catch (IOException | InvalidConfigurationException e) {
-            throw new RuntimeException(e);
+            fileConfiguration.load(file)
+        } catch (e: IOException) {
+            throw RuntimeException("Error loading configuration file", e)
+        } catch (e: InvalidConfigurationException) {
+            throw RuntimeException("Configuration file is invalid", e)
         }
     }
 
-    public static void registerAbility(ToggleableAbility ability) {
-        if (!fileConfiguration.contains(ability.getKey().toString())) {
-            fileConfiguration.set(ability.getKey().toString(), false);
+    @JvmStatic
+    fun registerAbility(ability: ToggleableAbility) {
+        val key = ability.getKey().toString()
+        if (!fileConfiguration.contains(key)) {
+            fileConfiguration.set(key, false)
             try {
-                fileConfiguration.save(file);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                fileConfiguration.save(file)
+            } catch (e: IOException) {
+                throw RuntimeException("Error saving configuration file", e)
             }
         }
     }
 
-    public static boolean isEnabled(ToggleableAbility ability) {
-        return fileConfiguration.getBoolean(ability.toString(), false);
+    @JvmStatic
+    fun isEnabled(ability: ToggleableAbility): Boolean {
+        return fileConfiguration.getBoolean(ability.getKey().toString(), false)
     }
 }

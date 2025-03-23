@@ -60,14 +60,13 @@ class FreshAir : VisibleAbility, Listener {
         return Key.key("origins:fresh_air")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "When sleeping, your bed needs to be at an altitude of at least ${instance.getConfig().getInt("extra-settings.fresh-air-required-sleep-height", 86)} blocks, so you can breathe fresh air.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "When sleeping, your bed needs to be at an altitude of at least ${instance.getConfig().getInt("extra-settings.fresh-air-required-sleep-height", 86)} blocks, so you can breathe fresh air.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Fresh Air", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Fresh Air",
+        LineComponent.LineType.TITLE
+    )
 }

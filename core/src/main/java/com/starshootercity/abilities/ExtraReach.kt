@@ -12,33 +12,28 @@ class ExtraReach : VisibleAbility, MultiAbility {
         return Key.key("origins:extra_reach")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor("You can reach blocks and entities further away.", LineComponent.LineType.DESCRIPTION)
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You can reach blocks and entities further away.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Slender Body", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Slender Body",
+        LineComponent.LineType.TITLE
+    )
 
-    override fun getAbilities(): MutableList<Ability> {
-        return listOf<Ability>(
-            ExtraReachBlocks.Companion.extraReachBlocks,
-            ExtraReachEntities.Companion.extraReachEntities
-        ).toMutableList()
-    }
+    override val abilities: MutableList<Ability> = listOf(
+        ExtraReachBlocks.Companion.extraReachBlocks,
+        ExtraReachEntities.Companion.extraReachEntities
+    ).toMutableList()
 
     class ExtraReachEntities : AttributeModifierAbility {
-        override fun getAttribute(): Attribute {
-            return NMSInvoker.getEntityInteractionRangeAttribute()!!
-        }
 
-        override fun getAmount(): Double {
-            return 1.5
-        }
+        override val attribute: Attribute = NMSInvoker.getEntityInteractionRangeAttribute()!!
 
-        override fun getOperation(): AttributeModifier.Operation {
-            return AttributeModifier.Operation.ADD_NUMBER
-        }
+        override val amount: Double = 1.5
+
+        override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
         override fun getKey(): Key {
             return Key.key("origins:extra_reach_entities")
@@ -50,17 +45,12 @@ class ExtraReach : VisibleAbility, MultiAbility {
     }
 
     class ExtraReachBlocks : AttributeModifierAbility {
-        override fun getAttribute(): Attribute {
-            return NMSInvoker.getBlockInteractionRangeAttribute()!!
-        }
 
-        override fun getAmount(): Double {
-            return 1.5
-        }
+        override val attribute: Attribute = NMSInvoker.getBlockInteractionRangeAttribute()!!
 
-        override fun getOperation(): AttributeModifier.Operation {
-            return AttributeModifier.Operation.ADD_NUMBER
-        }
+        override val amount: Double = 1.5
+
+        override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
         override fun getKey(): Key {
             return Key.key("origins:extra_reach_blocks")

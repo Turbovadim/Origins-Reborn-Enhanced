@@ -1,7 +1,7 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Player
 
-public interface DependencyAbility extends Ability {
-    boolean isEnabled(Player player);
+interface DependencyAbility : Ability {
+    fun isEnabled(player: Player): Boolean
 }

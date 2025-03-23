@@ -1,9 +1,11 @@
 package com.starshootercity.database
 
-import com.starshootercity.database.schema.SelectedOrigins
+import com.starshootercity.database.schema.OriginKeyValuePairs
+import com.starshootercity.database.schema.UUIDOrigins
 import com.starshootercity.database.schema.UsedOrigins
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -18,7 +20,10 @@ fun initDb(dataFolder: File) {
 
     transaction(db) {
         println("Creating missing tables and columns if any...")
-        SchemaUtils.createMissingTablesAndColumns(SelectedOrigins, UsedOrigins)
+        SchemaUtils.createMissingTablesAndColumns(OriginKeyValuePairs, UsedOrigins, UUIDOrigins)
+    }
+    runBlocking {
+        DatabaseManager.fillOriginCache()
     }
 }
 

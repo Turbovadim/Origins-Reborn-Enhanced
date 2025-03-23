@@ -1,6 +1,7 @@
 package com.starshootercity
 
 import com.starshootercity.OriginsReborn.Companion.instance
+import kotlinx.coroutines.runBlocking
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import org.bukkit.entity.Player
 
@@ -18,7 +19,7 @@ class OriginsRebornPlaceholderExpansion(private val layer: String) : Placeholder
     }
 
     override fun onPlaceholderRequest(player: Player, params: String): String? {
-        val origin = OriginSwapper.getOrigin(player, layer)
+        val origin = runBlocking { OriginSwapper.getOrigin(player, layer) }
         if (origin == null) return ""
         return origin.getName()
     }

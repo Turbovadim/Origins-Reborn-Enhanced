@@ -5,6 +5,8 @@ import com.starshootercity.AddonLoader.getTextFor
 import com.starshootercity.OriginsReborn.Companion.NMSInvoker
 import com.starshootercity.OriginsReborn.Companion.instance
 import com.starshootercity.events.PlayerSwapOriginEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
@@ -19,6 +21,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapedRecipe
+import org.endera.enderalib.utils.async.ioDispatcher
 
 class OrbOfOrigin : Listener {
     @EventHandler
@@ -53,16 +56,12 @@ class OrbOfOrigin : Listener {
 
     init {
         Bukkit.removeRecipe(orbKey)
-        val config = instance.config
-        if (config.getBoolean("orb-of-origin.enable-recipe")) {
+        if (OriginsReborn.mainConfig.orbOfOrigin.enableRecipe) {
             val shapedRecipe = ShapedRecipe(orbKey, orb).apply {
                 shape("012", "345", "678")
             }
 
-            val recipeData: List<String> = config.getList("orb-of-origin.recipe")
-                ?.flatMap { row ->
-                    (row as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                } ?: emptyList()
+            val recipeData: List<String> = OriginsReborn.mainConfig.orbOfOrigin.recipe.flatten()
 
             recipeData.forEachIndexed { index, materialName ->
                 val material = Material.matchMaterial(materialName) ?: Material.AIR
@@ -107,31 +106,31 @@ class OrbOfOrigin : Listener {
         }
 
         var opened = false
-        for (layer in AddonLoader.layers) {
-            OriginSwapper.setOrigin(
-                player,
-                null,
-                PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
-                false,
-                layer!!
-            )
-            if (opened) continue
-
-            if (instance.config.getBoolean("orb-of-origin.random.$layer")) {
-                OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
-                val origin = OriginSwapper.getOrigin(player, layer)
-                val index = getOrigins(layer).indexOf(origin)
-                OriginSwapper.openOriginSwapper(
+        CoroutineScope(ioDispatcher).launch {
+            for (layer in AddonLoader.layers) {
+                OriginSwapper.setOrigin(
                     player,
+                    null,
                     PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
-                    index,
-                    0,
                     false,
-                    true,
-                    layer
+                    layer!!
                 )
-            } else {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(instance) {
+                if (opened) continue
+
+                if (instance.config.getBoolean("orb-of-origin.random.$layer")) {
+                    OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
+                    val origin = OriginSwapper.getOrigin(player, layer)
+                    val index = getOrigins(layer).indexOf(origin)
+                    OriginSwapper.openOriginSwapper(
+                        player,
+                        PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                        index,
+                        0,
+                        false,
+                        true,
+                        layer
+                    )
+                } else {
                     OriginSwapper.openOriginSwapper(
                         player,
                         PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
@@ -140,8 +139,8 @@ class OrbOfOrigin : Listener {
                         layer
                     )
                 }
+                opened = true
             }
-            opened = true
         }
     }
 

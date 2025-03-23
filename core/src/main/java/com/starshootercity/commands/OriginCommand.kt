@@ -19,6 +19,8 @@ import com.starshootercity.events.PlayerSwapOriginEvent
 import com.starshootercity.util.CompressionUtils
 import com.starshootercity.util.CompressionUtils.decompressFiles
 import com.starshootercity.util.testBenchmarks
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -29,6 +31,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import org.bukkit.util.StringUtil
+import org.endera.enderalib.utils.async.ioDispatcher
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -48,45 +51,39 @@ class OriginCommand : CommandExecutor, TabCompleter {
                 return true
             }
             "swap" -> {
-                if (sender is Player) {
-                    if (getCooldowns().hasCooldown(sender, key)) {
-                        sender.sendMessage(Component.text("You are on cooldown.").color(NamedTextColor.RED))
-                        return true
-                    }
-                    if (OriginsReborn.instance.getConfig().getBoolean("swap-command.enabled")) {
-                        if (allowOriginSwapCommand(sender)) {
-                            val layer = if (args.size == 2) args[1]
-                            else "origin"
-                            openOriginSwapper(
-                                sender,
-                                PlayerSwapOriginEvent.SwapReason.COMMAND,
-                                0,
-                                0,
-                                OriginsReborn.instance.isVaultEnabled,
-                                layer
-                            )
+                CoroutineScope(ioDispatcher).launch {
+                    if (sender is Player) {
+                        if (getCooldowns().hasCooldown(sender, key)) {
+                            sender.sendMessage(Component.text("You are on cooldown.").color(NamedTextColor.RED))
+                            return@launch
+                        }
+                        if (OriginsReborn.instance.getConfig().getBoolean("swap-command.enabled")) {
+                            if (allowOriginSwapCommand(sender)) {
+                                val layer = if (args.size == 2) args[1]
+                                else "origin"
+                                openOriginSwapper(
+                                    sender,
+                                    PlayerSwapOriginEvent.SwapReason.COMMAND,
+                                    0,
+                                    0,
+                                    OriginsReborn.instance.isVaultEnabled,
+                                    layer
+                                )
+                            } else {
+                                sender.sendMessage(Component.text(OriginsReborn.mainConfig.messages.noSwapCommandPermissions))
+                            }
                         } else {
                             sender.sendMessage(
-                                Component.text(
-                                    OriginsReborn.instance.getConfig()
-                                        .getString(
-                                            "messages.no-swap-command-permissions",
-                                            "§cYou don't have permission to do this!"
-                                        )!!
+                                Component.text("This command has been disabled in the configuration").color(
+                                    NamedTextColor.RED
                                 )
                             )
                         }
                     } else {
                         sender.sendMessage(
-                            Component.text("This command has been disabled in the configuration").color(
-                                NamedTextColor.RED
-                            )
+                            Component.text("This command can only be run by a player").color(NamedTextColor.RED)
                         )
                     }
-                } else {
-                    sender.sendMessage(
-                        Component.text("This command can only be run by a player").color(NamedTextColor.RED)
-                    )
                 }
                 return true
             }
@@ -152,11 +149,13 @@ class OriginCommand : CommandExecutor, TabCompleter {
                                     )
                                 )
 
-                                val pOrigin = getOrigin(sender, layer)
-                                val tOrigin = getOrigin(target, layer)
+                                CoroutineScope(ioDispatcher).launch {
+                                    val pOrigin = getOrigin(sender, layer)
+                                    val tOrigin = getOrigin(target, layer)
 
-                                setOrigin(sender, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
-                                setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+                                    setOrigin(sender, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+                                    setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+                                }
                                 return true
                             }
                         }
@@ -235,7 +234,9 @@ class OriginCommand : CommandExecutor, TabCompleter {
                     )
                     return true
                 }
-                setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+                CoroutineScope(ioDispatcher).launch {
+                    setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+                }
                 return true
             }
 
@@ -274,11 +275,13 @@ class OriginCommand : CommandExecutor, TabCompleter {
                 if (sender is Player) {
                     val layer = if (args.size == 2) args[1]
                     else "origin"
-                    openOriginSwapper(
-                        sender, PlayerSwapOriginEvent.SwapReason.COMMAND, getOrigins(layer).indexOf(
-                            getOrigin(sender, layer)
-                        ), 0, false, true, layer
-                    )
+                    CoroutineScope(ioDispatcher).launch {
+                        openOriginSwapper(
+                            sender, PlayerSwapOriginEvent.SwapReason.COMMAND, getOrigins(layer).indexOf(
+                                getOrigin(sender, layer)
+                            ), 0, false, true, layer
+                        )
+                    }
                 } else {
                     sender.sendMessage(
                         Component.text("This command can only be run by a player").color(NamedTextColor.RED)

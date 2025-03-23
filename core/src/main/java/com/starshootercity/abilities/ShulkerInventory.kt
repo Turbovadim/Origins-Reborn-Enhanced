@@ -26,20 +26,17 @@ import java.io.File
 import java.io.IOException
 
 class ShulkerInventory : VisibleAbility, Listener {
+
     override fun getKey(): Key {
         return Key.key("origins:shulker_inventory")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You have access to an additional 9 slots of inventory, which keep the items on death.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You have access to an additional 9 slots of inventory, which keep the items on death.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Hoarder", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor("Hoarder", LineComponent.LineType.TITLE)
 
     var openedBoxKey: NamespacedKey = NamespacedKey(instance, "openedbox")
 

@@ -23,17 +23,13 @@ class FallImmunity : VisibleAbility, Listener {
         return Key.key("origins:fall_immunity")
     }
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "You never take fall damage, no matter from which height you fall.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "You never take fall damage, no matter from which height you fall.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Acrobatics",
-            LineComponent.LineType.TITLE
-        )
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Acrobatics",
+        LineComponent.LineType.TITLE
+    )
 }

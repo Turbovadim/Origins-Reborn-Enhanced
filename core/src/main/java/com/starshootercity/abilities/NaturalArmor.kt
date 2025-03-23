@@ -12,26 +12,19 @@ class NaturalArmor : AttributeModifierAbility, VisibleAbility {
         return Key.key("origins:natural_armor")
     }
 
-    override fun getAttribute(): Attribute {
-        return NMSInvoker.getArmorAttribute()
-    }
+    override val attribute: Attribute = NMSInvoker.getArmorAttribute()
 
-    override fun getAmount(): Double {
-        return 8.0
-    }
+    override val amount: Double = 8.0
 
-    override fun getOperation(): AttributeModifier.Operation {
-        return AttributeModifier.Operation.ADD_NUMBER
-    }
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Even without wearing armor, your skin provides natural protection.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Even without wearing armor, your skin provides natural protection.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Sturdy Skin", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Sturdy Skin",
+        LineComponent.LineType.TITLE
+    )
 }

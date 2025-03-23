@@ -1,44 +1,46 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-import com.starshootercity.Origin;
-import com.starshootercity.OriginSwapper;
-import org.bukkit.Bukkit;
-import org.bukkit.Particle;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.starshootercity.OriginSwapper.Companion.getOrigins
+import kotlinx.coroutines.runBlocking
+import org.bukkit.Bukkit
+import org.bukkit.Particle
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
 
-import java.util.ArrayList;
-import java.util.List;
+interface ParticleAbility : Ability {
+    val particle: Particle
+    val frequency: Int
+        get() = 4
+    val extra: Int
+        get() = 0
+    val data: Any?
+        get() = null
 
-public interface ParticleAbility extends Ability {
-    Particle getParticle();
-    default int getFrequency() {
-        return 4;
-    }
-    default int getExtra() {
-        return 0;
-    }
-    default Object getData() {
-        return null;
-    }
+    class ParticleAbilityListener : Listener {
 
-    class ParticleAbilityListener implements Listener {
         @EventHandler
-        public void onServerTickEnd(ServerTickEndEvent event) {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                List<Origin> origins = OriginSwapper.getOrigins(player);
-                List<Ability> abilities = new ArrayList<>();
-                for (Origin origin : origins) abilities.addAll(origin.getAbilities());
-                for (Ability ability : abilities) {
-                    if (ability instanceof ParticleAbility particleAbility) {
-                        if (event.getTickNumber() % particleAbility.getFrequency() == 0) {
-                            player.getWorld().spawnParticle(particleAbility.getParticle(), player.getLocation(), 1, 0.5, 1, 0.5, particleAbility.getExtra(), particleAbility.getData());
+        fun onServerTickEnd(event: ServerTickEndEvent) {
+            runBlocking {
+                Bukkit.getOnlinePlayers().forEach { player ->
+                    getOrigins(player)
+                        .flatMap { it.getAbilities() }
+                        .filterIsInstance<ParticleAbility>()
+                        .filter { event.tickNumber % it.frequency == 0 }
+                        .forEach { ability ->
+                            player.world.spawnParticle(
+                                ability.particle,
+                                player.location,
+                                1,
+                                0.5, 1.0, 0.5,
+                                ability.extra.toDouble(),
+                                ability.data
+                            )
                         }
-                    }
                 }
             }
         }
+
+        
     }
 }

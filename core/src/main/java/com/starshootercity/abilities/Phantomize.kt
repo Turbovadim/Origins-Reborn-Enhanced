@@ -10,7 +10,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerEvent
-import org.jetbrains.annotations.NotNull
 import java.util.*
 
 class Phantomize : DependencyAbility, Listener {
@@ -28,7 +27,7 @@ class Phantomize : DependencyAbility, Listener {
         }
     }
 
-    override fun getKey(): @NotNull Key {
+    override fun getKey(): Key {
         return Key.key("origins:phantomize")
     }
 

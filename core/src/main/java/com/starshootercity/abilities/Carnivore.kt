@@ -52,19 +52,15 @@ class Carnivore : VisibleAbility, Listener {
     }
 
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Your diet is restricted to meat, you can't eat vegetables.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "Your diet is restricted to meat, you can't eat vegetables.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "Carnivore",
-            LineComponent.LineType.TITLE
-        )
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Carnivore",
+        LineComponent.LineType.TITLE
+    )
 
     override fun getKey(): Key {
         return Key.key("origins:carnivore")

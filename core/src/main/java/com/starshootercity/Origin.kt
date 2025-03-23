@@ -4,6 +4,7 @@ import com.starshootercity.abilities.Ability
 import com.starshootercity.abilities.AbilityRegister
 import com.starshootercity.abilities.MultiAbility
 import com.starshootercity.abilities.VisibleAbility
+import com.starshootercity.database.DatabaseManager
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -30,7 +31,7 @@ class Origin(
     private val max: Int,
     val layer: String
 ) {
-    val team: Team? = if (OriginsReborn.instance.config.getBoolean("display.enable-prefixes")) {
+    val team: Team? = if (OriginsReborn.mainConfig.display.enablePrefixes) {
         val scoreboard: Scoreboard = Bukkit.getScoreboardManager().mainScoreboard
         scoreboard.getTeam(name)?.unregister()
         val newTeam = scoreboard.registerNewTeam(name)
@@ -51,40 +52,29 @@ class Origin(
         else -> '\uE005'
     }
 
-    fun isUnchoosable(player: Player): Boolean {
+    suspend fun isUnchoosable(player: Player): Boolean {
         if (unchoosable) return true
-        val instance = OriginsReborn.instance
-        val mode = instance.config.getString("restrictions.reusing-origins", "NONE")
-        val same = instance.config.getBoolean("restrictions.prevent-same-origins")
+        val mode = OriginsReborn.mainConfig.restrictions.reusingOrigins
+        val same = OriginsReborn.mainConfig.restrictions.preventSameOrigins
+
         if (max != -1) {
             var num = 0
-            for (p in OriginSwapper.originFileConfiguration.getKeys(false)) {
-                if (OriginSwapper.originFileConfiguration.getString(p, "").equals(getName().lowercase(Locale.getDefault()))) {
+            DatabaseManager.getAllUsedOrigins().forEach {
+                if (it.equals(getName().lowercase(Locale.getDefault()), ignoreCase = true)) {
                     num++
                 }
             }
             if (num >= max) return true
         }
         if (same) {
-            for (p in OriginSwapper.originFileConfiguration.getKeys(false)) {
-                if (OriginSwapper.originFileConfiguration.getString(p, "").equals(getName().lowercase(Locale.getDefault()))) {
-                    return true
-                }
-            }
+            return DatabaseManager.getAllUsedOrigins().contains(getName().lowercase(Locale.getDefault()))
         }
         return when (mode) {
-            "PERPLAYER" -> OriginSwapper.usedOriginFileConfiguration
-                .getStringList(player.uniqueId.toString())
+            "PERPLAYER" -> DatabaseManager
+                .getUsedOrigins(player.uniqueId.toString())
                 .contains(getName().lowercase(Locale.getDefault()))
             "ALL" -> {
-                for (p in OriginSwapper.usedOriginFileConfiguration.getKeys(false)) {
-                    if (OriginSwapper.usedOriginFileConfiguration.getStringList(p)
-                            .contains(getName().lowercase(Locale.getDefault()))
-                    ) {
-                        return true
-                    }
-                }
-                false
+                DatabaseManager.getAllUsedOrigins().contains(getName().lowercase(Locale.getDefault()))
             }
             else -> false
         }
@@ -111,7 +101,7 @@ class Origin(
             val a = AbilityRegister.abilityMap[key]
             if (a == null) continue
             originAbilities.add(a)
-            if (a is MultiAbility) originAbilities.addAll(a.getAbilities())
+            if (a is MultiAbility) originAbilities.addAll(a.abilities)
         }
         return originAbilities
     }

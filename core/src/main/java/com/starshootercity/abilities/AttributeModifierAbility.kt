@@ -1,39 +1,47 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import net.objecthunter.exp4j.ExpressionBuilder;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import net.objecthunter.exp4j.ExpressionBuilder
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
+import org.bukkit.entity.Player
+import java.util.*
 
-public interface AttributeModifierAbility extends Ability {
-    @NotNull Attribute getAttribute();
-    double getAmount();
+interface AttributeModifierAbility : Ability {
+    val attribute: Attribute
+    val amount: Double
 
-    @SuppressWarnings("unused")
-    default double getChangedAmount(Player player) {
-        return 0;
-    }
+    @Suppress("unused")
+    fun getChangedAmount(player: Player): Double = 0.0
 
-    AttributeModifier.@NotNull Operation getOperation();
+    val operation: AttributeModifier.Operation
 
-    default double getTotalAmount(Player player) {
-        double total = getAmount() + getChangedAmount(player);
-        if (total != 0) {
-            String modifiedValue = AbilityRegister.attributeModifierAbilityFileConfig.getString("%s.value".formatted(getKey()), "x");
+    fun getTotalAmount(player: Player): Double {
+        val total = amount + getChangedAmount(player)
+        if (total != 0.0) {
+            val modifiedValue = AbilityRegister.attributeModifierAbilityFileConfig
+                .getString("${getKey()}.value", "x")!!
             try {
-                return new ExpressionBuilder(modifiedValue).build().setVariable("x", total).evaluate();
-            } catch (IllegalArgumentException ignored) {}
+                return ExpressionBuilder(modifiedValue)
+                    .build()
+                    .setVariable("x", total)
+                    .evaluate()
+            } catch (_: IllegalArgumentException) {
+                // Ignore exception and fallback to returning total
+            }
         }
-        return total;
+        return total
     }
 
-    default AttributeModifier.@NotNull Operation getActualOperation() {
-        return switch (AbilityRegister.attributeModifierAbilityFileConfig.getString("%s.operation".formatted(getKey()), "default").toLowerCase()) {
-            case "add_scalar" -> AttributeModifier.Operation.ADD_SCALAR;
-            case "add_number" -> AttributeModifier.Operation.ADD_NUMBER;
-            case "multiply_scalar_1" -> AttributeModifier.Operation.MULTIPLY_SCALAR_1;
-            default -> getOperation();
-        };
-    }
+    val actualOperation: AttributeModifier.Operation
+        get() {
+            val opString = AbilityRegister.attributeModifierAbilityFileConfig
+                .getString("${getKey()}.operation", "default")!!
+                .lowercase(Locale.getDefault())
+            return when (opString) {
+                "add_scalar" -> AttributeModifier.Operation.ADD_SCALAR
+                "add_number" -> AttributeModifier.Operation.ADD_NUMBER
+                "multiply_scalar_1" -> AttributeModifier.Operation.MULTIPLY_SCALAR_1
+                else -> operation
+            }
+        }
 }

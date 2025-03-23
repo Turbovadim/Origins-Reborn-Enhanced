@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 class PackApplier : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (instance.config.getBoolean("resource-pack.enabled")) {
+        if (OriginsReborn.mainConfig.resourcePack.enabled) {
             sendPacks(event.getPlayer())
             if (ShortcutUtils.isBedrockPlayer(event.getPlayer().uniqueId)) return
             Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable { sendPacks(event.getPlayer()) }, 60)

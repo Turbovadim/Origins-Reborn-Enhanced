@@ -31,7 +31,7 @@ object AddonLoader {
     private val random = Random()
 
     @JvmStatic
-    fun getFirstUnselectedLayer(player: Player): String? {
+    suspend fun getFirstUnselectedLayer(player: Player): String? {
         for (layer in layers) {
             if (OriginSwapper.getOrigin(player, layer!!) == null) return layer
         }
@@ -39,29 +39,29 @@ object AddonLoader {
     }
 
     @JvmStatic
-    fun getOrigin(name: String?): Origin? {
+    fun getOrigin(name: String): Origin? {
         return originNameMap[name]
     }
 
     @JvmStatic
-    fun getOriginByFilename(name: String?): Origin? {
+    fun getOriginByFilename(name: String): Origin? {
         return originFileNameMap[name]
     }
 
     @JvmStatic
-    fun getOrigins(layer: String?): MutableList<Origin?> {
-        val o: MutableList<Origin?> = ArrayList<Origin?>(origins)
-        o.removeIf { or: Origin? -> or!!.layer != layer }
+    fun getOrigins(layer: String): MutableList<Origin> {
+        val o: MutableList<Origin> = ArrayList<Origin>(origins)
+        o.removeIf { or -> or.layer != layer }
         return o
     }
 
     @JvmStatic
-    fun getFirstOrigin(layer: String?): Origin? {
+    fun getFirstOrigin(layer: String): Origin? {
         return getOrigins(layer)[0]
     }
 
     @JvmStatic
-    fun getRandomOrigin(layer: String?): Origin? {
+    fun getRandomOrigin(layer: String): Origin? {
         val o = getOrigins(layer)
         return o[random.nextInt(o.size)]
     }
@@ -99,7 +99,7 @@ object AddonLoader {
             else if (v == OriginsAddon.State.ALLOW) allowed = true
         }
         return allowed || player.hasPermission(
-            instance.config.getString("swap-command.permission", "originsreborn.admin")!!
+            OriginsReborn.mainConfig.swapCommand.permission
         )
     }
 
@@ -203,7 +203,7 @@ object AddonLoader {
         originFiles.put(addon.getNamespace(), addonFiles)
         val originFolder = File(addon.dataFolder, "origins")
         if (!originFolder.exists()) {
-            val ignored = originFolder.mkdirs()
+            originFolder.mkdirs()
             try {
                 ZipInputStream(FileInputStream(addon.getFile())).use { inputStream ->
                     var entry = inputStream.getNextEntry()

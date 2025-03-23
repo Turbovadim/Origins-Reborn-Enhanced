@@ -8,11 +8,7 @@ class FlameParticles : ParticleAbility {
         return Key.key("origins:flame_particles")
     }
 
-    override fun getParticle(): Particle {
-        return Particle.FLAME
-    }
+    override val particle = Particle.FLAME
 
-    override fun getFrequency(): Int {
-        return 4
-    }
+    override val frequency = 4
 }

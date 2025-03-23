@@ -29,20 +29,17 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
         return Key.key("origins:phasing")
     }
 
-    override fun getDependencyKey(): Key {
-        return Key.key("origins:phantomize")
-    }
+    override val dependencyKey: Key = Key.key("origins:phantomize")
 
-    override fun getDescription(): MutableList<LineComponent?> {
-        return makeLineFor(
-            "While phantomized, you can walk through solid material, except Obsidian.",
-            LineComponent.LineType.DESCRIPTION
-        )
-    }
+    override val description: MutableList<LineComponent?> = makeLineFor(
+        "While phantomized, you can walk through solid material, except Obsidian.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override fun getTitle(): MutableList<LineComponent?> {
-        return makeLineFor("Phasing", LineComponent.LineType.TITLE)
-    }
+    override val title: MutableList<LineComponent?> = makeLineFor(
+        "Phasing",
+        LineComponent.LineType.TITLE
+    )
 
     @EventHandler
     fun onServerTick(event: ServerTickEndEvent?) {
@@ -112,7 +109,7 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
     }
 
      */
-    override fun canFly(player: Player?): Boolean {
+    override fun canFly(player: Player): Boolean {
         return dependency.isEnabled(player) && isPhasing.getOrDefault(player, false) == true
     }
 
@@ -125,7 +122,7 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
         })
     }
 
-    override fun getFlightSpeed(player: Player?): Float {
+    override fun getFlightSpeed(player: Player): Float {
         return 0.1f
     }
 
@@ -146,7 +143,7 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
         )
     }
 
-    override fun shouldActivate(player: Player?): Boolean {
+    override fun shouldActivate(player: Player): Boolean {
         return dependency.isEnabled(player) && isPhasing.getOrDefault(player, false) == true
     }
 

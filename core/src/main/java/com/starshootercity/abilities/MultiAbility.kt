@@ -1,7 +1,5 @@
-package com.starshootercity.abilities;
+package com.starshootercity.abilities
 
-import java.util.List;
-
-public interface MultiAbility extends Ability {
-    List<Ability> getAbilities();
+interface MultiAbility : Ability {
+    val abilities: MutableList<Ability>
 }
