@@ -5,7 +5,7 @@ plugins {
     kotlin("jvm") version "2.1.10"
 }
 
-group = "com.starshootercity"
+group = "ru.turbovadim"
 version = "2.5.1"
 
 repositories {

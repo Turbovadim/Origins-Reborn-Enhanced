@@ -1,6 +1,6 @@
 name: Origins-Reborn-Enhanced
 version: ${version}
-main: com.starshootercity.OriginsReborn
+main: ru.turbovadim.OriginsRebornEnhanced
 description: Paper plugin inspired by the Origins mod by Apace
 api-version: '1.18'
 author: cometcake575
