@@ -1,4 +1,4 @@
-package com.starshootercity.packetsenders;
+package com.starshootercity.packetsenders
 
-public record OriginsRebornResourcePackInfo(Object packInfo) {
-}
+@JvmRecord
+data class OriginsRebornResourcePackInfo(val packInfo: Any?)

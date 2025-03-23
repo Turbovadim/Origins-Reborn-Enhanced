@@ -1,37 +1,27 @@
-package com.starshootercity.packetsenders;
+package com.starshootercity.packetsenders
 
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.block.BlockEvent;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.block.Block
+import org.bukkit.entity.Player
+import org.bukkit.event.HandlerList
+import org.bukkit.event.block.BlockEvent
+import org.bukkit.inventory.ItemStack
 
-@SuppressWarnings("unused")
-public class OriginsRebornBlockDamageAbortEvent extends BlockEvent {
-    private static final HandlerList handlers = new HandlerList();
-    private final Player player;
-    private final ItemStack itemstack;
+class OriginsRebornBlockDamageAbortEvent(
+    private val player: Player,
+    block: Block,
+    private val itemInHand: ItemStack
+) : BlockEvent(block) {
 
-    public OriginsRebornBlockDamageAbortEvent(@NotNull Player player, @NotNull Block block, @NotNull ItemStack itemInHand) {
-        super(block);
-        this.player = player;
-        this.itemstack = itemInHand;
-    }
+    fun getPlayer(): Player = player
 
-    public @NotNull Player getPlayer() {
-        return this.player;
-    }
+    fun getItemInHand(): ItemStack = itemInHand
 
-    public @NotNull ItemStack getItemInHand() {
-        return this.itemstack;
-    }
+    override fun getHandlers(): HandlerList = handlers
 
-    public @NotNull HandlerList getHandlers() {
-        return handlers;
-    }
+    companion object {
+        private val handlers = HandlerList()
 
-    public static @NotNull HandlerList getHandlerList() {
-        return handlers;
+        @JvmStatic
+        fun getHandlerList(): HandlerList = handlers
     }
 }

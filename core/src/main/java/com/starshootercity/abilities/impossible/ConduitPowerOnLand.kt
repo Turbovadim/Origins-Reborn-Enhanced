@@ -1,13 +1,11 @@
-package com.starshootercity.abilities.impossible;
+package com.starshootercity.abilities.impossible
 
-import com.starshootercity.abilities.Ability;
-import net.kyori.adventure.key.Key;
-import org.jetbrains.annotations.NotNull;
+import com.starshootercity.abilities.Ability
+import net.kyori.adventure.key.Key
 
-public class ConduitPowerOnLand implements Ability {
+class ConduitPowerOnLand : Ability {
     // Requires a modification to Paper which has been suggested on GitHub, will update if implemented
-    @Override
-    public @NotNull Key getKey() {
-        return Key.key("origins:conduit_power_on_land");
+    override fun getKey(): Key {
+        return Key.key("origins:conduit_power_on_land")
     }
 }
