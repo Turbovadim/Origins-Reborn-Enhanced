@@ -1,20 +1,12 @@
 package ru.turbovadim.abilities
 
-import ru.turbovadim.AddonLoader.getTextFor
-import ru.turbovadim.OriginSwapper
-import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
-import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.ShortcutUtils.isBedrockPlayer
-import ru.turbovadim.abilities.Ability.AbilityRunner
-import ru.turbovadim.events.PlayerLeftClickEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
-import org.bukkit.configuration.InvalidConfigurationException
-import org.bukkit.configuration.file.FileConfiguration
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -22,8 +14,16 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.inventory.InventoryType
-import java.io.File
-import java.io.IOException
+import org.endera.enderalib.utils.async.ioDispatcher
+import ru.turbovadim.AddonLoader.getTextFor
+import ru.turbovadim.OriginSwapper
+import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
+import ru.turbovadim.OriginSwapper.LineData.LineComponent
+import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.ShortcutUtils.isBedrockPlayer
+import ru.turbovadim.database.ShulkerInventoryManager
+import ru.turbovadim.events.PlayerLeftClickEvent
 
 class ShulkerInventory : VisibleAbility, Listener {
 
@@ -40,21 +40,22 @@ class ShulkerInventory : VisibleAbility, Listener {
 
     var openedBoxKey: NamespacedKey = NamespacedKey(instance, "openedbox")
 
-    init {
-        inventories = File(instance.dataFolder, "inventories.yml")
-        if (!inventories.exists()) {
-            inventories.getParentFile().mkdirs()
-            instance.saveResource("inventories.yml", false)
+    private fun setupInv(player: Player) {
+        val inventory = Bukkit.createInventory(
+            player,
+            InventoryType.DISPENSER,
+            Component.text(getTextFor("container.shulker_inventory_power", "Shulker Inventory"))
+        )
+        player.openInventory(inventory)
+        CoroutineScope(ioDispatcher).launch {
+            val inv = ShulkerInventoryManager.getInventory(player.uniqueId.toString())
+            withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                inv.forEach { item ->
+                    inventory.setItem(item.slot, item.itemStack)
+                }
+            }
         }
-
-        inventoriesConfig = AutosavingYamlConfiguration()
-        try {
-            inventoriesConfig!!.load(inventories)
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        } catch (e: InvalidConfigurationException) {
-            throw RuntimeException(e)
-        }
+        player.persistentDataContainer.set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
     }
 
     @EventHandler
@@ -65,23 +66,12 @@ class ShulkerInventory : VisibleAbility, Listener {
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {
-        val player = event.getPlayer()
+        val player = event.player
         if (event.hasBlock() || event.hasItem()) return
         if (!isBedrockPlayer(player.uniqueId)) return
 
         runForAbility(player) { p ->
-            val inventory = Bukkit.createInventory(
-                p,
-                InventoryType.DISPENSER,
-                Component.text(getTextFor("container.shulker_inventory_power", "Shulker Inventory"))
-            )
-            p.openInventory(inventory)
-            for (i in 0..8) {
-                inventoriesConfig?.getItemStack("${p.uniqueId}.$i")?.let { item ->
-                    inventory.setItem(i, item)
-                }
-            }
-            p.persistentDataContainer.set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+            setupInv(p)
         }
     }
 
@@ -92,57 +82,29 @@ class ShulkerInventory : VisibleAbility, Listener {
         runForAbility(player) { p ->
             if (event.isRightClick && event.slotType == InventoryType.SlotType.ARMOR && event.slot == 38) {
                 event.isCancelled = true
-                val inventory = Bukkit.createInventory(
-                    p,
-                    InventoryType.DISPENSER,
-                    Component.text(getTextFor("container.shulker_inventory_power", "Shulker Inventory"))
-                )
-                p.openInventory(inventory)
-                for (i in 0..8) {
-                    inventoriesConfig?.getItemStack("${p.uniqueId}.$i")?.let { item ->
-                        inventory.setItem(i, item)
-                    }
-                }
-                p.persistentDataContainer.set(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                setupInv(player)
                 return@runForAbility
             }
-
-            Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
-                if (p.persistentDataContainer.get<Byte, Boolean>(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
-                    for (i in 0..8) {
-                        inventoriesConfig?.set("${p.uniqueId}.$i", p.openInventory.getItem(i))
-                    }
-                }
-            })
+            saveInv(p)
         }
     }
 
+    private fun saveInv(player: Player) {
+        if (player.persistentDataContainer.get(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
+            val items = (0..8).map {
+                Pair(it, player.openInventory.getItem(it))
+            }.filter { it.second != null }
+            CoroutineScope(ioDispatcher).launch {
+                items.forEach { item ->
+                    ShulkerInventoryManager.saveItem(player.uniqueId.toString(), item.first, item.second!!)
+                }
+            }
+        }
+    }
 
     @EventHandler
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
-        Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
-            if (player.persistentDataContainer.get(openedBoxKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
-                for (i in 0..8) {
-                    inventoriesConfig?.set("${player.uniqueId}.$i", player.openInventory.getItem(i))
-                }
-            }
-        })
-    }
-
-    private class AutosavingYamlConfiguration : YamlConfiguration() {
-        override fun set(path: String, value: Any?) {
-            super.set(path, value)
-            try {
-                save(inventories)
-            } catch (e: IOException) {
-                throw RuntimeException(e)
-            }
-        }
-    }
-
-    companion object {
-        private lateinit var inventories: File
-        var inventoriesConfig: FileConfiguration? = null
+        saveInv(player)
     }
 }
